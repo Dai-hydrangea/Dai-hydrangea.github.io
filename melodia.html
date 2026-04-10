@@ -377,7 +377,7 @@ Example: [{"note":"C4","duration":"quarter"},{"note":"E4","duration":"eighth","c
             { text: prompt },
             { inline_data: { mime_type: 'image/jpeg', data: imageBase64 } }
           ]}],
-          generationConfig: { temperature: 0.05 }
+          generationConfig: { temperature: 0.05, thinkingConfig: { thinkingBudget: 8192 } }
         })
       });
       data = await resp.json();
@@ -388,7 +388,10 @@ Example: [{"note":"C4","duration":"quarter"},{"note":"E4","duration":"eighth","c
       break;
     }
     if (data.error) throw new Error(data.error.message);
-    const text = data.candidates[0].content.parts[0].text;
+    // thinking モードでは複数パーツが返る(thought + response)
+    const parts = data.candidates[0].content.parts;
+    const text = parts.filter(p => p.text && !p.thought).map(p => p.text).join('\n')
+      || parts.map(p => p.text || '').join('\n');
     console.log('Gemini response:', text);
     // JSON抽出: ```json...``` ブロック or 直接配列
     let jsonStr = null;
