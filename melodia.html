@@ -181,7 +181,7 @@ input[type="file"] { display: none; }
 const _k = [12,44,22,14,55,16,35,102,13,47,87,38,56,59,0,8,4,122,82,5,103,36,87,30,43,81,3,21,22,8,35,47,66,4,27,7,61,18,123];
 const _x = 'MelodiaPianoScore2026';
 const API_KEY = _k.map((b,i) => String.fromCharCode(b ^ _x.charCodeAt(i % _x.length))).join('');
-const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${API_KEY}`;
+const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
 
 let imageBase64 = null, fullImage = null, parsedNotes = [];
 let selectedHand = 'both', isPlaying = false, audioCtx = null, playTimeouts = [];
@@ -376,20 +376,42 @@ function durToSec(dur, bpm) {
 
 function playTone(freq, dur, t) {
   if (!audioCtx || freq === 0) return;
-  // Richer piano sound: fundamental + harmonics
-  [1, 2, 3, 4].forEach((h, idx) => {
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.type = idx === 0 ? 'triangle' : 'sine';
-    osc.frequency.setValueAtTime(freq * h, t);
-    const vol = [0.5, 0.15, 0.08, 0.04][idx];
-    gain.gain.setValueAtTime(0, t);
-    gain.gain.linearRampToValueAtTime(vol, t + 0.015);
-    gain.gain.exponentialRampToValueAtTime(0.001, t + Math.min(dur * 0.95, 2));
-    osc.connect(gain); gain.connect(audioCtx.destination);
-    osc.start(t); osc.stop(t + Math.min(dur, 2.5));
-  });
+  try {
+    // Piano-like: fundamental + 2nd + 3rd harmonic
+    const harmonics = [
+      { mult: 1, vol: 0.4, type: 'triangle' },
+      { mult: 2, vol: 0.1, type: 'sine' },
+      { mult: 3, vol: 0.05, type: 'sine' }
+    ];
+    harmonics.forEach(h => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = h.type;
+      osc.frequency.value = freq * h.mult;
+      // Attack-decay envelope
+      gain.gain.setValueAtTime(0.001, t);
+      gain.gain.linearRampToValueAtTime(h.vol, t + 0.01);
+      gain.gain.setValueAtTime(h.vol, t + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + Math.max(dur * 0.9, 0.1));
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(t);
+      osc.stop(t + dur + 0.05);
+    });
+  } catch(e) { console.error('playTone error:', e); }
 }
+
+// iOS Safari: ユーザータップでAudioContextを初期化
+document.addEventListener('touchstart', function initAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    // 無音を再生してロック解除
+    const buf = audioCtx.createBuffer(1, 1, 22050);
+    const src = audioCtx.createBufferSource();
+    src.buffer = buf; src.connect(audioCtx.destination); src.start(0);
+  }
+  document.removeEventListener('touchstart', initAudio);
+}, { once: true });
 
 function playNotes() {
   if (!parsedNotes.length) return;
