@@ -11,154 +11,82 @@ body {
   background: linear-gradient(135deg, #1a1a2e, #16213e);
   color: #e0e0e0;
   min-height: 100vh;
-  padding: 20px;
+  padding: 16px;
 }
 .container { max-width: 480px; margin: 0 auto; }
-h1 {
-  text-align: center;
-  font-size: 28px;
-  color: #ffd700;
-  margin-bottom: 4px;
-  letter-spacing: 0.05em;
-}
-.subtitle {
-  text-align: center;
-  font-size: 13px;
-  color: #888;
-  margin-bottom: 24px;
-}
+h1 { text-align: center; font-size: 28px; color: #ffd700; margin-bottom: 4px; }
+.subtitle { text-align: center; font-size: 13px; color: #888; margin-bottom: 20px; }
 .card {
   background: rgba(255,255,255,0.08);
   border-radius: 16px;
-  padding: 20px;
-  margin-bottom: 16px;
+  padding: 16px;
+  margin-bottom: 14px;
   backdrop-filter: blur(10px);
 }
-.card h2 {
-  font-size: 15px;
-  color: #ffd700;
-  margin-bottom: 12px;
-}
+.card h2 { font-size: 15px; color: #ffd700; margin-bottom: 10px; }
 .photo-area {
   border: 2px dashed rgba(255,215,0,0.3);
   border-radius: 12px;
-  padding: 32px 16px;
+  padding: 24px 16px;
   text-align: center;
   cursor: pointer;
-  transition: all 0.3s;
 }
-.photo-area:hover, .photo-area:active {
-  border-color: #ffd700;
-  background: rgba(255,215,0,0.05);
-}
-.photo-area img {
-  max-width: 100%;
-  max-height: 300px;
-  border-radius: 8px;
-  margin-top: 12px;
-}
+.photo-area:active { border-color: #ffd700; background: rgba(255,215,0,0.05); }
 .photo-icon { font-size: 48px; }
-.photo-text { font-size: 14px; color: #aaa; margin-top: 8px; }
+.photo-text { font-size: 13px; color: #aaa; margin-top: 8px; }
 input[type="file"] { display: none; }
 .btn {
-  display: block;
-  width: 100%;
-  padding: 14px;
-  border: none;
-  border-radius: 12px;
-  font-size: 16px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.3s;
-  margin-bottom: 8px;
+  display: block; width: 100%; padding: 14px; border: none;
+  border-radius: 12px; font-size: 16px; font-weight: bold;
+  cursor: pointer; margin-bottom: 8px;
 }
-.btn-primary {
-  background: linear-gradient(135deg, #ffd700, #ff8c00);
-  color: #1a1a2e;
-}
-.btn-primary:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-.btn-play {
-  background: linear-gradient(135deg, #4ade80, #22c55e);
-  color: #1a1a2e;
-}
-.btn-stop {
-  background: linear-gradient(135deg, #f87171, #ef4444);
-  color: white;
-}
-.tempo-control {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-.tempo-control label { font-size: 13px; color: #aaa; white-space: nowrap; }
-.tempo-control input[type="range"] { flex: 1; }
-.tempo-value { font-size: 14px; color: #ffd700; min-width: 60px; text-align: right; }
-.status {
-  text-align: center;
-  font-size: 13px;
-  color: #aaa;
-  margin: 12px 0;
-}
+.btn-primary { background: linear-gradient(135deg, #ffd700, #ff8c00); color: #1a1a2e; }
+.btn-primary:disabled { opacity: 0.4; }
+.btn-play { background: linear-gradient(135deg, #4ade80, #22c55e); color: #1a1a2e; }
+.btn-stop { background: linear-gradient(135deg, #f87171, #ef4444); color: white; }
+.btn-outline { background: rgba(255,215,0,0.15); color: #ffd700; border: 1px solid rgba(255,215,0,0.3); }
+.status { text-align: center; font-size: 13px; color: #aaa; margin: 10px 0; }
 .status.loading { color: #ffd700; }
 .status.error { color: #f87171; }
+.controls { display: flex; gap: 8px; margin-bottom: 8px; }
+.controls .btn { flex: 1; }
+.hand-select { display: flex; gap: 8px; margin: 10px 0; }
+.hand-btn {
+  flex: 1; padding: 8px; border: 2px solid rgba(255,215,0,0.3);
+  border-radius: 10px; background: transparent; color: #e0e0e0;
+  font-size: 13px; cursor: pointer;
+}
+.hand-btn.active { border-color: #ffd700; background: rgba(255,215,0,0.15); color: #ffd700; font-weight: bold; }
 .notes-display {
-  background: rgba(0,0,0,0.3);
-  border-radius: 8px;
-  padding: 12px;
-  font-family: monospace;
-  font-size: 13px;
-  line-height: 1.6;
-  max-height: 200px;
-  overflow-y: auto;
-  margin-top: 12px;
+  background: rgba(0,0,0,0.3); border-radius: 8px; padding: 10px;
+  max-height: 240px; overflow-y: auto; margin-top: 10px;
 }
 .note-item {
-  display: inline-block;
-  padding: 3px 8px;
-  margin: 2px;
-  border-radius: 6px;
-  background: rgba(255,215,0,0.15);
-  color: #ffd700;
-  font-size: 14px;
+  display: inline-flex; flex-direction: column; align-items: center;
+  padding: 4px 6px; margin: 3px; border-radius: 8px;
+  background: rgba(255,215,0,0.12); color: #ffd700; font-size: 13px;
+  min-width: 40px; transition: all 0.15s;
 }
-.note-item.playing {
-  background: #ffd700;
-  color: #1a1a2e;
-  font-weight: bold;
-}
-.hand-select {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-.hand-btn {
-  flex: 1;
-  padding: 10px;
-  border: 2px solid rgba(255,215,0,0.3);
-  border-radius: 10px;
-  background: transparent;
-  color: #e0e0e0;
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.hand-btn.active {
-  border-color: #ffd700;
-  background: rgba(255,215,0,0.15);
-  color: #ffd700;
-  font-weight: bold;
-}
-.guide {
-  font-size: 12px;
-  color: #666;
-  text-align: center;
-  margin-top: 24px;
-  line-height: 1.6;
-}
+.note-item .doremi { font-size: 11px; color: #aaa; margin-top: 2px; }
+.note-item.playing { background: #ffd700; color: #1a1a2e; transform: scale(1.15); }
+.note-item.playing .doremi { color: #1a1a2e; }
+.note-item.rest { background: rgba(255,255,255,0.05); color: #666; }
+.tempo-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; }
+.tempo-row label { font-size: 12px; color: #aaa; white-space: nowrap; }
+.tempo-row input[type="range"] { flex: 1; }
+.tempo-row .val { font-size: 14px; color: #ffd700; min-width: 55px; text-align: right; }
+.toggle-row { display: flex; align-items: center; gap: 10px; margin: 6px 0; }
+.toggle-row label { font-size: 13px; color: #aaa; flex: 1; }
+.toggle-row input[type="checkbox"] { width: 20px; height: 20px; accent-color: #ffd700; }
+#cropArea { margin-top: 10px; }
+#cropContainer { position: relative; overflow: hidden; border-radius: 8px; touch-action: none; }
+#cropCanvas { width: 100%; display: block; }
+#cropBox { position: absolute; border: 2px solid #ffd700; background: rgba(255,215,0,0.15); pointer-events: none; display: none; }
+.howto { background: rgba(255,215,0,0.06); border-radius: 12px; padding: 14px; margin-bottom: 14px; }
+.howto h3 { font-size: 14px; color: #ffd700; margin-bottom: 8px; }
+.howto ol { padding-left: 20px; font-size: 12px; color: #aaa; line-height: 1.8; }
+.howto ol li { margin-bottom: 4px; }
+.footer { font-size: 11px; color: #555; text-align: center; margin-top: 20px; line-height: 1.6; }
 </style>
 </head>
 <body>
@@ -166,111 +94,123 @@ input[type="file"] { display: none; }
   <h1>🎹 Melodia</h1>
   <div class="subtitle">楽譜を撮って、音を聴こう</div>
 
-  <!-- 撮影エリア -->
+  <!-- 使い方 -->
+  <div class="howto">
+    <h3>📖 使い方</h3>
+    <ol>
+      <li>下の📷をタップして<b>楽譜を撮影</b></li>
+      <li>写真が表示されたら、<b>指でドラッグ</b>して読みたい範囲を選択（1〜4小節がおすすめ）</li>
+      <li>右手/左手/両手を選んで<b>「楽譜を読み取る」</b></li>
+      <li>AIが音符を検出したら<b>「▶ 再生」</b>で音が鳴ります</li>
+      <li><b>テンポ</b>をゆっくりにして練習できます</li>
+    </ol>
+  </div>
+
+  <!-- 撮影 -->
   <div class="card">
-    <h2>📸 楽譜を撮影</h2>
-    <div class="photo-area" onclick="document.getElementById('fileInput').click()">
-      <div class="photo-icon">📷</div>
-      <div class="photo-text">タップして楽譜を撮影<br>（広めに撮ってOK！後で範囲を選べます）</div>
-      <img id="preview" style="display:none">
+    <h2>📸 ステップ1: 楽譜を撮影</h2>
+    <div class="photo-area" id="photoArea" onclick="document.getElementById('fileInput').click()">
+      <div class="photo-icon" id="photoIcon">📷</div>
+      <div class="photo-text" id="photoText">タップして楽譜を撮影<br>広めに撮ってOK！</div>
     </div>
     <input type="file" id="fileInput" accept="image/*" capture="environment" onchange="handlePhoto(this)">
 
-    <!-- トリミングエリア -->
-    <div id="cropArea" style="display:none; margin-top:12px;">
-      <div style="font-size:13px; color:#ffd700; margin-bottom:8px;">
-        📐 読み取る範囲を指で選んでください
+    <div id="cropArea" style="display:none;">
+      <div style="font-size:13px; color:#ffd700; margin-bottom:6px;">
+        ✂️ ステップ2: 読みたい範囲を指で囲む
       </div>
-      <div style="font-size:11px; color:#aaa; margin-bottom:8px;">
-        読みたい小節だけを囲むと精度が上がります
+      <div style="font-size:11px; color:#aaa; margin-bottom:6px;">
+        小節を絞ると精度が上がります。選択しなければ全体を読みます。
       </div>
-      <div id="cropContainer" style="position:relative; overflow:hidden; border-radius:8px; touch-action:none;">
-        <canvas id="cropCanvas" style="width:100%; display:block;"></canvas>
-        <div id="cropBox" style="position:absolute; border:2px solid #ffd700; background:rgba(255,215,0,0.1); pointer-events:none;"></div>
+      <div id="cropContainer">
+        <canvas id="cropCanvas"></canvas>
+        <div id="cropBox"></div>
       </div>
-      <button class="btn" style="background:rgba(255,215,0,0.2); color:#ffd700; margin-top:8px;" onclick="resetCrop()">
-        🔄 選択をリセット
+      <button class="btn btn-outline" style="margin-top:8px; padding:10px; font-size:13px;" onclick="resetCrop()">
+        🔄 選択をリセット（全体を読む）
       </button>
     </div>
 
-    <div class="hand-select" style="margin-top:12px">
-      <button class="hand-btn active" onclick="selectHand('both', this)">両手</button>
-      <button class="hand-btn" onclick="selectHand('right', this)">右手のみ</button>
-      <button class="hand-btn" onclick="selectHand('left', this)">左手のみ</button>
+    <div class="hand-select">
+      <button class="hand-btn active" onclick="selectHand('both', this)">🎹 両手</button>
+      <button class="hand-btn" onclick="selectHand('right', this)">👆 右手</button>
+      <button class="hand-btn" onclick="selectHand('left', this)">👇 左手</button>
     </div>
 
     <button class="btn btn-primary" id="readBtn" onclick="readScore()" disabled>
-      🎵 楽譜を読み取る
+      🎵 ステップ3: 楽譜を読み取る
     </button>
     <div class="status" id="status"></div>
   </div>
 
-  <!-- 結果 & 再生 -->
+  <!-- 結果 -->
   <div class="card" id="resultCard" style="display:none">
     <h2>🎶 読み取り結果</h2>
     <div class="notes-display" id="notesDisplay"></div>
 
-    <div class="tempo-control" style="margin-top:16px">
-      <label>テンポ:</label>
-      <input type="range" id="tempoSlider" min="40" max="200" value="80" oninput="updateTempo()">
-      <span class="tempo-value" id="tempoValue">♩= 80</span>
+    <div class="tempo-row">
+      <label>🐢 ゆっくり</label>
+      <input type="range" id="tempoSlider" min="30" max="200" value="72" oninput="updateTempo()">
+      <span class="val" id="tempoValue">♩=72</span>
+      <label>🐇</label>
     </div>
 
-    <button class="btn btn-play" id="playBtn" onclick="playNotes()">
-      ▶ 再生
-    </button>
-    <button class="btn btn-stop" id="stopBtn" onclick="stopPlaying()" style="display:none">
-      ■ 停止
-    </button>
+    <div class="toggle-row">
+      <label>🔁 くりかえし再生</label>
+      <input type="checkbox" id="loopToggle">
+    </div>
+    <div class="toggle-row">
+      <label>🎵 ドレミ表示</label>
+      <input type="checkbox" id="doremiToggle" checked onchange="displayNotes()">
+    </div>
+
+    <div class="controls">
+      <button class="btn btn-play" id="playBtn" onclick="playNotes()">▶ 再生</button>
+      <button class="btn btn-stop" id="stopBtn" onclick="stopPlaying()" style="display:none">■ 停止</button>
+    </div>
   </div>
 
-  <div class="guide">
-    Melodia は楽譜の写真をAIで読み取り、<br>
-    音を再生するツールです。<br>
-    1〜4小節ずつ撮影すると精度が上がります。
+  <div class="footer">
+    Melodia — 楽譜をAIで読み取り、音を再生するツール<br>
+    Made with ❤️ by D.Seto
   </div>
 </div>
 
 <script>
-// --- Config (XOR obfuscated) ---
+// --- Config ---
 const _k = [12,44,22,14,55,16,35,102,13,47,87,38,56,59,0,8,4,122,82,5,103,36,87,30,43,81,3,21,22,8,35,47,66,4,27,7,61,18,123];
 const _x = 'MelodiaPianoScore2026';
 const API_KEY = _k.map((b,i) => String.fromCharCode(b ^ _x.charCodeAt(i % _x.length))).join('');
 const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${API_KEY}`;
 
-let imageBase64 = null;
-let fullImage = null; // original Image object for cropping
-let parsedNotes = [];
-let selectedHand = 'both';
-let isPlaying = false;
-let audioCtx = null;
-let playTimeouts = [];
+let imageBase64 = null, fullImage = null, parsedNotes = [];
+let selectedHand = 'both', isPlaying = false, audioCtx = null, playTimeouts = [];
+let cropStart = null, cropEnd = null, isCropping = false;
 
-// --- Crop state ---
-let cropStart = null;
-let cropEnd = null;
-let isCropping = false;
+// --- Doremi map ---
+const DOREMI = { 'C':'ド','D':'レ','E':'ミ','F':'ファ','G':'ソ','A':'ラ','B':'シ' };
+function toDoremi(note) {
+  if (!note || note === 'R') return '休';
+  const name = note.charAt(0).toUpperCase();
+  let d = DOREMI[name] || note;
+  if (note.includes('#')) d += '♯';
+  if (note.includes('b')) d += '♭';
+  return d;
+}
 
-// --- Photo handling ---
+// --- Photo ---
 function handlePhoto(input) {
   const file = input.files[0];
   if (!file) return;
-
   const reader = new FileReader();
   reader.onload = (e) => {
-    const preview = document.getElementById('preview');
-    preview.src = e.target.result;
-    preview.style.display = 'none'; // hide old preview
-    document.querySelector('.photo-icon').style.display = 'none';
-    document.querySelector('.photo-text').textContent = 'タップして撮り直す';
-
-    // Load image for crop canvas
+    document.getElementById('photoIcon').style.display = 'none';
+    document.getElementById('photoText').textContent = '📷 タップして撮り直す';
     fullImage = new Image();
     fullImage.onload = () => {
       setupCropCanvas();
       document.getElementById('cropArea').style.display = 'block';
       document.getElementById('readBtn').disabled = false;
-      // Default: use full image
       imageBase64 = e.target.result.split(',')[1];
     };
     fullImage.src = e.target.result;
@@ -278,98 +218,56 @@ function handlePhoto(input) {
   reader.readAsDataURL(file);
 }
 
+// --- Crop ---
 function setupCropCanvas() {
   const canvas = document.getElementById('cropCanvas');
   const container = document.getElementById('cropContainer');
-  const maxW = container.clientWidth || 440;
+  const maxW = container.clientWidth || 400;
   const scale = maxW / fullImage.width;
-  canvas.width = fullImage.width * scale;
+  canvas.width = maxW;
   canvas.height = fullImage.height * scale;
   canvas.style.height = canvas.height + 'px';
-
-  const ctx = canvas.getContext('2d');
-  ctx.drawImage(fullImage, 0, 0, canvas.width, canvas.height);
-
-  // Reset crop
-  cropStart = null;
-  cropEnd = null;
+  canvas.getContext('2d').drawImage(fullImage, 0, 0, canvas.width, canvas.height);
+  cropStart = cropEnd = null;
   document.getElementById('cropBox').style.display = 'none';
 
-  // Touch/mouse events
-  canvas.onmousedown = canvas.ontouchstart = (e) => {
-    e.preventDefault();
+  const getPos = (e) => {
     const rect = canvas.getBoundingClientRect();
     const t = e.touches ? e.touches[0] : e;
-    cropStart = { x: t.clientX - rect.left, y: t.clientY - rect.top };
-    cropEnd = null;
-    isCropping = true;
+    return { x: t.clientX - rect.left, y: t.clientY - rect.top };
   };
-
-  canvas.onmousemove = canvas.ontouchmove = (e) => {
-    if (!isCropping) return;
-    e.preventDefault();
-    const rect = canvas.getBoundingClientRect();
-    const t = e.touches ? e.touches[0] : e;
-    cropEnd = { x: t.clientX - rect.left, y: t.clientY - rect.top };
-    drawCropBox();
-  };
-
-  canvas.onmouseup = canvas.ontouchend = (e) => {
-    if (!isCropping) return;
-    isCropping = false;
-    if (cropStart && cropEnd) {
-      applyCrop();
-    }
-  };
+  canvas.onmousedown = canvas.ontouchstart = (e) => { e.preventDefault(); cropStart = getPos(e); cropEnd = null; isCropping = true; };
+  canvas.onmousemove = canvas.ontouchmove = (e) => { if (!isCropping) return; e.preventDefault(); cropEnd = getPos(e); drawCropBox(); };
+  canvas.onmouseup = canvas.ontouchend = () => { if (isCropping && cropStart && cropEnd) applyCrop(); isCropping = false; };
 }
 
 function drawCropBox() {
   if (!cropStart || !cropEnd) return;
   const box = document.getElementById('cropBox');
-  const x = Math.min(cropStart.x, cropEnd.x);
-  const y = Math.min(cropStart.y, cropEnd.y);
-  const w = Math.abs(cropEnd.x - cropStart.x);
-  const h = Math.abs(cropEnd.y - cropStart.y);
-  box.style.left = x + 'px';
-  box.style.top = y + 'px';
-  box.style.width = w + 'px';
-  box.style.height = h + 'px';
+  box.style.left = Math.min(cropStart.x, cropEnd.x) + 'px';
+  box.style.top = Math.min(cropStart.y, cropEnd.y) + 'px';
+  box.style.width = Math.abs(cropEnd.x - cropStart.x) + 'px';
+  box.style.height = Math.abs(cropEnd.y - cropStart.y) + 'px';
   box.style.display = 'block';
 }
 
 function applyCrop() {
   const canvas = document.getElementById('cropCanvas');
-  const scaleX = fullImage.width / canvas.width;
-  const scaleY = fullImage.height / canvas.height;
-
-  const x = Math.min(cropStart.x, cropEnd.x) * scaleX;
-  const y = Math.min(cropStart.y, cropEnd.y) * scaleY;
-  const w = Math.abs(cropEnd.x - cropStart.x) * scaleX;
-  const h = Math.abs(cropEnd.y - cropStart.y) * scaleY;
-
-  if (w < 20 || h < 20) return; // too small
-
-  // Crop to new canvas
-  const cropCanvas = document.createElement('canvas');
-  cropCanvas.width = w;
-  cropCanvas.height = h;
-  const ctx = cropCanvas.getContext('2d');
-  ctx.drawImage(fullImage, x, y, w, h, 0, 0, w, h);
-
-  // Update base64 with cropped image
-  imageBase64 = cropCanvas.toDataURL('image/jpeg', 0.9).split(',')[1];
+  const sx = fullImage.width / canvas.width, sy = fullImage.height / canvas.height;
+  const x = Math.min(cropStart.x, cropEnd.x) * sx, y = Math.min(cropStart.y, cropEnd.y) * sy;
+  const w = Math.abs(cropEnd.x - cropStart.x) * sx, h = Math.abs(cropEnd.y - cropStart.y) * sy;
+  if (w < 20 || h < 20) return;
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  c.getContext('2d').drawImage(fullImage, x, y, w, h, 0, 0, w, h);
+  imageBase64 = c.toDataURL('image/jpeg', 0.9).split(',')[1];
 }
 
 function resetCrop() {
-  cropStart = null;
-  cropEnd = null;
+  cropStart = cropEnd = null;
   document.getElementById('cropBox').style.display = 'none';
-  // Reset to full image
-  const canvas = document.createElement('canvas');
-  canvas.width = fullImage.width;
-  canvas.height = fullImage.height;
-  canvas.getContext('2d').drawImage(fullImage, 0, 0);
-  imageBase64 = canvas.toDataURL('image/jpeg', 0.9).split(',')[1];
+  const c = document.createElement('canvas'); c.width = fullImage.width; c.height = fullImage.height;
+  c.getContext('2d').drawImage(fullImage, 0, 0);
+  imageBase64 = c.toDataURL('image/jpeg', 0.9).split(',')[1];
   setupCropCanvas();
 }
 
@@ -379,191 +277,155 @@ function selectHand(hand, btn) {
   btn.classList.add('active');
 }
 
-// --- Score reading via Gemini Vision ---
+// --- AI Score Reading ---
 async function readScore() {
   if (!imageBase64) return;
-
   const status = document.getElementById('status');
   const readBtn = document.getElementById('readBtn');
-  status.textContent = '🎵 AIが楽譜を読み取っています…';
+  status.textContent = '🎵 AIが楽譜を読み取っています…（10〜20秒）';
   status.className = 'status loading';
   readBtn.disabled = true;
 
-  const handInstruction = selectedHand === 'right'
-    ? 'Read only the treble clef (right hand).'
-    : selectedHand === 'left'
-    ? 'Read only the bass clef (left hand).'
-    : 'Read both treble and bass clef.';
+  const handInst = selectedHand === 'right' ? 'Read only the treble clef (right hand).'
+    : selectedHand === 'left' ? 'Read only the bass clef (left hand).'
+    : 'Read both treble and bass clef. For piano, read treble first then bass.';
 
-  const prompt = `You are a music score reader. Analyze this sheet music image and extract the notes.
+  const prompt = `You are an expert music score reader. Analyze this sheet music photograph and extract every note precisely.
 
-${handInstruction}
+${handInst}
 
-Return ONLY a JSON array of note objects. Each note should have:
-- "note": note name with octave (e.g., "C4", "F#5", "Bb3"). Use C4 = middle C.
-- "duration": one of "whole", "half", "quarter", "eighth", "sixteenth"
-- "rest": true if it's a rest (in this case, "note" can be "R")
-- "chord": array of additional notes if it's a chord (e.g., ["E4", "G4"])
+Return ONLY a JSON array. Each element:
+- "note": pitch with octave (C4=middle C, e.g. "C4","F#5","Bb3")
+- "duration": "whole","half","quarter","eighth","sixteenth","dotted-half","dotted-quarter"
+- "rest": true if rest (note="R")
+- "chord": additional simultaneous notes as array (e.g. ["E4","G4"])
 
-For example: [{"note":"C4","duration":"quarter"},{"note":"E4","duration":"quarter","chord":["G4"]},{"note":"R","duration":"quarter","rest":true}]
+Rules:
+- Left to right order
+- Apply key signature sharps/flats
+- Apply accidentals
+- Dotted notes: use "dotted-quarter" etc.
+- Ties: combine into one longer note
+- Be very precise about octave numbers
+- Return ONLY valid JSON array, no explanation
 
-Important:
-- Read notes from left to right, in order
-- Be precise about octave numbers
-- If you see sharps (#) or flats (b) in the key signature, apply them
-- Return ONLY the JSON array, no explanation`;
+Example: [{"note":"C4","duration":"quarter"},{"note":"E4","duration":"eighth","chord":["G4"]}]`;
 
   try {
-    const response = await fetch(API_URL, {
+    const resp = await fetch(API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [{
-          parts: [
-            { text: prompt },
-            { inline_data: { mime_type: 'image/jpeg', data: imageBase64 } }
-          ]
-        }],
-        generationConfig: { temperature: 0.1 }
+        contents: [{ parts: [
+          { text: prompt },
+          { inline_data: { mime_type: 'image/jpeg', data: imageBase64 } }
+        ]}],
+        generationConfig: { temperature: 0.05 }
       })
     });
-
-    const data = await response.json();
-
-    if (data.error) {
-      throw new Error(data.error.message);
-    }
-
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error.message);
     const text = data.candidates[0].content.parts[0].text;
-    // Extract JSON from response (handle markdown code blocks)
-    const jsonMatch = text.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) throw new Error('楽譜を読み取れませんでした');
-
-    parsedNotes = JSON.parse(jsonMatch[0]);
+    const match = text.match(/\[[\s\S]*\]/);
+    if (!match) throw new Error('楽譜を読み取れませんでした。範囲を狭めて再試行してください。');
+    parsedNotes = JSON.parse(match[0]);
     displayNotes();
-
-    status.textContent = `✅ ${parsedNotes.length}個の音符を検出しました`;
+    status.textContent = `✅ ${parsedNotes.length}個の音符を検出！`;
     status.className = 'status';
     document.getElementById('resultCard').style.display = 'block';
-
+    document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth' });
   } catch (err) {
-    status.textContent = `❌ エラー: ${err.message}`;
+    status.textContent = `❌ ${err.message}`;
     status.className = 'status error';
   }
-
   readBtn.disabled = false;
 }
 
-// --- Display notes ---
+// --- Display ---
 function displayNotes() {
+  const showDoremi = document.getElementById('doremiToggle').checked;
   const display = document.getElementById('notesDisplay');
   display.innerHTML = parsedNotes.map((n, i) => {
-    const label = n.rest ? '休' : n.note + (n.chord ? '+' + n.chord.join('+') : '');
-    const durSymbol = { whole:'𝅝', half:'𝅗𝅥', quarter:'♩', eighth:'♪', sixteenth:'𝅘𝅥𝅯' }[n.duration] || '♩';
-    return `<span class="note-item" id="note-${i}">${durSymbol} ${label}</span>`;
+    const isRest = n.rest;
+    const durSym = { whole:'𝅝', half:'𝅗𝅥', quarter:'♩', eighth:'♪', sixteenth:'𝅘𝅥𝅯',
+      'dotted-half':'𝅗𝅥.', 'dotted-quarter':'♩.' }[n.duration] || '♩';
+    const label = isRest ? '休' : n.note;
+    const chordLabel = (!isRest && n.chord) ? '<br>+' + n.chord.map(c => showDoremi ? toDoremi(c) : c).join('+') : '';
+    const doremi = showDoremi && !isRest ? `<span class="doremi">${toDoremi(n.note)}</span>` : '';
+    return `<span class="note-item ${isRest ? 'rest' : ''}" id="note-${i}">
+      ${durSym} ${showDoremi && !isRest ? toDoremi(n.note) : label}${chordLabel}
+    </span>`;
   }).join('');
 }
 
-// --- Audio playback ---
-function noteToFreq(noteName) {
-  if (!noteName || noteName === 'R') return 0;
-
-  const noteMap = { 'C':0, 'D':2, 'E':4, 'F':5, 'G':7, 'A':9, 'B':11 };
-  let name = noteName.charAt(0).toUpperCase();
-  let octave = parseInt(noteName.charAt(noteName.length - 1));
-  let semitone = noteMap[name] || 0;
-
-  if (noteName.includes('#')) semitone += 1;
-  if (noteName.includes('b')) semitone -= 1;
-
-  // A4 = 440Hz, MIDI note 69
-  const midi = semitone + (octave + 1) * 12;
-  return 440 * Math.pow(2, (midi - 69) / 12);
+// --- Audio ---
+function noteToFreq(name) {
+  if (!name || name === 'R') return 0;
+  const map = { C:0, D:2, E:4, F:5, G:7, A:9, B:11 };
+  let semi = map[name.charAt(0).toUpperCase()] || 0;
+  if (name.includes('#')) semi++; if (name.includes('b')) semi--;
+  const oct = parseInt(name.replace(/[^0-9]/g, '')) || 4;
+  return 440 * Math.pow(2, (semi + (oct + 1) * 12 - 69) / 12);
 }
 
-function durationToSeconds(duration, bpm) {
-  const beatDuration = 60 / bpm;
-  const map = {
-    'whole': beatDuration * 4,
-    'half': beatDuration * 2,
-    'quarter': beatDuration,
-    'eighth': beatDuration / 2,
-    'sixteenth': beatDuration / 4
-  };
-  return map[duration] || beatDuration;
+function durToSec(dur, bpm) {
+  const b = 60 / bpm;
+  return { whole:b*4, half:b*2, quarter:b, eighth:b/2, sixteenth:b/4,
+    'dotted-half':b*3, 'dotted-quarter':b*1.5 }[dur] || b;
 }
 
-function playTone(freq, duration, startTime) {
-  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  if (freq === 0) return; // rest
-
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-
-  // Piano-like envelope
-  osc.type = 'triangle';
-  osc.frequency.setValueAtTime(freq, startTime);
-
-  gain.gain.setValueAtTime(0, startTime);
-  gain.gain.linearRampToValueAtTime(0.5, startTime + 0.02);
-  gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration * 0.9);
-
-  osc.connect(gain);
-  gain.connect(audioCtx.destination);
-
-  osc.start(startTime);
-  osc.stop(startTime + duration);
+function playTone(freq, dur, t) {
+  if (!audioCtx || freq === 0) return;
+  // Richer piano sound: fundamental + harmonics
+  [1, 2, 3, 4].forEach((h, idx) => {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = idx === 0 ? 'triangle' : 'sine';
+    osc.frequency.setValueAtTime(freq * h, t);
+    const vol = [0.5, 0.15, 0.08, 0.04][idx];
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(vol, t + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + Math.min(dur * 0.95, 2));
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(t); osc.stop(t + Math.min(dur, 2.5));
+  });
 }
 
 function playNotes() {
-  if (parsedNotes.length === 0) return;
-
+  if (!parsedNotes.length) return;
   stopPlaying();
   isPlaying = true;
   document.getElementById('playBtn').style.display = 'none';
   document.getElementById('stopBtn').style.display = 'block';
-
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   audioCtx.resume();
 
   const bpm = parseInt(document.getElementById('tempoSlider').value);
-  let currentTime = audioCtx.currentTime + 0.1;
+  let t = audioCtx.currentTime + 0.1;
 
-  parsedNotes.forEach((note, index) => {
-    const dur = durationToSeconds(note.duration, bpm);
-
-    // Highlight current note
-    const delay = (currentTime - audioCtx.currentTime) * 1000;
-    const timeout = setTimeout(() => {
+  parsedNotes.forEach((note, i) => {
+    const dur = durToSec(note.duration, bpm);
+    const delay = (t - audioCtx.currentTime) * 1000;
+    playTimeouts.push(setTimeout(() => {
       document.querySelectorAll('.note-item').forEach(el => el.classList.remove('playing'));
-      const el = document.getElementById(`note-${index}`);
-      if (el) el.classList.add('playing');
-    }, delay);
-    playTimeouts.push(timeout);
-
+      const el = document.getElementById(`note-${i}`);
+      if (el) { el.classList.add('playing'); el.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+    }, delay));
     if (!note.rest) {
-      // Play main note
-      const freq = noteToFreq(note.note);
-      playTone(freq, dur, currentTime);
-
-      // Play chord notes
-      if (note.chord) {
-        note.chord.forEach(chordNote => {
-          const cFreq = noteToFreq(chordNote);
-          playTone(cFreq, dur, currentTime);
-        });
-      }
+      playTone(noteToFreq(note.note), dur, t);
+      if (note.chord) note.chord.forEach(c => playTone(noteToFreq(c), dur, t));
     }
-
-    currentTime += dur;
+    t += dur;
   });
 
-  // Stop after all notes played
-  const totalDur = (currentTime - audioCtx.currentTime) * 1000 + 500;
-  const endTimeout = setTimeout(() => {
-    stopPlaying();
-  }, totalDur);
-  playTimeouts.push(endTimeout);
+  playTimeouts.push(setTimeout(() => {
+    document.querySelectorAll('.note-item').forEach(el => el.classList.remove('playing'));
+    if (document.getElementById('loopToggle').checked && isPlaying) {
+      playNotes(); // loop
+    } else {
+      stopPlaying();
+    }
+  }, (t - audioCtx.currentTime) * 1000 + 300));
 }
 
 function stopPlaying() {
@@ -576,8 +438,7 @@ function stopPlaying() {
 }
 
 function updateTempo() {
-  const val = document.getElementById('tempoSlider').value;
-  document.getElementById('tempoValue').textContent = `♩= ${val}`;
+  document.getElementById('tempoValue').textContent = `♩=${document.getElementById('tempoSlider').value}`;
 }
 </script>
 </body>
