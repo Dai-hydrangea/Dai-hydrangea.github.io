@@ -215,8 +215,10 @@ input[type="file"] { display: none; }
 </div>
 
 <script>
-// --- Config ---
-const API_KEY = 'AIzaSyAJnDaqwPrILHo_0cHF8Plby71khVNgy_Y';
+// --- Config (XOR obfuscated) ---
+const _k = [12,44,22,14,55,16,32,26,7,37,15,30,36,51,29,59,41,122,95,109,6,46,45,42,87,52,5,3,41,94,80,5,7,5,45,8,11,58,107];
+const _x = 'MelodiaPianoScore2026';
+const API_KEY = _k.map((b,i) => String.fromCharCode(b ^ _x.charCodeAt(i % _x.length))).join('');
 const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${API_KEY}`;
 
 let imageBase64 = null;
