@@ -460,30 +460,34 @@ function durToSec(dur, bpm) {
     'dotted-half':b*3, 'dotted-quarter':b*1.5 }[dur] || b;
 }
 
+// SoundCraft と同じ音声パターン（DynamicsCompressor経由）
+let compressor = null;
+function ensureCompressor() {
+  if (!compressor || compressor.context !== audioCtx) {
+    compressor = audioCtx.createDynamicsCompressor();
+    compressor.threshold.value = -24;
+    compressor.ratio.value = 20;
+    compressor.connect(audioCtx.destination);
+  }
+  return compressor;
+}
+
 function playTone(freq, dur, t) {
   if (!audioCtx || freq === 0) return;
   try {
-    // Piano-like: fundamental + 2nd + 3rd harmonic
-    const harmonics = [
-      { mult: 1, vol: 0.4, type: 'triangle' },
-      { mult: 2, vol: 0.1, type: 'sine' },
-      { mult: 3, vol: 0.05, type: 'sine' }
-    ];
-    harmonics.forEach(h => {
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = h.type;
-      osc.frequency.value = freq * h.mult;
-      // Attack-decay envelope
-      gain.gain.setValueAtTime(0.001, t);
-      gain.gain.linearRampToValueAtTime(h.vol, t + 0.01);
-      gain.gain.setValueAtTime(h.vol, t + 0.01);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + Math.max(dur * 0.9, 0.1));
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start(t);
-      osc.stop(t + dur + 0.05);
-    });
+    const comp = ensureCompressor();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    gain.gain.value = 0;
+    osc.connect(gain);
+    gain.connect(comp);
+    osc.start(t);
+    // SoundCraft式: setTargetAtTimeで滑らかに
+    gain.gain.setTargetAtTime(0.7, t, 0.02);
+    gain.gain.setTargetAtTime(0, t + dur * 0.8, 0.1);
+    osc.stop(t + dur + 0.3);
   } catch(e) { console.error('playTone error:', e); }
 }
 
