@@ -460,48 +460,22 @@ function durToSec(dur, bpm) {
     'dotted-half':b*3, 'dotted-quarter':b*1.5 }[dur] || b;
 }
 
-// SoundCraft と同じ音声パターン（DynamicsCompressor経由）
-let compressor = null;
-function ensureCompressor() {
-  if (!compressor || compressor.context !== audioCtx) {
-    compressor = audioCtx.createDynamicsCompressor();
-    compressor.threshold.value = -24;
-    compressor.ratio.value = 20;
-    compressor.connect(audioCtx.destination);
-  }
-  return compressor;
-}
-
-function playTone(freq, dur, t) {
+// === iOS Safari 完全対応: 1音ずつ「今」鳴らす方式 ===
+function playToneNow(freq, durMs) {
   if (!audioCtx || freq === 0) return;
-  try {
-    const comp = ensureCompressor();
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.type = 'sine';
-    osc.frequency.value = freq;
-    gain.gain.value = 0;
-    osc.connect(gain);
-    gain.connect(comp);
-    osc.start(t);
-    // SoundCraft式: setTargetAtTimeで滑らかに
-    gain.gain.setTargetAtTime(0.7, t, 0.02);
-    gain.gain.setTargetAtTime(0, t + dur * 0.8, 0.1);
-    osc.stop(t + dur + 0.3);
-  } catch(e) { console.error('playTone error:', e); }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'sine';
+  osc.frequency.value = freq;
+  gain.gain.value = 0.6;
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start(0);
+  setTimeout(() => {
+    try { gain.gain.value = 0; osc.stop(); } catch(e){}
+  }, durMs);
 }
-
-// iOS Safari: ユーザータップでAudioContextを初期化
-document.addEventListener('touchstart', function initAudio() {
-  if (!audioCtx) {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    // 無音を再生してロック解除
-    const buf = audioCtx.createBuffer(1, 1, 22050);
-    const src = audioCtx.createBufferSource();
-    src.buffer = buf; src.connect(audioCtx.destination); src.start(0);
-  }
-  document.removeEventListener('touchstart', initAudio);
-}, { once: true });
 
 function playNotes() {
   if (!parsedNotes.length) return;
@@ -509,41 +483,48 @@ function playNotes() {
   isPlaying = true;
   document.getElementById('playBtn').style.display = 'none';
   document.getElementById('stopBtn').style.display = 'block';
-  // iOS Safari: ボタンタップのコンテキスト内でAudioContextを作成+resume
-  if (audioCtx) { audioCtx.close(); audioCtx = null; }
-  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  // 無音バッファを即再生してロック解除
-  const unlock = audioCtx.createBuffer(1, 1, 22050);
-  const src = audioCtx.createBufferSource();
-  src.buffer = unlock; src.connect(audioCtx.destination); src.start(0);
+
+  // ユーザータップ内でAudioContext作成（iOS必須）
+  if (!audioCtx || audioCtx.state === 'closed') {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
   audioCtx.resume();
 
+  // まず無音を鳴らしてiOSロック解除
+  const osc0 = audioCtx.createOscillator();
+  const g0 = audioCtx.createGain();
+  g0.gain.value = 0;
+  osc0.connect(g0); g0.connect(audioCtx.destination);
+  osc0.start(); osc0.stop(audioCtx.currentTime + 0.01);
+
   const bpm = parseInt(document.getElementById('tempoSlider').value);
-  let t = audioCtx.currentTime + 0.1;
+  let delayMs = 100; // 100ms後に開始
 
   parsedNotes.forEach((note, i) => {
-    const dur = durToSec(note.duration, bpm);
-    const delay = (t - audioCtx.currentTime) * 1000;
+    const durMs = durToSec(note.duration, bpm) * 1000;
     playTimeouts.push(setTimeout(() => {
+      if (!isPlaying) return;
+      // ハイライト
       document.querySelectorAll('.note-item').forEach(el => el.classList.remove('playing'));
       const el = document.getElementById(`note-${i}`);
-      if (el) { el.classList.add('playing'); el.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
-    }, delay));
-    if (!note.rest) {
-      playTone(noteToFreq(note.note), dur, t);
-      if (note.chord) note.chord.forEach(c => playTone(noteToFreq(c), dur, t));
-    }
-    t += dur;
+      if (el) { el.classList.add('playing'); el.scrollIntoView({block:'nearest'}); }
+      // 音を「今」鳴らす
+      if (!note.rest) {
+        playToneNow(noteToFreq(note.note), durMs);
+        if (note.chord) note.chord.forEach(c => playToneNow(noteToFreq(c), durMs));
+      }
+    }, delayMs));
+    delayMs += durMs;
   });
 
   playTimeouts.push(setTimeout(() => {
     document.querySelectorAll('.note-item').forEach(el => el.classList.remove('playing'));
     if (document.getElementById('loopToggle').checked && isPlaying) {
-      playNotes(); // loop
+      playNotes();
     } else {
       stopPlaying();
     }
-  }, (t - audioCtx.currentTime) * 1000 + 300));
+  }, delayMs + 300));
 }
 
 function stopPlaying() {
