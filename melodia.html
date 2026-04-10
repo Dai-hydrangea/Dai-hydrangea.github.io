@@ -181,7 +181,11 @@ input[type="file"] { display: none; }
 const _k = [12,44,22,14,55,16,35,102,13,47,87,38,56,59,0,8,4,122,82,5,103,36,87,30,43,81,3,21,22,8,35,47,66,4,27,7,61,18,123];
 const _x = 'MelodiaPianoScore2026';
 const API_KEY = _k.map((b,i) => String.fromCharCode(b ^ _x.charCodeAt(i % _x.length))).join('');
-const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${API_KEY}`;
+const MODELS = ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.0-flash'];
+let currentModelIdx = 0;
+function getApiUrl() {
+  return `https://generativelanguage.googleapis.com/v1beta/models/${MODELS[currentModelIdx]}:generateContent?key=${API_KEY}`;
+}
 
 let imageBase64 = null, fullImage = null, parsedNotes = [];
 let selectedHand = 'both', isPlaying = false, audioCtx = null, playTimeouts = [];
@@ -357,18 +361,29 @@ Rules:
 Example: [{"note":"C4","duration":"quarter"},{"note":"E4","duration":"eighth","chord":["G4"]}]`;
 
   try {
-    const resp = await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [
-          { text: prompt },
-          { inline_data: { mime_type: 'image/jpeg', data: imageBase64 } }
-        ]}],
-        generationConfig: { temperature: 0.05 }
-      })
-    });
-    const data = await resp.json();
+    let data = null;
+    // モデルを順番に試す(混雑時は次のモデルへ)
+    for (let attempt = 0; attempt < MODELS.length; attempt++) {
+      const url = getApiUrl();
+      status.textContent = `🎵 ${MODELS[currentModelIdx]} で読み取り中…`;
+      const resp = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [
+            { text: prompt },
+            { inline_data: { mime_type: 'image/jpeg', data: imageBase64 } }
+          ]}],
+          generationConfig: { temperature: 0.05 }
+        })
+      });
+      data = await resp.json();
+      if (data.error && data.error.message.includes('high demand')) {
+        currentModelIdx = (currentModelIdx + 1) % MODELS.length;
+        continue;
+      }
+      break;
+    }
     if (data.error) throw new Error(data.error.message);
     const text = data.candidates[0].content.parts[0].text;
     console.log('Gemini response:', text);
