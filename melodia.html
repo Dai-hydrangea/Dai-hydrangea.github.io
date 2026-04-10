@@ -181,7 +181,7 @@ input[type="file"] { display: none; }
 const _k = [12,44,22,14,55,16,35,102,13,47,87,38,56,59,0,8,4,122,82,5,103,36,87,30,43,81,3,21,22,8,35,47,66,4,27,7,61,18,123];
 const _x = 'MelodiaPianoScore2026';
 const API_KEY = _k.map((b,i) => String.fromCharCode(b ^ _x.charCodeAt(i % _x.length))).join('');
-const MODELS = ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.0-flash'];
+const MODELS = ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.5-flash-lite'];
 let currentModelIdx = 0;
 function getApiUrl() {
   return `https://generativelanguage.googleapis.com/v1beta/models/${MODELS[currentModelIdx]}:generateContent?key=${API_KEY}`;
@@ -208,8 +208,11 @@ function handlePhoto(input) {
   if (!file) return;
   const reader = new FileReader();
   reader.onload = (e) => {
-    document.getElementById('photoIcon').style.display = 'none';
-    document.getElementById('photoText').textContent = '📷 タップして撮り直す';
+    // 撮った写真をそのまま表示
+    const photoArea = document.getElementById('photoArea');
+    photoArea.innerHTML = `<img src="${e.target.result}" style="max-width:100%; border-radius:8px;" onclick="document.getElementById('fileInput').click()">
+      <div class="photo-text" style="margin-top:8px">📷 タップして撮り直す</div>`;
+
     fullImage = new Image();
     fullImage.onload = () => {
       setupCropCanvas();
@@ -378,7 +381,7 @@ Example: [{"note":"C4","duration":"quarter"},{"note":"E4","duration":"eighth","c
         })
       });
       data = await resp.json();
-      if (data.error && data.error.message.includes('high demand')) {
+      if (data.error && (data.error.message.includes('high demand') || data.error.message.includes('no longer available') || data.error.message.includes('not found'))) {
         currentModelIdx = (currentModelIdx + 1) % MODELS.length;
         continue;
       }
@@ -403,8 +406,14 @@ Example: [{"note":"C4","duration":"quarter"},{"note":"E4","duration":"eighth","c
       throw new Error('JSONが見つかりません。範囲を狭めて再試行してください。');
     }
     parsedNotes = JSON.parse(jsonStr);
+    if (parsedNotes.length === 0) {
+      // 0個の場合はAI応答を表示
+      document.getElementById('notesDisplay').textContent = '⚠️ AI応答(デバッグ): ' + text.substring(0, 800);
+      document.getElementById('resultCard').style.display = 'block';
+      throw new Error('音符が検出されませんでした。範囲を変えて再試行してください。');
+    }
     displayNotes();
-    status.textContent = `✅ ${parsedNotes.length}個の音符を検出！`;
+    status.textContent = `✅ ${parsedNotes.length}個の音符を検出！(${MODELS[currentModelIdx]})`;
     status.className = 'status';
     document.getElementById('resultCard').style.display = 'block';
     document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth' });
