@@ -371,9 +371,23 @@ Example: [{"note":"C4","duration":"quarter"},{"note":"E4","duration":"eighth","c
     const data = await resp.json();
     if (data.error) throw new Error(data.error.message);
     const text = data.candidates[0].content.parts[0].text;
-    const match = text.match(/\[[\s\S]*\]/);
-    if (!match) throw new Error('楽譜を読み取れませんでした。範囲を狭めて再試行してください。');
-    parsedNotes = JSON.parse(match[0]);
+    console.log('Gemini response:', text);
+    // JSON抽出: ```json...``` ブロック or 直接配列
+    let jsonStr = null;
+    const codeBlock = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (codeBlock) {
+      jsonStr = codeBlock[1].trim();
+    } else {
+      const arrMatch = text.match(/\[[\s\S]*\]/);
+      if (arrMatch) jsonStr = arrMatch[0];
+    }
+    if (!jsonStr) {
+      // デバッグ用: AIの応答を表示
+      document.getElementById('notesDisplay').textContent = 'AI応答: ' + text.substring(0, 500);
+      document.getElementById('resultCard').style.display = 'block';
+      throw new Error('JSONが見つかりません。範囲を狭めて再試行してください。');
+    }
+    parsedNotes = JSON.parse(jsonStr);
     displayNotes();
     status.textContent = `✅ ${parsedNotes.length}個の音符を検出！`;
     status.className = 'status';
