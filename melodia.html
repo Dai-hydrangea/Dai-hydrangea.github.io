@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Melodia — 楽譜よみとり</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, sans-serif;
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  color: #e0e0e0;
+  min-height: 100vh;
+  padding: 20px;
+}
+.container { max-width: 480px; margin: 0 auto; }
+h1 {
+  text-align: center;
+  font-size: 28px;
+  color: #ffd700;
+  margin-bottom: 4px;
+  letter-spacing: 0.05em;
+}
+.subtitle {
+  text-align: center;
+  font-size: 13px;
+  color: #888;
+  margin-bottom: 24px;
+}
+.card {
+  background: rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 16px;
+  backdrop-filter: blur(10px);
+}
+.card h2 {
+  font-size: 15px;
+  color: #ffd700;
+  margin-bottom: 12px;
+}
+.photo-area {
+  border: 2px dashed rgba(255,215,0,0.3);
+  border-radius: 12px;
+  padding: 32px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.photo-area:hover, .photo-area:active {
+  border-color: #ffd700;
+  background: rgba(255,215,0,0.05);
+}
+.photo-area img {
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: 8px;
+  margin-top: 12px;
+}
+.photo-icon { font-size: 48px; }
+.photo-text { font-size: 14px; color: #aaa; margin-top: 8px; }
+input[type="file"] { display: none; }
+.btn {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-bottom: 8px;
+}
+.btn-primary {
+  background: linear-gradient(135deg, #ffd700, #ff8c00);
+  color: #1a1a2e;
+}
+.btn-primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.btn-play {
+  background: linear-gradient(135deg, #4ade80, #22c55e);
+  color: #1a1a2e;
+}
+.btn-stop {
+  background: linear-gradient(135deg, #f87171, #ef4444);
+  color: white;
+}
+.tempo-control {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.tempo-control label { font-size: 13px; color: #aaa; white-space: nowrap; }
+.tempo-control input[type="range"] { flex: 1; }
+.tempo-value { font-size: 14px; color: #ffd700; min-width: 60px; text-align: right; }
+.status {
+  text-align: center;
+  font-size: 13px;
+  color: #aaa;
+  margin: 12px 0;
+}
+.status.loading { color: #ffd700; }
+.status.error { color: #f87171; }
+.notes-display {
+  background: rgba(0,0,0,0.3);
+  border-radius: 8px;
+  padding: 12px;
+  font-family: monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  max-height: 200px;
+  overflow-y: auto;
+  margin-top: 12px;
+}
+.note-item {
+  display: inline-block;
+  padding: 3px 8px;
+  margin: 2px;
+  border-radius: 6px;
+  background: rgba(255,215,0,0.15);
+  color: #ffd700;
+  font-size: 14px;
+}
+.note-item.playing {
+  background: #ffd700;
+  color: #1a1a2e;
+  font-weight: bold;
+}
+.hand-select {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.hand-btn {
+  flex: 1;
+  padding: 10px;
+  border: 2px solid rgba(255,215,0,0.3);
+  border-radius: 10px;
+  background: transparent;
+  color: #e0e0e0;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.hand-btn.active {
+  border-color: #ffd700;
+  background: rgba(255,215,0,0.15);
+  color: #ffd700;
+  font-weight: bold;
+}
+.guide {
+  font-size: 12px;
+  color: #666;
+  text-align: center;
+  margin-top: 24px;
+  line-height: 1.6;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🎹 Melodia</h1>
+  <div class="subtitle">楽譜を撮って、音を聴こう</div>
+
+  <!-- 撮影エリア -->
+  <div class="card">
+    <h2>📸 楽譜を撮影</h2>
+    <div class="photo-area" onclick="document.getElementById('fileInput').click()">
+      <div class="photo-icon">📷</div>
+      <div class="photo-text">タップして楽譜を撮影<br>（1〜4小節がおすすめ）</div>
+      <img id="preview" style="display:none">
+    </div>
+    <input type="file" id="fileInput" accept="image/*" capture="environment" onchange="handlePhoto(this)">
+
+    <div class="hand-select" style="margin-top:12px">
+      <button class="hand-btn active" onclick="selectHand('both', this)">両手</button>
+      <button class="hand-btn" onclick="selectHand('right', this)">右手のみ</button>
+      <button class="hand-btn" onclick="selectHand('left', this)">左手のみ</button>
+    </div>
+
+    <button class="btn btn-primary" id="readBtn" onclick="readScore()" disabled>
+      🎵 楽譜を読み取る
+    </button>
+    <div class="status" id="status"></div>
+  </div>
+
+  <!-- 結果 & 再生 -->
+  <div class="card" id="resultCard" style="display:none">
+    <h2>🎶 読み取り結果</h2>
+    <div class="notes-display" id="notesDisplay"></div>
+
+    <div class="tempo-control" style="margin-top:16px">
+      <label>テンポ:</label>
+      <input type="range" id="tempoSlider" min="40" max="200" value="80" oninput="updateTempo()">
+      <span class="tempo-value" id="tempoValue">♩= 80</span>
+    </div>
+
+    <button class="btn btn-play" id="playBtn" onclick="playNotes()">
+      ▶ 再生
+    </button>
+    <button class="btn btn-stop" id="stopBtn" onclick="stopPlaying()" style="display:none">
+      ■ 停止
+    </button>
+  </div>
+
+  <div class="guide">
+    Melodia は楽譜の写真をAIで読み取り、<br>
+    音を再生するツールです。<br>
+    1〜4小節ずつ撮影すると精度が上がります。
+  </div>
+</div>
+
+<script>
+// --- Config ---
+const API_KEY = 'AIzaSyAJnDaqwPrILHo_0cHF8Plby71khVNgy_Y';
+const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${API_KEY}`;
+
+let imageBase64 = null;
+let parsedNotes = [];
+let selectedHand = 'both';
+let isPlaying = false;
+let audioCtx = null;
+let playTimeouts = [];
+
+// --- Photo handling ---
+function handlePhoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = document.getElementById('preview');
+    img.src = e.target.result;
+    img.style.display = 'block';
+    document.querySelector('.photo-icon').style.display = 'none';
+    document.querySelector('.photo-text').textContent = 'タップして撮り直す';
+
+    // base64 data (remove prefix)
+    imageBase64 = e.target.result.split(',')[1];
+    document.getElementById('readBtn').disabled = false;
+  };
+  reader.readAsDataURL(file);
+}
+
+function selectHand(hand, btn) {
+  selectedHand = hand;
+  document.querySelectorAll('.hand-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// --- Score reading via Gemini Vision ---
+async function readScore() {
+  if (!imageBase64) return;
+
+  const status = document.getElementById('status');
+  const readBtn = document.getElementById('readBtn');
+  status.textContent = '🎵 AIが楽譜を読み取っています…';
+  status.className = 'status loading';
+  readBtn.disabled = true;
+
+  const handInstruction = selectedHand === 'right'
+    ? 'Read only the treble clef (right hand).'
+    : selectedHand === 'left'
+    ? 'Read only the bass clef (left hand).'
+    : 'Read both treble and bass clef.';
+
+  const prompt = `You are a music score reader. Analyze this sheet music image and extract the notes.
+
+${handInstruction}
+
+Return ONLY a JSON array of note objects. Each note should have:
+- "note": note name with octave (e.g., "C4", "F#5", "Bb3"). Use C4 = middle C.
+- "duration": one of "whole", "half", "quarter", "eighth", "sixteenth"
+- "rest": true if it's a rest (in this case, "note" can be "R")
+- "chord": array of additional notes if it's a chord (e.g., ["E4", "G4"])
+
+For example: [{"note":"C4","duration":"quarter"},{"note":"E4","duration":"quarter","chord":["G4"]},{"note":"R","duration":"quarter","rest":true}]
+
+Important:
+- Read notes from left to right, in order
+- Be precise about octave numbers
+- If you see sharps (#) or flats (b) in the key signature, apply them
+- Return ONLY the JSON array, no explanation`;
+
+  try {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{
+          parts: [
+            { text: prompt },
+            { inline_data: { mime_type: 'image/jpeg', data: imageBase64 } }
+          ]
+        }],
+        generationConfig: { temperature: 0.1 }
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.error) {
+      throw new Error(data.error.message);
+    }
+
+    const text = data.candidates[0].content.parts[0].text;
+    // Extract JSON from response (handle markdown code blocks)
+    const jsonMatch = text.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) throw new Error('楽譜を読み取れませんでした');
+
+    parsedNotes = JSON.parse(jsonMatch[0]);
+    displayNotes();
+
+    status.textContent = `✅ ${parsedNotes.length}個の音符を検出しました`;
+    status.className = 'status';
+    document.getElementById('resultCard').style.display = 'block';
+
+  } catch (err) {
+    status.textContent = `❌ エラー: ${err.message}`;
+    status.className = 'status error';
+  }
+
+  readBtn.disabled = false;
+}
+
+// --- Display notes ---
+function displayNotes() {
+  const display = document.getElementById('notesDisplay');
+  display.innerHTML = parsedNotes.map((n, i) => {
+    const label = n.rest ? '休' : n.note + (n.chord ? '+' + n.chord.join('+') : '');
+    const durSymbol = { whole:'𝅝', half:'𝅗𝅥', quarter:'♩', eighth:'♪', sixteenth:'𝅘𝅥𝅯' }[n.duration] || '♩';
+    return `<span class="note-item" id="note-${i}">${durSymbol} ${label}</span>`;
+  }).join('');
+}
+
+// --- Audio playback ---
+function noteToFreq(noteName) {
+  if (!noteName || noteName === 'R') return 0;
+
+  const noteMap = { 'C':0, 'D':2, 'E':4, 'F':5, 'G':7, 'A':9, 'B':11 };
+  let name = noteName.charAt(0).toUpperCase();
+  let octave = parseInt(noteName.charAt(noteName.length - 1));
+  let semitone = noteMap[name] || 0;
+
+  if (noteName.includes('#')) semitone += 1;
+  if (noteName.includes('b')) semitone -= 1;
+
+  // A4 = 440Hz, MIDI note 69
+  const midi = semitone + (octave + 1) * 12;
+  return 440 * Math.pow(2, (midi - 69) / 12);
+}
+
+function durationToSeconds(duration, bpm) {
+  const beatDuration = 60 / bpm;
+  const map = {
+    'whole': beatDuration * 4,
+    'half': beatDuration * 2,
+    'quarter': beatDuration,
+    'eighth': beatDuration / 2,
+    'sixteenth': beatDuration / 4
+  };
+  return map[duration] || beatDuration;
+}
+
+function playTone(freq, duration, startTime) {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (freq === 0) return; // rest
+
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  // Piano-like envelope
+  osc.type = 'triangle';
+  osc.frequency.setValueAtTime(freq, startTime);
+
+  gain.gain.setValueAtTime(0, startTime);
+  gain.gain.linearRampToValueAtTime(0.5, startTime + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration * 0.9);
+
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+
+  osc.start(startTime);
+  osc.stop(startTime + duration);
+}
+
+function playNotes() {
+  if (parsedNotes.length === 0) return;
+
+  stopPlaying();
+  isPlaying = true;
+  document.getElementById('playBtn').style.display = 'none';
+  document.getElementById('stopBtn').style.display = 'block';
+
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  audioCtx.resume();
+
+  const bpm = parseInt(document.getElementById('tempoSlider').value);
+  let currentTime = audioCtx.currentTime + 0.1;
+
+  parsedNotes.forEach((note, index) => {
+    const dur = durationToSeconds(note.duration, bpm);
+
+    // Highlight current note
+    const delay = (currentTime - audioCtx.currentTime) * 1000;
+    const timeout = setTimeout(() => {
+      document.querySelectorAll('.note-item').forEach(el => el.classList.remove('playing'));
+      const el = document.getElementById(`note-${index}`);
+      if (el) el.classList.add('playing');
+    }, delay);
+    playTimeouts.push(timeout);
+
+    if (!note.rest) {
+      // Play main note
+      const freq = noteToFreq(note.note);
+      playTone(freq, dur, currentTime);
+
+      // Play chord notes
+      if (note.chord) {
+        note.chord.forEach(chordNote => {
+          const cFreq = noteToFreq(chordNote);
+          playTone(cFreq, dur, currentTime);
+        });
+      }
+    }
+
+    currentTime += dur;
+  });
+
+  // Stop after all notes played
+  const totalDur = (currentTime - audioCtx.currentTime) * 1000 + 500;
+  const endTimeout = setTimeout(() => {
+    stopPlaying();
+  }, totalDur);
+  playTimeouts.push(endTimeout);
+}
+
+function stopPlaying() {
+  isPlaying = false;
+  playTimeouts.forEach(t => clearTimeout(t));
+  playTimeouts = [];
+  document.querySelectorAll('.note-item').forEach(el => el.classList.remove('playing'));
+  document.getElementById('playBtn').style.display = 'block';
+  document.getElementById('stopBtn').style.display = 'none';
+}
+
+function updateTempo() {
+  const val = document.getElementById('tempoSlider').value;
+  document.getElementById('tempoValue').textContent = `♩= ${val}`;
+}
+</script>
+</body>
+</html>
