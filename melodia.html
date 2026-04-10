@@ -505,7 +505,13 @@ function playNotes() {
   isPlaying = true;
   document.getElementById('playBtn').style.display = 'none';
   document.getElementById('stopBtn').style.display = 'block';
-  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  // iOS Safari: ボタンタップのコンテキスト内でAudioContextを作成+resume
+  if (audioCtx) { audioCtx.close(); audioCtx = null; }
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  // 無音バッファを即再生してロック解除
+  const unlock = audioCtx.createBuffer(1, 1, 22050);
+  const src = audioCtx.createBufferSource();
+  src.buffer = unlock; src.connect(audioCtx.destination); src.start(0);
   audioCtx.resume();
 
   const bpm = parseInt(document.getElementById('tempoSlider').value);
