@@ -120,7 +120,7 @@ input[type="file"] { display: none; }
         ✂️ ステップ2: 読みたい範囲を指で囲む
       </div>
       <div style="font-size:11px; color:#aaa; margin-bottom:6px;">
-        小節を絞ると精度が上がります。選択しなければ全体を読みます。
+        📌 <b>少し長押し</b>してからドラッグで範囲選択。普通にスクロールもできます。
       </div>
       <div id="cropContainer">
         <canvas id="cropCanvas"></canvas>
@@ -219,16 +219,25 @@ function handlePhoto(input) {
 }
 
 // --- Crop ---
+let longPressTimer = null;
+let cropReady = false;
+
 function setupCropCanvas() {
   const canvas = document.getElementById('cropCanvas');
   const container = document.getElementById('cropContainer');
   const maxW = container.clientWidth || 400;
   const scale = maxW / fullImage.width;
-  canvas.width = maxW;
-  canvas.height = fullImage.height * scale;
-  canvas.style.height = canvas.height + 'px';
-  canvas.getContext('2d').drawImage(fullImage, 0, 0, canvas.width, canvas.height);
+  // 高解像度キャンバス（Retina対応）
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = maxW * dpr;
+  canvas.height = fullImage.height * scale * dpr;
+  canvas.style.width = maxW + 'px';
+  canvas.style.height = (fullImage.height * scale) + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.drawImage(fullImage, 0, 0, maxW, fullImage.height * scale);
   cropStart = cropEnd = null;
+  cropReady = false;
   document.getElementById('cropBox').style.display = 'none';
 
   const getPos = (e) => {
@@ -236,9 +245,45 @@ function setupCropCanvas() {
     const t = e.touches ? e.touches[0] : e;
     return { x: t.clientX - rect.left, y: t.clientY - rect.top };
   };
-  canvas.onmousedown = canvas.ontouchstart = (e) => { e.preventDefault(); cropStart = getPos(e); cropEnd = null; isCropping = true; };
-  canvas.onmousemove = canvas.ontouchmove = (e) => { if (!isCropping) return; e.preventDefault(); cropEnd = getPos(e); drawCropBox(); };
-  canvas.onmouseup = canvas.ontouchend = () => { if (isCropping && cropStart && cropEnd) applyCrop(); isCropping = false; };
+
+  // 長押し（0.3秒）で選択モード開始
+  canvas.ontouchstart = (e) => {
+    const pos = getPos(e);
+    cropReady = false;
+    longPressTimer = setTimeout(() => {
+      cropReady = true;
+      cropStart = pos;
+      cropEnd = null;
+      isCropping = true;
+      // 振動フィードバック（対応端末のみ）
+      if (navigator.vibrate) navigator.vibrate(30);
+      canvas.style.outline = '2px solid #ffd700';
+    }, 300);
+  };
+
+  canvas.ontouchmove = (e) => {
+    if (!cropReady) {
+      // まだ長押し判定中→通常スクロールを許可
+      clearTimeout(longPressTimer);
+      return;
+    }
+    e.preventDefault(); // 選択モード中はスクロール無効
+    cropEnd = getPos(e);
+    drawCropBox();
+  };
+
+  canvas.ontouchend = () => {
+    clearTimeout(longPressTimer);
+    canvas.style.outline = 'none';
+    if (cropReady && cropStart && cropEnd) applyCrop();
+    isCropping = false;
+    cropReady = false;
+  };
+
+  // マウス（PC）はそのまま
+  canvas.onmousedown = (e) => { cropStart = getPos(e); cropEnd = null; isCropping = true; cropReady = true; };
+  canvas.onmousemove = (e) => { if (!isCropping) return; cropEnd = getPos(e); drawCropBox(); };
+  canvas.onmouseup = () => { if (isCropping && cropStart && cropEnd) applyCrop(); isCropping = false; cropReady = false; };
 }
 
 function drawCropBox() {
