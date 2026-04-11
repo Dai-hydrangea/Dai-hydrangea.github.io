@@ -358,46 +358,49 @@ async function readScore() {
     : selectedHand === 'left' ? 'Read only the bass clef (left hand).'
     : 'Read both treble and bass clef. For piano, read treble first then bass.';
 
-  const prompt = `You are an expert music score reader. Read the notes EXACTLY as written on the staff.
+  const prompt = `You are an expert music score reader.
 
-CRITICAL RULES:
-- Do NOT transpose. Even if the score says "Trumpet in Bb" or any transposing instrument, read the notes EXACTLY as they appear on the staff.
-- A note on the 3rd line of treble clef is ALWAYS B4, regardless of what instrument the score is for.
-- Read the visual position on the staff, not the sounding pitch.
+STEP 1: Identify the 5 staff lines.
+- Staff lines are STRAIGHT horizontal lines, evenly spaced.
+- IGNORE all curved lines (slurs, ties, phrase marks) — these are NOT staff lines.
+- IGNORE all stems, beams, and flags.
+- Find exactly 5 straight parallel lines = the staff.
+
+STEP 2: Identify the clef and key signature.
+
+STEP 3: Read each note by its VISUAL POSITION on the staff.
+- Do NOT transpose for any instrument. Read exactly what is written.
 
 ${handInst}
 
-Return ONLY a JSON array. Each element:
-- "note": pitch with octave as written on staff (C4=middle C on treble clef ledger line below)
-- "duration": "whole","half","quarter","eighth","sixteenth","dotted-half","dotted-quarter"
+TREBLE CLEF positions (bottom to top):
+Below staff: ledger line = C4, space above ledger = D4
+Line 1 (bottom) = E4, Space 1 = F4
+Line 2 = G4, Space 2 = A4
+Line 3 (middle) = B4, Space 3 = C5
+Line 4 = D5, Space 4 = E5
+Line 5 (top) = F5
+Above staff: space = G5, ledger line = A5
+
+For each note head, determine:
+1. Is it ON a line, or IN a space?
+2. Which line or space number (counting from bottom)?
+3. Map to the pitch using the table above.
+
+Output ONLY a JSON array:
+[{"note":"B4","duration":"quarter"},{"note":"A4","duration":"eighth"}]
+
+Each element has:
+- "note": exact pitch and octave
+- "duration": "whole","half","quarter","eighth","sixteenth","dotted-quarter","dotted-half"
 - "rest": true if rest (note="R")
-- "chord": additional simultaneous notes as array
-
-TREBLE CLEF NOTE POSITIONS (you MUST follow this exactly):
-Lines (bottom to top): E4, G4, B4, D5, F5
-Spaces (bottom to top): F4, A4, C5, E5
-Ledger line below staff: C4 (middle C)
-Ledger line above staff: A5
-
-IMPORTANT: Count lines and spaces from the BOTTOM of the staff.
-- A note sitting ON the bottom line = E4
-- A note in the space between 1st and 2nd lines = F4
-- A note sitting ON the 2nd line = G4
-- A note in the space between 2nd and 3rd lines = A4
-- A note sitting ON the 3rd line (middle line) = B4
-- A note in the space between 3rd and 4th lines = C5
-- A note sitting ON the 4th line = D5
-- A note in the space between 4th and 5th lines = E5
-- A note sitting ON the top line = F5
+- "chord": array of additional notes if simultaneous
 
 Rules:
 - Left to right order
-- Apply key signature sharps/flats to the correct notes
-- Apply accidentals
-- Be VERY precise about which line/space each note sits on
-- Return ONLY valid JSON array, no explanation
-
-Example: [{"note":"E4","duration":"quarter"},{"note":"G4","duration":"eighth"}]`;
+- Apply key signature sharps/flats
+- IGNORE slurs and ties for note identification (they are curved, not straight)
+- Return ONLY the JSON array`;
 
   try {
     let data = null;
