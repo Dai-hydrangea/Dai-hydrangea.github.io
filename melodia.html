@@ -493,16 +493,65 @@ function playToneNow(freq, durMs) {
   src.start(0);
 }
 
-// テスト音: ドレミファソ
-function testSound() {
-  if (!audioCtx || audioCtx.state === 'closed') {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+// WAVファイルを生成してaudio要素で再生（iOS Safari最終手段）
+function createWavBlob(freq, durSec) {
+  const sr = 44100;
+  const len = Math.ceil(sr * durSec);
+  const buf = new ArrayBuffer(44 + len * 2);
+  const view = new DataView(buf);
+  // WAVヘッダー
+  const writeStr = (off, str) => { for(let i=0;i<str.length;i++) view.setUint8(off+i, str.charCodeAt(i)); };
+  writeStr(0, 'RIFF');
+  view.setUint32(4, 36 + len * 2, true);
+  writeStr(8, 'WAVE');
+  writeStr(12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true); // PCM
+  view.setUint16(22, 1, true); // mono
+  view.setUint32(24, sr, true);
+  view.setUint32(28, sr * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  writeStr(36, 'data');
+  view.setUint32(40, len * 2, true);
+  for (let i = 0; i < len; i++) {
+    const t = i / sr;
+    let env = 1;
+    if (t < 0.01) env = t / 0.01;
+    if (t > durSec - 0.05) env = Math.max(0, (durSec - t) / 0.05);
+    const sample = Math.sin(2 * Math.PI * freq * t) * 0.7 * env;
+    view.setInt16(44 + i * 2, sample * 32767, true);
   }
-  audioCtx.resume();
-  const notes = [261.63, 293.66, 329.63, 349.23, 392.00]; // C4 D4 E4 F4 G4
-  notes.forEach((freq, i) => {
-    setTimeout(() => playToneNow(freq, 300), i * 350);
-  });
+  return new Blob([buf], { type: 'audio/wav' });
+}
+
+let currentAudio = null;
+function playToneWav(freq, durMs) {
+  if (freq === 0) return;
+  const blob = createWavBlob(freq, durMs / 1000);
+  const url = URL.createObjectURL(blob);
+  const audio = new Audio(url);
+  audio.play().catch(e => console.log('play error:', e));
+  setTimeout(() => URL.revokeObjectURL(url), durMs + 1000);
+}
+
+// テスト音: ドレミファソ（2方式で試す）
+function testSound() {
+  // 方式1: AudioBuffer
+  try {
+    if (!audioCtx || audioCtx.state === 'closed') {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    audioCtx.resume();
+    playToneNow(440, 500);
+    console.log('AudioBuffer method triggered');
+  } catch(e) { console.log('AudioBuffer failed:', e); }
+
+  // 方式2: WAV + Audio要素（1秒後）
+  setTimeout(() => {
+    playToneWav(523.25, 500); // C5
+    console.log('WAV method triggered');
+  }, 1000);
 }
 
 function playNotes() {
@@ -529,8 +578,8 @@ function playNotes() {
       const el = document.getElementById(`note-${i}`);
       if (el) { el.classList.add('playing'); el.scrollIntoView({block:'nearest'}); }
       if (!note.rest) {
-        playToneNow(noteToFreq(note.note), durMs);
-        if (note.chord) note.chord.forEach(c => playToneNow(noteToFreq(c), durMs));
+        playToneWav(noteToFreq(note.note), durMs);
+        if (note.chord) note.chord.forEach(c => playToneWav(noteToFreq(c), durMs));
       }
     }, delayMs));
     delayMs += durMs;
