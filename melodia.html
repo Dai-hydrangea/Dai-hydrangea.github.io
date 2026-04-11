@@ -308,13 +308,26 @@ function drawCropBox() {
 
 function applyCrop() {
   const canvas = document.getElementById('cropCanvas');
-  const sx = fullImage.width / canvas.width, sy = fullImage.height / canvas.height;
-  const x = Math.min(cropStart.x, cropEnd.x) * sx, y = Math.min(cropStart.y, cropEnd.y) * sy;
-  const w = Math.abs(cropEnd.x - cropStart.x) * sx, h = Math.abs(cropEnd.y - cropStart.y) * sy;
-  if (w < 20 || h < 20) return;
-  const c = document.createElement('canvas'); c.width = w; c.height = h;
-  c.getContext('2d').drawImage(fullImage, x, y, w, h, 0, 0, w, h);
-  imageBase64 = c.toDataURL('image/jpeg', 0.9).split(',')[1];
+  const dpr = window.devicePixelRatio || 1;
+  // 表示サイズ(CSS)からの倍率を計算
+  const displayW = parseInt(canvas.style.width);
+  const displayH = parseInt(canvas.style.height);
+  const sx = fullImage.width / displayW;
+  const sy = fullImage.height / displayH;
+  const x = Math.min(cropStart.x, cropEnd.x) * sx;
+  const y = Math.min(cropStart.y, cropEnd.y) * sy;
+  const w = Math.abs(cropEnd.x - cropStart.x) * sx;
+  const h = Math.abs(cropEnd.y - cropStart.y) * sy;
+  if (w < 30 || h < 30) return;
+  // 元画像の解像度でクロップ（劣化なし）
+  const c = document.createElement('canvas');
+  c.width = Math.round(w);
+  c.height = Math.round(h);
+  c.getContext('2d').drawImage(fullImage, Math.round(x), Math.round(y), Math.round(w), Math.round(h), 0, 0, c.width, c.height);
+  imageBase64 = c.toDataURL('image/jpeg', 0.95).split(',')[1];
+  // クロップ範囲の情報を表示
+  document.getElementById('cropArea').querySelector('div').innerHTML =
+    `✂️ 選択済み（${Math.round(w)}×${Math.round(h)}px）<br><span style="font-size:11px;color:#aaa;">範囲が小さいほど精度が上がります</span>`;
 }
 
 function resetCrop() {
@@ -345,26 +358,36 @@ async function readScore() {
     : selectedHand === 'left' ? 'Read only the bass clef (left hand).'
     : 'Read both treble and bass clef. For piano, read treble first then bass.';
 
-  const prompt = `You are an expert music score reader. Analyze this sheet music photograph and extract every note precisely.
+  const prompt = `You are an expert music score reader. Read the notes EXACTLY as written on the staff.
+
+CRITICAL RULES:
+- Do NOT transpose. Even if the score says "Trumpet in Bb" or any transposing instrument, read the notes EXACTLY as they appear on the staff.
+- A note on the 3rd line of treble clef is ALWAYS B4, regardless of what instrument the score is for.
+- Read the visual position on the staff, not the sounding pitch.
 
 ${handInst}
 
 Return ONLY a JSON array. Each element:
-- "note": pitch with octave (C4=middle C, e.g. "C4","F#5","Bb3")
+- "note": pitch with octave as written on staff (C4=middle C on treble clef ledger line below)
 - "duration": "whole","half","quarter","eighth","sixteenth","dotted-half","dotted-quarter"
 - "rest": true if rest (note="R")
-- "chord": additional simultaneous notes as array (e.g. ["E4","G4"])
+- "chord": additional simultaneous notes as array
+
+Treble clef reference (bottom to top):
+- 1st line = E4, 1st space = F4
+- 2nd line = G4, 2nd space = A4
+- 3rd line = B4, 3rd space = C5
+- 4th line = D5, 4th space = E5
+- 5th line = F5
 
 Rules:
 - Left to right order
-- Apply key signature sharps/flats
+- Apply key signature sharps/flats to the correct notes
 - Apply accidentals
-- Dotted notes: use "dotted-quarter" etc.
-- Ties: combine into one longer note
-- Be very precise about octave numbers
+- Be VERY precise about which line/space each note sits on
 - Return ONLY valid JSON array, no explanation
 
-Example: [{"note":"C4","duration":"quarter"},{"note":"E4","duration":"eighth","chord":["G4"]}]`;
+Example: [{"note":"E4","duration":"quarter"},{"note":"G4","duration":"eighth"}]`;
 
   try {
     let data = null;
