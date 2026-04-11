@@ -155,6 +155,12 @@ input[type="file"] { display: none; }
       <label>🐇</label>
     </div>
 
+    <div class="tempo-row">
+      <label>🔧 音程補正</label>
+      <input type="range" id="pitchShift" min="-6" max="6" value="0" oninput="updateShift()">
+      <span class="val" id="shiftValue">±0</span>
+    </div>
+
     <div class="toggle-row">
       <label>🔁 くりかえし再生</label>
       <input type="checkbox" id="loopToggle">
@@ -474,23 +480,55 @@ function displayNotes() {
     const isRest = n.rest;
     const durSym = { whole:'𝅝', half:'𝅗𝅥', quarter:'♩', eighth:'♪', sixteenth:'𝅘𝅥𝅯',
       'dotted-half':'𝅗𝅥.', 'dotted-quarter':'♩.' }[n.duration] || '♩';
-    const label = isRest ? '休' : n.note;
-    const chordLabel = (!isRest && n.chord) ? '<br>+' + n.chord.map(c => showDoremi ? toDoremi(c) : c).join('+') : '';
-    const doremi = showDoremi && !isRest ? `<span class="doremi">${toDoremi(n.note)}</span>` : '';
+    // 補正後の音名を使用
+    const shifted = isRest ? 'R' : getShiftedNote(n.note);
+    const label = isRest ? '休' : shifted;
+    const chordLabel = (!isRest && n.chord) ? '<br>+' + n.chord.map(c => showDoremi ? toDoremi(getShiftedNote(c)) : getShiftedNote(c)).join('+') : '';
     return `<span class="note-item ${isRest ? 'rest' : ''}" id="note-${i}">
-      ${durSym} ${showDoremi && !isRest ? toDoremi(n.note) : label}${chordLabel}
+      ${durSym} ${showDoremi && !isRest ? toDoremi(shifted) : label}${chordLabel}
     </span>`;
   }).join('');
 }
 
 // --- Audio ---
-function noteToFreq(name) {
-  if (!name || name === 'R') return 0;
+// 音名の配列（半音順）
+const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+
+function noteToMidi(name) {
+  if (!name || name === 'R') return -1;
   const map = { C:0, D:2, E:4, F:5, G:7, A:9, B:11 };
   let semi = map[name.charAt(0).toUpperCase()] || 0;
   if (name.includes('#')) semi++; if (name.includes('b')) semi--;
   const oct = parseInt(name.replace(/[^0-9]/g, '')) || 4;
-  return 440 * Math.pow(2, (semi + (oct + 1) * 12 - 69) / 12);
+  return semi + (oct + 1) * 12;
+}
+
+function midiToNoteName(midi) {
+  const note = NOTE_NAMES[midi % 12];
+  const oct = Math.floor(midi / 12) - 1;
+  return note + oct;
+}
+
+function noteToFreq(name) {
+  const midi = noteToMidi(name);
+  if (midi < 0) return 0;
+  // 音程補正を適用
+  const shift = parseInt(document.getElementById('pitchShift')?.value || '0');
+  return 440 * Math.pow(2, (midi + shift - 69) / 12);
+}
+
+function getShiftedNote(name) {
+  const midi = noteToMidi(name);
+  if (midi < 0) return name;
+  const shift = parseInt(document.getElementById('pitchShift')?.value || '0');
+  return midiToNoteName(midi + shift);
+}
+
+function updateShift() {
+  const val = parseInt(document.getElementById('pitchShift').value);
+  const label = val > 0 ? `+${val}` : val === 0 ? '±0' : `${val}`;
+  document.getElementById('shiftValue').textContent = label;
+  displayNotes(); // 表示を更新
 }
 
 function durToSec(dur, bpm) {
