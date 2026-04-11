@@ -168,6 +168,9 @@ input[type="file"] { display: none; }
       <button class="btn btn-play" id="playBtn" onclick="playNotes()">▶ 再生</button>
       <button class="btn btn-stop" id="stopBtn" onclick="stopPlaying()" style="display:none">■ 停止</button>
     </div>
+    <button class="btn btn-outline" onclick="testSound()" style="padding:10px; font-size:13px;">
+      🔊 テスト音（ドレミファソ）
+    </button>
   </div>
 
   <div class="footer">
@@ -460,21 +463,46 @@ function durToSec(dur, bpm) {
     'dotted-half':b*3, 'dotted-quarter':b*1.5 }[dur] || b;
 }
 
-// === iOS Safari 完全対応: 1音ずつ「今」鳴らす方式 ===
+// === 音声生成: AudioBuffer方式（iOS Safari で確実に動く） ===
+
+// サイン波のAudioBufferを生成（事前計算）
+function createToneBuffer(freq, durSec, sampleRate) {
+  const len = Math.ceil(sampleRate * durSec);
+  const buf = new Float32Array(len);
+  for (let i = 0; i < len; i++) {
+    const t = i / sampleRate;
+    // フェードイン/アウト
+    let env = 1;
+    if (t < 0.01) env = t / 0.01;
+    if (t > durSec - 0.05) env = Math.max(0, (durSec - t) / 0.05);
+    buf[i] = Math.sin(2 * Math.PI * freq * t) * 0.5 * env;
+  }
+  return buf;
+}
+
 function playToneNow(freq, durMs) {
   if (!audioCtx || freq === 0) return;
-  if (audioCtx.state === 'suspended') audioCtx.resume();
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-  osc.type = 'sine';
-  osc.frequency.value = freq;
-  gain.gain.value = 0.6;
-  osc.connect(gain);
-  gain.connect(audioCtx.destination);
-  osc.start(0);
-  setTimeout(() => {
-    try { gain.gain.value = 0; osc.stop(); } catch(e){}
-  }, durMs);
+  const durSec = durMs / 1000;
+  const sr = audioCtx.sampleRate;
+  const samples = createToneBuffer(freq, durSec, sr);
+  const audioBuf = audioCtx.createBuffer(1, samples.length, sr);
+  audioBuf.getChannelData(0).set(samples);
+  const src = audioCtx.createBufferSource();
+  src.buffer = audioBuf;
+  src.connect(audioCtx.destination);
+  src.start(0);
+}
+
+// テスト音: ドレミファソ
+function testSound() {
+  if (!audioCtx || audioCtx.state === 'closed') {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  audioCtx.resume();
+  const notes = [261.63, 293.66, 329.63, 349.23, 392.00]; // C4 D4 E4 F4 G4
+  notes.forEach((freq, i) => {
+    setTimeout(() => playToneNow(freq, 300), i * 350);
+  });
 }
 
 function playNotes() {
@@ -490,25 +518,16 @@ function playNotes() {
   }
   audioCtx.resume();
 
-  // まず無音を鳴らしてiOSロック解除
-  const osc0 = audioCtx.createOscillator();
-  const g0 = audioCtx.createGain();
-  g0.gain.value = 0;
-  osc0.connect(g0); g0.connect(audioCtx.destination);
-  osc0.start(); osc0.stop(audioCtx.currentTime + 0.01);
-
   const bpm = parseInt(document.getElementById('tempoSlider').value);
-  let delayMs = 100; // 100ms後に開始
+  let delayMs = 50;
 
   parsedNotes.forEach((note, i) => {
     const durMs = durToSec(note.duration, bpm) * 1000;
     playTimeouts.push(setTimeout(() => {
       if (!isPlaying) return;
-      // ハイライト
       document.querySelectorAll('.note-item').forEach(el => el.classList.remove('playing'));
       const el = document.getElementById(`note-${i}`);
       if (el) { el.classList.add('playing'); el.scrollIntoView({block:'nearest'}); }
-      // 音を「今」鳴らす
       if (!note.rest) {
         playToneNow(noteToFreq(note.note), durMs);
         if (note.chord) note.chord.forEach(c => playToneNow(noteToFreq(c), durMs));
