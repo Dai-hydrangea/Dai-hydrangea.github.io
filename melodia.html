@@ -535,23 +535,18 @@ function playToneWav(freq, durMs) {
   setTimeout(() => URL.revokeObjectURL(url), durMs + 1000);
 }
 
-// テスト音: ドレミファソ（2方式で試す）
+// テスト音: ドレミファソ（WAV方式）
 function testSound() {
-  // 方式1: AudioBuffer
-  try {
-    if (!audioCtx || audioCtx.state === 'closed') {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    audioCtx.resume();
-    playToneNow(440, 500);
-    console.log('AudioBuffer method triggered');
-  } catch(e) { console.log('AudioBuffer failed:', e); }
-
-  // 方式2: WAV + Audio要素（1秒後）
-  setTimeout(() => {
-    playToneWav(523.25, 500); // C5
-    console.log('WAV method triggered');
-  }, 1000);
+  const notes = [
+    261.63, // ド C4
+    293.66, // レ D4
+    329.63, // ミ E4
+    349.23, // ファ F4
+    392.00  // ソ G4
+  ];
+  notes.forEach((freq, i) => {
+    setTimeout(() => playToneWav(freq, 400), i * 450);
+  });
 }
 
 function playNotes() {
