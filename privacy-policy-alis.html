@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A.L.I.S. - プライバシーポリシー</title>
+    <style>
+        body { font-family: -apple-system, sans-serif; max-width: 720px; margin: 40px auto; padding: 0 20px; line-height: 1.8; color: #333; }
+        h1 { font-size: 24px; border-bottom: 2px solid #3d8cbf; padding-bottom: 8px; }
+        h2 { font-size: 18px; margin-top: 28px; color: #3d8cbf; }
+        h3 { font-size: 15px; margin-top: 16px; color: #444; }
+        p { margin: 8px 0; }
+        .date { color: #888; font-size: 14px; }
+        table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 14px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background: #f5f5f5; }
+        a { color: #0066cc; }
+        .note { background: #f7f7f2; border-left: 3px solid #3d8cbf; padding: 12px 16px; margin: 12px 0; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <h1>A.L.I.S. プライバシーポリシー</h1>
+    <p class="date">最終更新日：2026年4月19日</p>
+
+    <p>A.L.I.S.（以下「本アプリ」）は、瀬戸大作（以下「開発者」）により提供される対話型AIアプリケーションです。本アプリはユーザーのプライバシーを最優先に設計されています。</p>
+
+    <h2>1. 収集する情報</h2>
+
+    <h3>音声データ</h3>
+    <p>マイクから取得した音声は、文字起こしの目的でのみ使用されます。音声認識は原則 iPhone 内蔵の機能を使用し、端末内で処理されます。音声データ自体は外部サーバーに送信されず、端末内にも保存されません。</p>
+
+    <h3>テキスト化された会話内容</h3>
+    <p>使用する「人格」により扱いが異なります：</p>
+    <ul>
+        <li><strong>おばあちゃん人格</strong>：Apple Intelligence（Foundation Models）を使用し、<strong>完全に端末内で処理</strong>されます。通信は発生しません。</li>
+        <li><strong>ドクターX・R.MIKE・最高級・カスタム人格</strong>：Anthropic Claude API に送信されます。</li>
+        <li><strong>AI 人格</strong>：Google Gemini API に送信されます。</li>
+    </ul>
+
+    <h3>プライバシーモード</h3>
+    <p>設定で有効化すると、AI API に送信する前に電話番号・メールアドレス・人名などの個人情報を端末内で自動マスキングします。おばあちゃん人格は元々端末内処理のため、常に安全です。</p>
+
+    <h3>会話履歴・議事録データ</h3>
+    <p>すべて<strong>端末内にのみ保存</strong>されます。開発者のサーバーには送信されません。アプリを削除すると完全に削除されます。</p>
+
+    <h3>課金情報</h3>
+    <p>購入情報は Apple の App Store / StoreKit を通じて処理されます。開発者はクレジットカード情報等を直接取得しません。</p>
+
+    <h2>2. 第三者への提供</h2>
+    <p>以下のサービスに対してのみ、会話内容を送信する場合があります：</p>
+    <table>
+        <tr><th>サービス</th><th>用途</th><th>提供会社</th></tr>
+        <tr><td>Claude API</td><td>ドクターX・R.MIKE・最高級・カスタム人格の応答生成</td><td>Anthropic, PBC</td></tr>
+        <tr><td>Gemini API</td><td>AI 人格の応答生成</td><td>Google LLC</td></tr>
+    </table>
+    <p>
+        Anthropic のプライバシー：<a href="https://www.anthropic.com/privacy">anthropic.com/privacy</a><br>
+        Google のプライバシー：<a href="https://policies.google.com/privacy">policies.google.com/privacy</a>
+    </p>
+    <p>これら以外の第三者に対するデータ送信は行いません。広告ネットワーク・アナリティクスツール等は一切使用していません。</p>
+
+    <h2>3. データの削除</h2>
+    <ul>
+        <li>設定画面内「履歴をクリア」で会話履歴を全削除できます</li>
+        <li>議事録履歴は「過去の議事録」画面から個別削除可能です</li>
+        <li>アプリのアンインストールにより全データが完全削除されます</li>
+    </ul>
+
+    <h2>4. 年齢制限</h2>
+    <p>本アプリは12歳以上を対象としています。未成年のご利用は保護者の監督のもとでお願いします。</p>
+    <div class="note">
+        キャラメイク機能には、犯罪の教示・未成年への性的表現・特定個人への誹謗・自傷の推奨・差別的表現を含む入力を拒否する安全フィルタが組み込まれています。
+    </div>
+
+    <h2>5. AI が生成する応答について</h2>
+    <p>本アプリの応答は AI により生成されたものです。医療・法律・金融・緊急事態対応など重要な判断の根拠としては使用しないでください。AI は思考のパートナーであり、専門家の代替ではありません。</p>
+
+    <h2>6. お問い合わせ</h2>
+    <p>プライバシーに関するお問い合わせ：<a href="mailto:daihydrangea.apps@gmail.com">daihydrangea.apps@gmail.com</a></p>
+    <p>サポートページ：<a href="https://dai-hydrangea.github.io/alis-support.html">alis-support.html</a></p>
+
+    <h2>変更履歴</h2>
+    <p>2026年4月19日：初版公開</p>
+</body>
+</html>
