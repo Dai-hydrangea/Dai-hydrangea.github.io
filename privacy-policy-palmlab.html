@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>てのひラボ プライバシーポリシー</title>
+<style>
+  body { font-family: -apple-system, "Hiragino Sans", "Helvetica Neue", sans-serif;
+         max-width: 720px; margin: 2rem auto; padding: 0 1rem; line-height: 1.7;
+         color: #222; background: #fafafa; }
+  h1 { font-size: 1.6rem; border-bottom: 2px solid #4a6cb3; padding-bottom: .3rem; }
+  h2 { font-size: 1.2rem; color: #4a6cb3; margin-top: 2rem; }
+  h3 { font-size: 1.0rem; color: #555; }
+  a { color: #4a6cb3; }
+  ul { padding-left: 1.4rem; }
+  hr { border: none; border-top: 1px solid #ddd; margin: 2rem 0 1rem; }
+  footer { text-align: center; color: #888; font-size: .85rem; }
+</style>
+</head>
+<body>
+
+<h1>てのひラボ (Palm Lab) プライバシーポリシー</h1>
+<p><strong>最終更新日: 2026-05-04</strong></p>
+
+<h2>1. はじめに</h2>
+<p>PalmLab (以下「本アプリ」) は、個人開発者によって運営される iOS アプリです。本アプリは、ユーザーのプライバシーを尊重し、必要最小限のデータのみを取り扱います。</p>
+
+<h2>2. 収集する情報</h2>
+<p>本アプリ自体は、以下の情報を <strong>一切収集・送信しません</strong>:</p>
+<ul>
+<li>氏名・メールアドレス・電話番号などの個人情報</li>
+<li>位置情報</li>
+<li>端末の識別子 (IDFA / IDFV)</li>
+<li>利用履歴・操作ログ</li>
+<li>連絡先・写真ライブラリへのアクセス履歴</li>
+</ul>
+<p>すべてのシミュレーション計算、設定、お気に入りデータは <strong>端末内のみ</strong> で完結します。</p>
+
+<h2>3. AI 雲虫眼鏡 (任意機能) について</h2>
+<p>ユーザーが「AI 雲虫眼鏡」機能を <strong>自発的に使用した場合のみ</strong>、以下の処理が発生します:</p>
+<h3>送信されるデータ</h3>
+<ul>
+<li>ユーザーがカメラまたはフォトライブラリから選択した <strong>雲の写真 1 枚</strong></li>
+<li>写真は 512px に縮小、JPEG 圧縮率 0.55 で送信されます</li>
+</ul>
+<h3>送信先</h3>
+<p>Google Gemini API (gemini-2.5-flash)</p>
+<ul>
+<li>送信先: <a href="https://generativelanguage.googleapis.com/">https://generativelanguage.googleapis.com/</a></li>
+<li>Google のプライバシーポリシー: <a href="https://policies.google.com/privacy">https://policies.google.com/privacy</a></li>
+</ul>
+<h3>送信される目的</h3>
+<p>雲の種類 (積雲・巻雲・乱層雲など) を AI が判定し、シミュレーションに反映するため。</p>
+<h3>送信されないもの</h3>
+<ul>
+<li>写真の Exif (位置情報・撮影日時) は送信前に削除されます</li>
+<li>端末識別子・ユーザー識別子は一切付与されません</li>
+<li>Google アカウントとの紐付けはありません (匿名 API リクエスト)</li>
+</ul>
+<h3>利用回数の制限</h3>
+<p>無料利用は <strong>1 日 5 回まで</strong>。それを超えた利用は ¥300 の応援課金後に無制限になります。</p>
+
+<h2>4. アプリ内課金 (応援サポーター)</h2>
+<p>「応援サポーター」¥300 (買い切り、永久) を購入された場合:</p>
+<ul>
+<li>課金処理は Apple の StoreKit 経由で行われ、 <strong>本アプリは課金情報を保持しません</strong></li>
+<li>購入の有無は端末内 UserDefaults と Apple のレシートサーバーで判定されます</li>
+<li>Apple のプライバシーポリシー: <a href="https://www.apple.com/legal/privacy/">https://www.apple.com/legal/privacy/</a></li>
+</ul>
+
+<h2>5. WeatherKit (任意機能) について</h2>
+<p>「現在の空」機能で WeatherKit を利用する場合、Apple WeatherKit に <strong>東京 (35.68N, 139.77E)</strong> の固定地点で天気情報を要求します。 <strong>ユーザーの位置情報は使用しません</strong>。</p>
+<p>WeatherKit のプライバシーポリシー: <a href="https://weatherkit.apple.com/legal-attribution.html">https://weatherkit.apple.com/legal-attribution.html</a></p>
+
+<h2>6. 第三者へのデータ提供</h2>
+<p>本アプリは、上記 Gemini API への画像送信 (ユーザーが明示的に AI 雲虫眼鏡を使った時のみ) を除き、いかなる第三者にもデータを提供しません。</p>
+
+<h2>7. お子様の利用について</h2>
+<p>本アプリは、お子様にも安心してご利用いただけるよう設計されています。</p>
+<ul>
+<li>個人情報の収集なし</li>
+<li>広告なし</li>
+<li>アプリ内購入は応援サポーター 1 種類のみ (任意・¥300・買い切り)</li>
+<li>設定の「解説レベル」を「小学生」にすると、より平易な解説に切り替わります</li>
+</ul>
+
+<h2>8. データの削除について</h2>
+<p>本アプリのデータはすべて端末内に保存されているため、アプリをアンインストールするとすべてのデータが削除されます。</p>
+
+<h2>9. 変更について</h2>
+<p>本ポリシーは予告なく変更される場合があります。重要な変更があった場合、アプリ内またはサポートページで告知します。</p>
+
+<h2>10. お問い合わせ</h2>
+<p>本ポリシーや本アプリに関するお問い合わせは、以下からお願いします:</p>
+<ul>
+<li>App Store の本アプリページ「サポート」リンク</li>
+<li>GitHub Pages サポート: <a href="https://dai-hydrangea.github.io/palmlab-support.html">https://dai-hydrangea.github.io/palmlab-support.html</a></li>
+<li>開発者の他のアプリ: <a href="https://apps.apple.com/jp/developer/daisaku-seto/id1889853807">https://apps.apple.com/jp/developer/daisaku-seto/id1889853807</a></li>
+</ul>
+
+<hr>
+<footer>© 2026 Palm Lab Project</footer>
+
+</body>
+</html>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>てのひラボ サポート</title>
+<style>
+  body { font-family: -apple-system, "Hiragino Sans", "Helvetica Neue", sans-serif;
+         max-width: 720px; margin: 2rem auto; padding: 0 1rem; line-height: 1.7;
+         color: #222; background: #fafafa; }
+  h1 { font-size: 1.6rem; border-bottom: 2px solid #4a6cb3; padding-bottom: .3rem; }
+  h2 { font-size: 1.2rem; color: #4a6cb3; margin-top: 2rem; }
+  h3 { font-size: 1.0rem; color: #555; }
+  a { color: #4a6cb3; }
+  ul { padding-left: 1.4rem; }
+  hr { border: none; border-top: 1px solid #ddd; margin: 2rem 0 1rem; }
+  footer { text-align: center; color: #888; font-size: .85rem; }
+  blockquote { border-left: 3px solid #4a6cb3; padding-left: .8rem; color: #555;
+               background: #f0f4fa; margin: 1rem 0; padding: .8rem; }
+</style>
+</head>
+<body>
+
+<h1>てのひラボ (Palm Lab) サポート</h1>
+<p>身の回りの不思議に手を伸ばす、 手のひらサイズの科学博物館。</p>
+
+<h2>概要</h2>
+<p>PalmLab は <strong>3 つのホール</strong> で構成された iOS / iPad の科学博物館アプリです:</p>
+<ul>
+<li><strong>天体ホール</strong> — 太陽系・銀河系・大銀河の N 体重力シミュレーション。月の満ち欠け、ガリレオ衛星、有名な星 19 個まで。</li>
+<li><strong>カオスの間</strong> — 三体問題、二重振り子、ローレンツ・アトラクター、磁石振り子のフラクタル境界。</li>
+<li><strong>流体ラボ</strong> — 10 種類の雲シミュレーション + 実空をカメラで撮ると AI が判定する「雲虫眼鏡」。</li>
+</ul>
+
+<h2>よくある質問</h2>
+
+<h3>起動が遅いです</h3>
+<ul>
+<li>ホーム画面から起動: 通常 2-3 秒です。</li>
+<li>Xcode 経由 (TestFlight 等) 初回起動: 30 秒前後かかることがあります (Metal シェーダーの初回コンパイル等)。 2 回目以降は速くなります。</li>
+</ul>
+
+<h3>AI 雲虫眼鏡が使えません</h3>
+<ul>
+<li>1 日 5 回までの無料枠を超えると、応援サポーター (¥300 買い切り) で無制限になります。</li>
+<li>設定 → API キー で独自の Google Gemini API キーを入力した場合、そのキーで通信します。</li>
+<li>インターネット接続が必要です。</li>
+</ul>
+
+<h3>月や衛星が見えません</h3>
+<ul>
+<li>太陽系プリセットを選んで、ピンチで地球や木星に近づいてください。</li>
+<li>衛星は親惑星の周りを Kepler 軌道で回っています (実物より誇張されたスケールで配置)。</li>
+</ul>
+
+<h3>数式が見たい</h3>
+<p>天体ホールの上部 ƒ(x) ボタンを押すと、力ペアの数式テーブルが表示されます。</p>
+
+<h3>解説を子供向けに切り替えたい</h3>
+<p>設定 → 表示 → 解説レベル を「小学生」 に切り替えてください。 各展示の解説が平易な文体に変わります。</p>
+
+<h3>iPad の横長画面で使えますか?</h3>
+<p>はい、 iPad の縦・横両方に対応しています。 大銀河は特に横長で迫力があります。</p>
+
+<h3>実物の太陽系の縮尺ですか?</h3>
+<p>距離・大きさは見やすさのため大きくデフォルメしています。 本物の月-地球距離は地球-太陽距離の 1/389 で、画面では点にもなりません。</p>
+
+<h2>操作方法</h2>
+
+<h3>共通</h3>
+<ul>
+<li><strong>ドラッグ</strong>: 視点を回転</li>
+<li><strong>ピンチ</strong>: 拡大縮小</li>
+<li><strong>2 本指ドラッグ</strong>: 視点を平行移動 (回転中心を動かす)</li>
+<li><strong>タップ</strong>: 天体や対象を選択 (名前と解説が表示)</li>
+</ul>
+
+<h3>二重振り子</h3>
+<ul>
+<li>末端 (ピンクの玉) をドラッグして好きな位置から離す</li>
+<li>ピンチで縮尺変更 (振り子は止まりません)</li>
+</ul>
+
+<h3>磁石振り子</h3>
+<ul>
+<li>画面のどこでもタップして振り子を離す</li>
+<li>「地図 ON」で背景にフラクタル境界を表示</li>
+</ul>
+
+<h3>雲ラボ</h3>
+<ul>
+<li>3 つのスライダー (水温・上空気温・湿度) で 10 種類の雲を発生</li>
+<li>「雲を撮る」 ボタンで実空の雲を AI 判定</li>
+</ul>
+
+<h2>バージョン履歴</h2>
+
+<h3>1.0 (2026-05 リリース予定)</h3>
+<ul>
+<li>初公開: 3 ホール (天体・カオス・流体) + 設定</li>
+<li>多言語: 日本語・英語・中国語</li>
+<li>iPhone / iPad 対応</li>
+<li>応援サポーター (¥300 買い切り) で AI 雲虫眼鏡無制限</li>
+</ul>
+
+<h2>お問い合わせ</h2>
+<p>不具合報告やご要望は、以下のいずれかから:</p>
+<ul>
+<li>App Store の本アプリページ「<strong>カスタマーサポート</strong>」リンク</li>
+<li>開発者の他のアプリページ: <a href="https://apps.apple.com/jp/developer/daisaku-seto/id1889853807">https://apps.apple.com/jp/developer/daisaku-seto/id1889853807</a></li>
+<li>開発者の note: <a href="https://note.com/dai_hydrangea">https://note.com/dai_hydrangea</a></li>
+</ul>
+
+<hr>
+<footer>© 2026 Palm Lab Project · Made with ♥ in Japan</footer>
+
+</body>
+</html>
