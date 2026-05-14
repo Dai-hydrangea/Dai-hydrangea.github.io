@@ -102,8 +102,8 @@ body {
 
 /* ─── 設定ギア (iPhone のみ表示) ─── */
 #settings-gear {
-  position:fixed; bottom:46px; right:14px;
-  width:48px; height:48px; border-radius:50%;
+  position:fixed; top:14px; right:14px;
+  width:44px; height:44px; border-radius:50%;
   display:none;                        /* デスクトップは非表示 */
   align-items:center; justify-content:center;
   background:rgba(0,16,32,0.85);
@@ -194,14 +194,14 @@ body {
   #brief-panel { padding:22px 20px 28px; font-size:14px; }
 }
 
-/* ─── iPhone レイアウト: ギア + 縮小ナビ ─── */
+/* ─── iPhone レイアウト: 右上ギア + 下寄せナビ + 詳細パネル幅圧縮 ─── */
 @media (max-width: 600px) {
   #settings-gear { display:flex; }
 
-  /* 上メニューは普段隠れ、 ギアタップで右下から popup */
+  /* 上メニューは普段隠れ、 ギアタップで右上から下に popup */
   #tabs, #ctrl-buttons {
-    position:fixed; right:14px; left:auto; top:auto;
-    transform:none; bottom:104px;
+    position:fixed; right:14px; left:auto; bottom:auto;
+    transform:none;
     display:none; flex-direction:column; gap:6px;
     z-index:14;
     background:rgba(0,8,18,0.92);
@@ -210,28 +210,44 @@ body {
     box-shadow:0 0 22px rgba(0,229,255,0.20);
   }
   #tabs.open, #ctrl-buttons.open { display:flex; }
-  /* tabs を gear の真上に、 ctrl-buttons をその上に積む */
-  #tabs        { bottom:104px; }
-  #ctrl-buttons{ bottom:194px; }
+  /* ギア (top:14, 44h) の下に tabs、 その下に ctrl-buttons */
+  #tabs        { top:70px; }
+  #ctrl-buttons{ top:178px; }
   .tab, .ctrl-btn {
     padding:10px 16px; font-size:13px; letter-spacing:2px;
     min-width:130px; text-align:center;
   }
 
-  /* ナビ矢印: 小さく & 下寄せ */
+  /* ナビ矢印: 小さく & 画面下端寄せ */
   #nav-prev, #nav-next {
-    width:42px; height:64px; font-size:22px;
-    top:auto; bottom:120px;                     /* center-label より上 */
+    width:38px; height:52px; font-size:20px;
+    top:auto; bottom:48px;
     transform:none;
     border:1px solid rgba(0,229,255,0.45);
     background:rgba(0,8,18,0.55);
   }
-  #nav-prev { left:14px; }
-  #nav-next { right:14px; }
+  #nav-prev { left:10px; }
+  #nav-next { right:10px; }
 
-  /* HUD タイトル少し縮める */
+  /* GLOBES カウンタは隠す (見にくいだけ) */
+  #counter { display:none; }
+  #updated { font-size:10px; right:14px; }
+
+  /* HUD タイトル縮める */
+  #hud { top:14px; left:14px; }
   #hud .title { font-size:18px; letter-spacing:4px; }
   #hud .sub   { font-size:10px; }
+
+  /* 右からのスライドインパネルを画面内に収める */
+  #detail-panel {
+    width:min(420px, 92vw);
+    padding:24px 22px;
+  }
+  #detail-keyword { font-size:30px; margin:30px 0 8px; }
+  #detail-meta-top { font-size:13px; margin-bottom:20px; }
+  .article-title { font-size:16px; }
+  .article-summary { font-size:13px; }
+  .article-meta { font-size:11px; }
 }
 #loading {
   position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
@@ -286,20 +302,22 @@ body {
 #corner-bl { bottom:8px; left:8px;  border-right:none; border-top:none; }
 #corner-br { bottom:8px; right:8px; border-left:none;  border-top:none; }
 
-/* ─── スライドインパネル (老眼配慮で文字大幅拡大) ─── */
+/* ─── 右からのスライドインパネル ─── */
 #detail-panel {
-  position:fixed; top:0; right:-580px; width:560px; height:100vh;
+  position:fixed; top:0; right:0; height:100vh;
+  width:min(560px, 92vw);
   background:linear-gradient(160deg, rgba(0,16,32,0.97), rgba(0,32,64,0.97));
   backdrop-filter:blur(10px);
   border-left:2px solid #00e5ff;
   box-shadow:-4px 0 32px rgba(0,229,255,0.25);
-  transition:right 0.32s ease-out;
+  transform:translateX(100%);
+  transition:transform 0.36s cubic-bezier(0.16, 1, 0.3, 1);
   padding:36px 32px;
   z-index:30;
   overflow-y:auto;
   color:#dceaf3;
 }
-#detail-panel.active { right:0; }
+#detail-panel.active { transform:translateX(0); }
 #detail-close {
   position:absolute; top:18px; right:18px;
   color:#00e5ff; font-size:15px; font-weight:bold; letter-spacing:2px;
