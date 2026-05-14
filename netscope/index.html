@@ -50,6 +50,31 @@ body {
   border-color:#00e5ff; box-shadow:0 0 22px rgba(0,229,255,0.45);
 }
 
+/* ─── REFRESH / AUTO ボタン ─── */
+#ctrl-buttons {
+  position:fixed; top:18px; right:22px;
+  display:flex; gap:8px; z-index:11;
+}
+.ctrl-btn {
+  padding:10px 18px; font-size:13px; letter-spacing:2px;
+  color:#006677; border:1px solid #003344; cursor:pointer;
+  background:rgba(0,8,18,0.7);
+  font-family:'Share Tech Mono','Courier New',monospace;
+  transition:all 0.15s;
+}
+.ctrl-btn:hover { color:#00e5ff; border-color:#005577; }
+.ctrl-btn.active {
+  color:#00ff9f; border-color:#00ff9f; text-shadow:0 0 6px #00ff9f;
+}
+.ctrl-btn.spinning {
+  color:#00e5ff; border-color:#00e5ff;
+  animation:ctrlPulse 0.8s ease-in-out;
+}
+@keyframes ctrlPulse {
+  0%, 100% { box-shadow:0 0 0 rgba(0,229,255,0); }
+  50%      { box-shadow:0 0 22px rgba(0,229,255,0.6); }
+}
+
 #center-label {
   position:fixed; bottom:90px; left:50%; transform:translateX(-50%);
   color:#00e5ff; font-size:32px; font-weight:bold;
@@ -191,6 +216,11 @@ body {
 <div id="nav-prev">◀</div>
 <div id="nav-next">▶</div>
 
+<div id="ctrl-buttons">
+  <div class="ctrl-btn" id="btn-refresh" title="JSON を再読込">↻ RELOAD</div>
+  <div class="ctrl-btn" id="btn-auto"    title="30 秒ごとに主役球を自動切替">▶ AUTO</div>
+</div>
+
 <div id="center-label">─</div>
 <div id="center-sub">─</div>
 
@@ -221,10 +251,18 @@ import { Line2          } from 'three/addons/lines/Line2.js';
 import { LineGeometry   } from 'three/addons/lines/LineGeometry.js';
 import { LineMaterial   } from 'three/addons/lines/LineMaterial.js';
 
-// ── data-stream ──
+// ── data-stream (最初 25 秒は賑やか → ゆっくり静かに / 同時表示数に上限) ──
 const DATA_CHARS = '電脳網闇情報攻殻機動局意識データ零壱拾百千万億∞解析観測流変論調';
 const DIGITS = '0123456789';
+const STREAM_MAX_ACTIVE = 18;      // 同時表示数の上限
+const STREAM_INTRO_MS   = 25000;   // 最初の 25 秒間は賑やか
+const STREAM_INTERVAL_INTRO = 700; // intro 中の生成間隔 (ms)
+const STREAM_INTERVAL_CALM  = 2600; // intro 後の生成間隔 (ms)
+const streamRoot = document.getElementById('data-stream');
+const streamStartedAt = performance.now();
+
 function spawnDataChar() {
+  if (streamRoot.childElementCount >= STREAM_MAX_ACTIVE) return;
   const el = document.createElement('div');
   el.className = 'data-char';
   const len = 6 + Math.floor(Math.random()*7);
@@ -236,11 +274,27 @@ function spawnDataChar() {
   el.textContent = s;
   el.style.left = (Math.random() * 100) + 'vw';
   el.style.animationDuration = (10 + Math.random()*14) + 's';
-  document.getElementById('data-stream').appendChild(el);
+  streamRoot.appendChild(el);
   el.addEventListener('animationend', () => el.remove());
 }
-setInterval(spawnDataChar, 700);
-for (let i = 0; i < 12; i++) setTimeout(spawnDataChar, i * 200);
+function scheduleNextStream() {
+  const elapsed = performance.now() - streamStartedAt;
+  // intro → calm へ線形で interval を伸ばす (25s → 26s で fade-out)
+  let interval;
+  if (elapsed < STREAM_INTRO_MS) {
+    interval = STREAM_INTERVAL_INTRO;
+  } else if (elapsed < STREAM_INTRO_MS + 1000) {
+    const t = (elapsed - STREAM_INTRO_MS) / 1000;
+    interval = STREAM_INTERVAL_INTRO + (STREAM_INTERVAL_CALM - STREAM_INTERVAL_INTRO) * t;
+  } else {
+    interval = STREAM_INTERVAL_CALM;
+  }
+  spawnDataChar();
+  setTimeout(scheduleNextStream, interval + Math.random()*200);
+}
+// 立ち上がりだけ短い間隔で 8 個まとめて出す (上限あるので暴走しない)
+for (let i = 0; i < 8; i++) setTimeout(spawnDataChar, i * 220);
+setTimeout(scheduleNextStream, 500);
 
 // ── Renderer ──
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -303,10 +357,10 @@ scene.add(orreryGroup);
 // SLOT 0 が常に主役表示。
 //
 const N_GLOBES_MAX = 9;
-const GLOBE_RADIUS = 140;      // ⭐ export.py の GLOBE_RADIUS と完全一致必須
+const GLOBE_RADIUS = 170;      // ⭐ export.py の GLOBE_RADIUS と完全一致必須 (140→170 +21%)
 const MAIN_SCALE = 2.6;        // ⭐ 球本体が大きいので scale は控えめ
 const SAT_SCALE  = 0.32;
-const SAT_RING_RADIUS = 620;   // ⭐ 主役巨大化に伴い衛星をさらに遠くへ
+const SAT_RING_RADIUS = 720;   // ⭐ 主役巨大化に伴い衛星をさらに遠くへ (620→720)
 const SAT_RING_Z      = -120;
 const SAT_RING_Y_SCALE = 0.65; // 縦圧縮 (楕円リング)
 
@@ -456,8 +510,9 @@ function buildGlobe(globeData) {
       const pA = posMap[e.a], pB = posMap[e.b];
       if (!pA || !pB) return;
       const ratio = e.weight / maxW;
-      const linewidth = 0.6 + ratio * 2.6;
-      const opacity = 0.10 + ratio * 0.50;
+      // ⭐ 線太さに上限。 細めで揃える (近接度はノード距離で表現される)
+      const linewidth = 0.4 + ratio * 1.0;   // 0.4 〜 1.4
+      const opacity = 0.10 + ratio * 0.40;
       const intensity = 0.5 + ratio * 0.5;
       const color = new THREE.Color(
         ((colorHex >> 16) & 0xff) / 255 * intensity,
@@ -683,6 +738,38 @@ window.addEventListener('keydown', e => {
   if (e.key === 'ArrowLeft')  rotateRevolver(-1);
   if (e.key === 'ArrowRight') rotateRevolver(+1);
 });
+
+// ── RELOAD ボタン (JSON を再取得) ──
+const btnRefresh = document.getElementById('btn-refresh');
+btnRefresh.addEventListener('click', async () => {
+  btnRefresh.classList.add('spinning');
+  btnRefresh.textContent = '↻ LOADING';
+  try {
+    await loadData();
+  } finally {
+    setTimeout(() => {
+      btnRefresh.classList.remove('spinning');
+      btnRefresh.textContent = '↻ RELOAD';
+    }, 600);
+  }
+});
+
+// ── AUTO ボタン (30 秒ごとにリボルバーを 1 つ進める) ──
+const AUTO_INTERVAL_MS = 30000;
+let autoTimer = null;
+const btnAuto = document.getElementById('btn-auto');
+function setAuto(on) {
+  if (on) {
+    btnAuto.classList.add('active');
+    btnAuto.textContent = '■ AUTO';
+    autoTimer = setInterval(() => rotateRevolver(+1), AUTO_INTERVAL_MS);
+  } else {
+    btnAuto.classList.remove('active');
+    btnAuto.textContent = '▶ AUTO';
+    if (autoTimer) { clearInterval(autoTimer); autoTimer = null; }
+  }
+}
+btnAuto.addEventListener('click', () => setAuto(autoTimer === null));
 
 // ─────────── ポインタ state machine ───────────
 //
