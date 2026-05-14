@@ -100,6 +100,31 @@ body {
 #counter { position:fixed; bottom:14px; left:22px; color:#446677; font-size:12px; letter-spacing:1.5px; z-index:10; }
 #updated { position:fixed; bottom:14px; right:22px; color:#446677; font-size:12px; letter-spacing:1.5px; z-index:10; }
 
+/* ─── 設定ギア (iPhone のみ表示) ─── */
+#settings-gear {
+  position:fixed; bottom:46px; right:14px;
+  width:48px; height:48px; border-radius:50%;
+  display:none;                        /* デスクトップは非表示 */
+  align-items:center; justify-content:center;
+  background:rgba(0,16,32,0.85);
+  border:1px solid rgba(0,229,255,0.6);
+  color:#00e5ff; font-size:24px;
+  cursor:pointer; z-index:13;
+  box-shadow:0 0 14px rgba(0,229,255,0.35);
+  font-family:'Share Tech Mono',monospace;
+  transition:all 0.15s;
+  -webkit-tap-highlight-color:transparent;
+}
+#settings-gear:hover, #settings-gear.active {
+  background:rgba(0,40,80,0.92);
+  border-color:#00e5ff;
+  box-shadow:0 0 22px rgba(0,229,255,0.6);
+}
+#settings-gear::before {
+  content:"⚙"; line-height:1; transform:translateY(-1px);
+  text-shadow:0 0 6px rgba(0,229,255,0.9);
+}
+
 /* ─── BRIEF panel: 下からふわっと slide-up ─── */
 #brief-panel {
   position:fixed; left:50%; bottom:0;
@@ -167,6 +192,46 @@ body {
 /* iPhone 狭幅 */
 @media (max-width: 480px) {
   #brief-panel { padding:22px 20px 28px; font-size:14px; }
+}
+
+/* ─── iPhone レイアウト: ギア + 縮小ナビ ─── */
+@media (max-width: 600px) {
+  #settings-gear { display:flex; }
+
+  /* 上メニューは普段隠れ、 ギアタップで右下から popup */
+  #tabs, #ctrl-buttons {
+    position:fixed; right:14px; left:auto; top:auto;
+    transform:none; bottom:104px;
+    display:none; flex-direction:column; gap:6px;
+    z-index:14;
+    background:rgba(0,8,18,0.92);
+    border:1px solid #00415a;
+    padding:10px;
+    box-shadow:0 0 22px rgba(0,229,255,0.20);
+  }
+  #tabs.open, #ctrl-buttons.open { display:flex; }
+  /* tabs を gear の真上に、 ctrl-buttons をその上に積む */
+  #tabs        { bottom:104px; }
+  #ctrl-buttons{ bottom:194px; }
+  .tab, .ctrl-btn {
+    padding:10px 16px; font-size:13px; letter-spacing:2px;
+    min-width:130px; text-align:center;
+  }
+
+  /* ナビ矢印: 小さく & 下寄せ */
+  #nav-prev, #nav-next {
+    width:42px; height:64px; font-size:22px;
+    top:auto; bottom:120px;                     /* center-label より上 */
+    transform:none;
+    border:1px solid rgba(0,229,255,0.45);
+    background:rgba(0,8,18,0.55);
+  }
+  #nav-prev { left:14px; }
+  #nav-next { right:14px; }
+
+  /* HUD タイトル少し縮める */
+  #hud .title { font-size:18px; letter-spacing:4px; }
+  #hud .sub   { font-size:10px; }
 }
 #loading {
   position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
@@ -304,6 +369,8 @@ body {
   <div class="ctrl-btn" id="btn-refresh" title="JSON を再読込">↻ RELOAD</div>
   <div class="ctrl-btn" id="btn-auto"    title="30 秒ごとに主役球を自動切替">▶ AUTO</div>
 </div>
+
+<button id="settings-gear" aria-label="settings"></button>
 
 <div id="center-label">─</div>
 <div id="center-sub">─</div>
@@ -1059,6 +1126,30 @@ function setAuto(on) {
   }
 }
 btnAuto.addEventListener('click', () => setAuto(autoTimer === null));
+
+// ── 設定ギア (iPhone): tabs + ctrl-buttons を popup で表示 ──
+const gearEl  = document.getElementById('settings-gear');
+const tabsEl  = document.getElementById('tabs');
+const ctrlEl  = document.getElementById('ctrl-buttons');
+function setSettingsOpen(open) {
+  gearEl.classList.toggle('active', open);
+  tabsEl.classList.toggle('open', open);
+  ctrlEl.classList.toggle('open', open);
+}
+gearEl.addEventListener('click', e => {
+  e.stopPropagation();
+  setSettingsOpen(!gearEl.classList.contains('active'));
+});
+// popup 内のボタン押下後は閉じる
+[...tabsEl.children, ...ctrlEl.children].forEach(el =>
+  el.addEventListener('click', () => setSettingsOpen(false))
+);
+// 外をタップしたら閉じる
+document.addEventListener('pointerdown', e => {
+  if (!gearEl.classList.contains('active')) return;
+  if (e.target.closest('#settings-gear, #tabs, #ctrl-buttons')) return;
+  setSettingsOpen(false);
+}, true);
 
 // ─────────── ポインタ state machine ───────────
 //
