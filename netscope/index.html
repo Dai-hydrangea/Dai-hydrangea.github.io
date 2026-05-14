@@ -513,20 +513,24 @@ function buildSlots(count) {
 // ── Sprite (キーワード) ファクトリ ──
 //   ratio (0.0-1.0) で fontSize / 色 intensity / alpha / glow を全て連動。
 //   関連強 (ratio=1) → 大・濃・くっきり、 関連弱 (ratio=0) → 小・薄・控えめ。
-function makeKeywordSprite(text, fontSize, ratio, colorHex) {
+function makeKeywordSprite(node, fontSize, ratio, colorHex) {
+  const text  = node.text;
+  const isEn  = (node.en_ratio || 0) >= 0.3;     // 海外発の話 indicator
   const canvas = document.createElement('canvas');
   const ctx    = canvas.getContext('2d');
   const fs     = Math.round(Math.max(14, Math.min(70, fontSize)));
+  const bfs    = Math.max(9, Math.round(fs * 0.42));
   ctx.font     = `bold ${fs}px "Share Tech Mono", "Courier New", monospace`;
   const tw     = ctx.measureText(text).width;
-  canvas.width  = Math.ceil(tw) + 28;
+  ctx.font     = `bold ${bfs}px "Share Tech Mono", "Courier New", monospace`;
+  const bw     = isEn ? ctx.measureText('EN').width + 10 : 0;
+  canvas.width  = Math.ceil(tw) + 28 + bw;
   canvas.height = fs + 18;
   ctx.font      = `bold ${fs}px "Share Tech Mono", "Courier New", monospace`;
   const hex = colorHex.toString(16).padStart(6, '0');
   const r = parseInt(hex.slice(0,2), 16);
   const g = parseInt(hex.slice(2,4), 16);
   const b = parseInt(hex.slice(4,6), 16);
-  // ⭐ 関連度に強く連動 (前: intensity 0.55-1.0 → 新: 0.30-1.0、 alpha も追加)
   const intensity = 0.30 + ratio * 0.70;
   const alpha     = 0.42 + ratio * 0.58;
   const color = `rgba(${Math.round(r*intensity)},${Math.round(g*intensity)},${Math.round(b*intensity)},${alpha})`;
@@ -536,10 +540,21 @@ function makeKeywordSprite(text, fontSize, ratio, colorHex) {
   ctx.fillText(text, 14, fs + 4);
   ctx.shadowBlur  = 4 + ratio * 6;
   ctx.fillText(text, 14, fs + 4);
+  // EN バッジ (海外ソース由来)
+  if (isEn) {
+    ctx.font = `bold ${bfs}px "Share Tech Mono", "Courier New", monospace`;
+    const badgeColor = `rgba(255,200,80,${Math.min(1, alpha + 0.15)})`;
+    ctx.shadowColor = 'rgba(255,200,80,0.85)';
+    ctx.shadowBlur  = 8;
+    ctx.fillStyle   = badgeColor;
+    const bx = 14 + tw + 6;
+    const by = fs + 4 - Math.round(fs * 0.18);
+    ctx.fillText('EN', bx, by);
+    ctx.shadowBlur = 0;
+  }
   const tex = new THREE.CanvasTexture(canvas);
   const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false });
   const sp  = new THREE.Sprite(mat);
-  // ⭐ scale factor 0.40 → 0.30 でワールド表示倍率を下げて重なり回避
   sp.scale.set(canvas.width * 0.30, canvas.height * 0.30, 1);
   return sp;
 }
@@ -618,8 +633,8 @@ function makeBriefSprite(colorHex) {
     // depthTest: true がデフォルト → 球表面の sprite やワイヤフレーム線で隠れる
   });
   const sp = new THREE.Sprite(mat);
-  // 球内に控えめ存在 (前 160x80 → 90x73)
-  sp.scale.set(90, 73, 1);
+  // 球内に控えめ存在 (90x73 → 58x47、 iPhone でも邪魔にならないサイズ)
+  sp.scale.set(58, 47, 1);
   sp.userData = { isBrief: true };
   return sp;
 }
@@ -684,7 +699,7 @@ function buildGlobe(globeData) {
     const ratio = Math.pow((node.count - minCount) / range, 0.7);
     // ⭐ fontSize 範囲を狭めて重なり回避 (32-100 → 18-56)
     const fs = 18 + ratio * 38;
-    const sprite = makeKeywordSprite(node.text, fs, ratio, colorHex);
+    const sprite = makeKeywordSprite(node, fs, ratio, colorHex);
     const pos = node.pos || [0, 0, 0];
     sprite.position.set(pos[0], pos[1], pos[2]);
     sprite.userData = { keyword: node, globeId: globeData.id };
@@ -1237,7 +1252,7 @@ function animate(now) {
     const b = g.userData?.brief;
     if (!b || !b.visible) return;
     const pulse = 1.0 + Math.sin(tsec * 1.6) * 0.06;
-    b.scale.set(90 * pulse, 73 * pulse, 1);
+    b.scale.set(58 * pulse, 47 * pulse, 1);
     b.position.y = Math.sin(tsec * 0.7) * 10;
     b.material.opacity = 0.78 + 0.20 * (0.5 + 0.5 * Math.sin(tsec * 1.2));
   });
