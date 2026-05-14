@@ -100,76 +100,6 @@ body {
 #counter { position:fixed; bottom:14px; left:22px; color:#446677; font-size:12px; letter-spacing:1.5px; z-index:10; }
 #updated { position:fixed; bottom:14px; right:22px; color:#446677; font-size:12px; letter-spacing:1.5px; z-index:10; }
 
-/* ─── DAILY BRIEF (ホログラム風 floating button) ─── */
-#brief-toggle {
-  position:fixed; top:34%; left:50%;
-  transform:translate(-50%, -50%);
-  display:none;                 /* JS が hasSummary 判定で inline-flex に */
-  align-items:center; justify-content:center; gap:8px;
-  padding:12px 26px;
-  z-index:12;
-  cursor:pointer;
-  user-select:none; -webkit-user-select:none;
-  font-family:'Share Tech Mono','Courier New',monospace;
-  font-size:13px; letter-spacing:5px;
-  color:#00e5ff; text-shadow:0 0 10px rgba(0,229,255,0.9);
-  background:
-    radial-gradient(ellipse at center,
-      rgba(0,229,255,0.18) 0%,
-      rgba(0,40,80,0.50) 60%,
-      rgba(0,8,18,0.60) 100%);
-  border:1px solid rgba(0,229,255,0.55);
-  /* 八角形 */
-  clip-path:polygon(12% 0, 88% 0, 100% 50%, 88% 100%, 12% 100%, 0 50%);
-  /* glow + 浮遊 */
-  animation:briefBreath 3.2s ease-in-out infinite, briefFloat 5.6s ease-in-out infinite;
-  transition:color 0.2s, transform 0.2s;
-}
-#brief-toggle::before, #brief-toggle::after {
-  content:""; position:absolute; inset:0;
-  pointer-events:none;
-  clip-path:polygon(12% 0, 88% 0, 100% 50%, 88% 100%, 12% 100%, 0 50%);
-}
-#brief-toggle::before {
-  border:1px solid rgba(0,229,255,0.25);
-  margin:-6px; transform:scale(1.06);
-  animation:briefRingPulse 3.2s ease-in-out infinite;
-}
-#brief-toggle::after {
-  /* scanline shimmer */
-  background:linear-gradient(180deg, transparent 0%,
-    rgba(0,229,255,0.25) 48%, rgba(0,229,255,0.25) 52%, transparent 100%);
-  background-size:100% 200%; opacity:0.4;
-  animation:briefScan 4s linear infinite;
-  mix-blend-mode:screen;
-}
-#brief-toggle .brief-arrow {
-  font-size:10px; opacity:0.8;
-  display:inline-block;
-}
-#brief-toggle.active {
-  color:#00ff9f; text-shadow:0 0 10px rgba(0,255,159,0.9);
-  background:radial-gradient(ellipse at center,
-    rgba(0,255,159,0.20) 0%, rgba(0,30,20,0.50) 60%, rgba(0,8,18,0.65) 100%);
-  border-color:rgba(0,255,159,0.6);
-}
-@keyframes briefBreath {
-  0%, 100% { box-shadow:0 0 18px rgba(0,229,255,0.35), inset 0 0 12px rgba(0,229,255,0.10); }
-  50%      { box-shadow:0 0 38px rgba(0,229,255,0.70), inset 0 0 20px rgba(0,229,255,0.25); }
-}
-@keyframes briefRingPulse {
-  0%, 100% { opacity:0.4; transform:scale(1.08); }
-  50%      { opacity:0.85; transform:scale(1.16); }
-}
-@keyframes briefFloat {
-  0%, 100% { transform:translate(-50%, -50%) translateY(0); }
-  50%      { transform:translate(-50%, -50%) translateY(-6px); }
-}
-@keyframes briefScan {
-  0%   { background-position:0% -100%; }
-  100% { background-position:0%  200%; }
-}
-
 /* ─── BRIEF panel: 下からふわっと slide-up ─── */
 #brief-panel {
   position:fixed; left:50%; bottom:0;
@@ -236,7 +166,6 @@ body {
 
 /* iPhone 狭幅 */
 @media (max-width: 480px) {
-  #brief-toggle { top:30%; padding:10px 20px; font-size:12px; letter-spacing:4px; }
   #brief-panel { padding:22px 20px 28px; font-size:14px; }
 }
 #loading {
@@ -379,10 +308,6 @@ body {
 <div id="center-label">─</div>
 <div id="center-sub">─</div>
 
-<div id="brief-toggle">
-  <span class="brief-label">まとめ</span>
-  <span class="brief-arrow">▼</span>
-</div>
 <div id="brief-panel">
   <div id="brief-panel-header">
     <div id="brief-panel-title">まとめ ─ DAILY BRIEF</div>
@@ -619,6 +544,86 @@ function makeKeywordSprite(text, fontSize, ratio, colorHex) {
   return sp;
 }
 
+// ⭐ BRIEF ── 球の中央 (内側) に浮かぶ octagonal core sprite。
+//   - depth-test 有効 → 表面の keyword sprite やワイヤフレーム線で隠れる ("slime の核" 感)
+//   - 各 globe に 1 個ずつ child として配置、 main 化されたとき visible に
+function makeBriefSprite(colorHex) {
+  const W = 360, H = 180;
+  const canvas = document.createElement('canvas');
+  canvas.width = W * 2; canvas.height = H * 2;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(2, 2);
+
+  const hex = colorHex.toString(16).padStart(6, '0');
+  const r = parseInt(hex.slice(0, 2), 16);
+  const g = parseInt(hex.slice(2, 4), 16);
+  const b = parseInt(hex.slice(4, 6), 16);
+  const rgba = (a) => `rgba(${r},${g},${b},${a})`;
+
+  // 八角形パス
+  const inset = 0.10;
+  const drawOctagon = () => {
+    ctx.beginPath();
+    ctx.moveTo(W * inset, 0);
+    ctx.lineTo(W * (1 - inset), 0);
+    ctx.lineTo(W, H * 0.5);
+    ctx.lineTo(W * (1 - inset), H);
+    ctx.lineTo(W * inset, H);
+    ctx.lineTo(0, H * 0.5);
+    ctx.closePath();
+  };
+
+  // 中央放射 fill
+  const grad = ctx.createRadialGradient(W / 2, H / 2, 8, W / 2, H / 2, W * 0.62);
+  grad.addColorStop(0.0, rgba(0.28));
+  grad.addColorStop(0.5, rgba(0.10));
+  grad.addColorStop(1.0, 'rgba(0,8,18,0.45)');
+  drawOctagon();
+  ctx.fillStyle = grad; ctx.fill();
+
+  // 主枠 (太め glow)
+  drawOctagon();
+  ctx.shadowColor = rgba(0.95); ctx.shadowBlur = 22;
+  ctx.strokeStyle = rgba(0.92); ctx.lineWidth = 2.2;
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // 内側薄枠 (二重線)
+  ctx.save();
+  ctx.translate(W / 2, H / 2);
+  ctx.scale(0.90, 0.80);
+  ctx.translate(-W / 2, -H / 2);
+  drawOctagon();
+  ctx.strokeStyle = rgba(0.32); ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.restore();
+
+  // テキスト "まとめ"
+  ctx.shadowColor = rgba(0.85); ctx.shadowBlur = 14;
+  ctx.fillStyle = rgba(1.0);
+  ctx.font = 'bold 44px "Share Tech Mono", "Hiragino Maru Gothic Pro", sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('まとめ', W / 2, H / 2 - 10);
+
+  // サブ "▼ DAILY BRIEF"
+  ctx.shadowBlur = 6;
+  ctx.font = 'bold 14px "Share Tech Mono", monospace';
+  ctx.fillStyle = rgba(0.65);
+  ctx.fillText('▼ DAILY BRIEF', W / 2, H / 2 + 28);
+  ctx.shadowBlur = 0;
+
+  const tex = new THREE.CanvasTexture(canvas);
+  const mat = new THREE.SpriteMaterial({
+    map: tex, transparent: true, depthWrite: false,
+    // depthTest: true がデフォルト → 球表面の sprite やワイヤフレーム線で隠れる
+  });
+  const sp = new THREE.Sprite(mat);
+  // 球の半分くらいのサイズ (半径 170 球の中心に存在感ありつつ keywords は周囲に見える)
+  sp.scale.set(160, 80, 1);
+  sp.userData = { isBrief: true };
+  return sp;
+}
+
 function makeCategoryLabel(text, colorHex) {
   const canvas = document.createElement('canvas');
   const ctx    = canvas.getContext('2d');
@@ -721,6 +726,14 @@ function buildGlobe(globeData) {
   group.add(label);
   group.userData.label = label;
 
+  // BRIEF core sprite (球の中央内側に浮かぶ)
+  const brief = makeBriefSprite(colorHex);
+  brief.position.set(0, 0, 0);
+  brief.visible = false;             // main globe & summary 存在時のみ表示
+  brief.userData.globeData = globeData;
+  group.add(brief);
+  group.userData.brief = brief;
+
   return group;
 }
 
@@ -798,19 +811,22 @@ function updateCenterLabel() {
 function updateBrief(g) {
   const summaryEl  = document.getElementById('brief-summary');
   const clustersEl = document.getElementById('brief-clusters');
-  const toggleEl   = document.getElementById('brief-toggle');
 
   const hasSummary  = !!(g.summary && g.summary.trim());
   const hasClusters = Array.isArray(g.clusters) && g.clusters.length > 0;
 
+  // 球内 BRIEF sprite の表示制御 (main かつ summary/clusters があるとき)
+  globesList.forEach((grp, i) => {
+    const isMain = (slotAssignment[i] === 0);
+    const data   = grp.userData?.globeData;
+    const has    = !!(data && (data.summary || (data.clusters && data.clusters.length)));
+    if (grp.userData.brief) grp.userData.brief.visible = (isMain && has);
+  });
+
   if (!hasSummary && !hasClusters) {
-    toggleEl.style.display = 'none';
-    document.getElementById('brief-panel').classList.remove('open');
-    toggleEl.classList.remove('active');
+    setBriefOpen(false);
     return;
   }
-  toggleEl.style.display = 'inline-flex';
-
   summaryEl.textContent = hasSummary ? g.summary : '';
   summaryEl.style.display = hasSummary ? 'block' : 'none';
 
@@ -851,22 +867,9 @@ function focusCluster(cluster, globeData) {
 }
 
 function setBriefOpen(open) {
-  const panel  = document.getElementById('brief-panel');
-  const toggle = document.getElementById('brief-toggle');
-  const arrow  = toggle.querySelector('.brief-arrow');
-  panel.classList.toggle('open', open);
-  toggle.classList.toggle('active', open);
-  if (arrow) arrow.textContent = open ? '▲' : '▼';
+  document.getElementById('brief-panel').classList.toggle('open', open);
 }
-document.getElementById('brief-toggle').addEventListener('click', () => {
-  const isOpen = document.getElementById('brief-panel').classList.contains('open');
-  setBriefOpen(!isOpen);
-});
 document.getElementById('brief-panel-close').addEventListener('click', () => setBriefOpen(false));
-// 球エリアをタップしたら閉じる (panel 内のタップは閉じない)
-renderer.domElement.addEventListener('pointerdown', () => {
-  if (document.getElementById('brief-panel').classList.contains('open')) setBriefOpen(false);
-}, true);
 
 function rotateRevolver(direction) {
   if (animating) {
@@ -1071,11 +1074,19 @@ function getHit(e) {
   pointer.y = (y / innerHeight) * -2 + 1;
   raycaster.setFromCamera(pointer, camera);
 
-  // sprite (キーワード) 優先
+  // sprite (キーワード + BRIEF) を距離順に取る → 手前のものが勝つ
   const sprites = [];
-  orreryGroup.traverse(o => { if (o.isSprite && o.userData.keyword) sprites.push(o); });
+  orreryGroup.traverse(o => {
+    if (!o.isSprite) return;
+    if (o.userData.keyword) sprites.push(o);
+    if (o.userData.isBrief && o.visible) sprites.push(o);
+  });
   const sprHits = raycaster.intersectObjects(sprites);
-  if (sprHits.length) return { type: 'keyword', node: sprHits[0].object.userData.keyword };
+  if (sprHits.length) {
+    const top = sprHits[0].object;
+    if (top.userData.keyword) return { type: 'keyword', node: top.userData.keyword };
+    if (top.userData.isBrief) return { type: 'brief' };
+  }
 
   // sphere (globe 全体)
   const meshes = [];
@@ -1182,6 +1193,8 @@ renderer.domElement.addEventListener('pointerup', e => {
     if (hit) {
       if (hit.type === 'keyword') {
         showKeywordDetail(hit.node);
+      } else if (hit.type === 'brief') {
+        setBriefOpen(true);
       } else if (hit.type === 'globe') {
         const i = globesList.indexOf(hit.group);
         if (i >= 0) {
@@ -1217,6 +1230,16 @@ function animate(now) {
   globesList.forEach((g, i) => {
     const isMain = (slotAssignment[i] === 0);
     g.rotation.y += dt * (isMain ? 0.10 : 0.25);
+  });
+  // BRIEF core: 呼吸 (scale) + 浮遊 (y) + alpha 揺らぎ
+  const tsec = now * 0.001;
+  globesList.forEach(g => {
+    const b = g.userData?.brief;
+    if (!b || !b.visible) return;
+    const pulse = 1.0 + Math.sin(tsec * 1.6) * 0.06;
+    b.scale.set(160 * pulse, 80 * pulse, 1);
+    b.position.y = Math.sin(tsec * 0.7) * 10;
+    b.material.opacity = 0.78 + 0.20 * (0.5 + 0.5 * Math.sin(tsec * 1.2));
   });
   renderer.render(scene, camera);
 }
