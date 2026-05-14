@@ -310,7 +310,7 @@ body {
 
 <div id="brief-panel">
   <div id="brief-panel-header">
-    <div id="brief-panel-title">まとめ ─ DAILY BRIEF</div>
+    <div id="brief-panel-title">観 ─ DAILY SCAN</div>
     <button id="brief-panel-close">CLOSE ✕</button>
   </div>
   <div id="brief-summary"></div>
@@ -548,7 +548,7 @@ function makeKeywordSprite(text, fontSize, ratio, colorHex) {
 //   - depth-test 有効 → 表面の keyword sprite やワイヤフレーム線で隠れる ("slime の核" 感)
 //   - 各 globe に 1 個ずつ child として配置、 main 化されたとき visible に
 function makeBriefSprite(colorHex) {
-  const W = 360, H = 180;
+  const W = 220, H = 180;
   const canvas = document.createElement('canvas');
   canvas.width = W * 2; canvas.height = H * 2;
   const ctx = canvas.getContext('2d');
@@ -561,7 +561,7 @@ function makeBriefSprite(colorHex) {
   const rgba = (a) => `rgba(${r},${g},${b},${a})`;
 
   // 八角形パス
-  const inset = 0.10;
+  const inset = 0.20;
   const drawOctagon = () => {
     ctx.beginPath();
     ctx.moveTo(W * inset, 0);
@@ -598,18 +598,18 @@ function makeBriefSprite(colorHex) {
   ctx.stroke();
   ctx.restore();
 
-  // テキスト "まとめ"
-  ctx.shadowColor = rgba(0.85); ctx.shadowBlur = 14;
+  // 主漢字 "観"
+  ctx.shadowColor = rgba(0.9); ctx.shadowBlur = 16;
   ctx.fillStyle = rgba(1.0);
-  ctx.font = 'bold 44px "Share Tech Mono", "Hiragino Maru Gothic Pro", sans-serif';
+  ctx.font = 'bold 78px "Hiragino Mincho ProN", "YuMincho", "Share Tech Mono", serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText('まとめ', W / 2, H / 2 - 10);
+  ctx.fillText('観', W / 2, H / 2 - 6);
 
-  // サブ "▼ DAILY BRIEF"
+  // サブ "SCAN"
   ctx.shadowBlur = 6;
   ctx.font = 'bold 14px "Share Tech Mono", monospace';
-  ctx.fillStyle = rgba(0.65);
-  ctx.fillText('▼ DAILY BRIEF', W / 2, H / 2 + 28);
+  ctx.fillStyle = rgba(0.7);
+  ctx.fillText('SCAN', W / 2, H / 2 + 46);
   ctx.shadowBlur = 0;
 
   const tex = new THREE.CanvasTexture(canvas);
@@ -618,8 +618,8 @@ function makeBriefSprite(colorHex) {
     // depthTest: true がデフォルト → 球表面の sprite やワイヤフレーム線で隠れる
   });
   const sp = new THREE.Sprite(mat);
-  // 球の半分くらいのサイズ (半径 170 球の中心に存在感ありつつ keywords は周囲に見える)
-  sp.scale.set(160, 80, 1);
+  // 球内に控えめ存在 (前 160x80 → 90x73)
+  sp.scale.set(90, 73, 1);
   sp.userData = { isBrief: true };
   return sp;
 }
@@ -1237,7 +1237,7 @@ function animate(now) {
     const b = g.userData?.brief;
     if (!b || !b.visible) return;
     const pulse = 1.0 + Math.sin(tsec * 1.6) * 0.06;
-    b.scale.set(160 * pulse, 80 * pulse, 1);
+    b.scale.set(90 * pulse, 73 * pulse, 1);
     b.position.y = Math.sin(tsec * 0.7) * 10;
     b.material.opacity = 0.78 + 0.20 * (0.5 + 0.5 * Math.sin(tsec * 1.2));
   });
