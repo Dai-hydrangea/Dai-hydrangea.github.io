@@ -826,6 +826,7 @@ function updateCenterLabel() {
 function updateBrief(g) {
   const summaryEl  = document.getElementById('brief-summary');
   const clustersEl = document.getElementById('brief-clusters');
+  const panel      = document.getElementById('brief-panel');
 
   const hasSummary  = !!(g.summary && g.summary.trim());
   const hasClusters = Array.isArray(g.clusters) && g.clusters.length > 0;
@@ -838,10 +839,19 @@ function updateBrief(g) {
     if (grp.userData.brief) grp.userData.brief.visible = (isMain && has);
   });
 
+  // 要約がない球儀でもパネルは開いたまま (リボルバー回しても消えない)
   if (!hasSummary && !hasClusters) {
-    setBriefOpen(false);
+    summaryEl.innerHTML =
+      '<span style="color:#5a7c92;font-style:italic;line-height:1.7;">' +
+      '─ NO SCAN AVAILABLE ─<br>' +
+      'このカテゴリは今回 要約が生成できませんでした。<br>' +
+      '次の自動更新 (朝 7 / 昼 13 / 夜 22 時) で復活する見込みです。' +
+      '</span>';
+    summaryEl.style.display = 'block';
+    clustersEl.innerHTML = '';
     return;
   }
+
   summaryEl.textContent = hasSummary ? g.summary : '';
   summaryEl.style.display = hasSummary ? 'block' : 'none';
 
