@@ -2,16 +2,26 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <title>NETSCOPE :: NEWS ORRERY</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 html, body { width:100%; height:100%; }
+html { touch-action:manipulation; -webkit-text-size-adjust:100%; }
 body {
   background:#000812;
   overflow:hidden;
   font-family:'Share Tech Mono','Courier New',monospace;
   color:#aac4d8;
+  /* ⭐ iOS Safari: ページ全体のピンチズームを無効化 (球の zoom は OrbitControls 側で処理) */
+  touch-action:none;
+  overscroll-behavior:none;
+  -webkit-user-select:none;
+  user-select:none;
 }
+/* 詳細パネル内は通常スクロール / 選択を許可 */
+#detail-panel { touch-action:pan-y; -webkit-user-select:text; user-select:text; }
 
 /* ─── HUD (老眼配慮) ─── */
 #hud {
@@ -178,7 +188,12 @@ body {
 .article-card:hover { border-color:#00e5ff; background:rgba(0,40,70,0.7); }
 .article-title {
   font-size:19px; line-height:1.55; color:#cfe7f5;
-  margin-bottom:10px; font-weight:bold;
+  margin-bottom:6px; font-weight:bold;
+}
+.article-title-orig {
+  font-size:12px; line-height:1.45; color:#5c7c92;
+  margin-bottom:10px; font-style:italic;
+  word-break:break-word;
 }
 .article-summary {
   font-size:15px; line-height:1.7; color:#9ab4c8;
@@ -242,6 +257,24 @@ body {
     "three/addons/":  "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
   }
 }
+</script>
+
+<script>
+// ⭐ iOS Safari のピンチ・ダブルタップズームを完全に殺す (3D 球の zoom は OrbitControls 側)
+['gesturestart','gesturechange','gestureend'].forEach(ev =>
+  document.addEventListener(ev, e => e.preventDefault(), { passive:false })
+);
+// 2 本指タッチをページ操作と認識させない
+document.addEventListener('touchmove', e => {
+  if (e.touches.length > 1) e.preventDefault();
+}, { passive:false });
+// ダブルタップズーム防止
+let __lastTap = 0;
+document.addEventListener('touchend', e => {
+  const now = Date.now();
+  if (now - __lastTap < 300) e.preventDefault();
+  __lastTap = now;
+}, { passive:false });
 </script>
 
 <script type="module">
@@ -851,6 +884,12 @@ function showKeywordDetail(keyword) {
       metaEl.innerHTML = `<span>SOURCE: ${a.source_name || '─'}</span>` +
                          (a.score ? `<span>SCORE: ${a.score}</span>` : '');
       card.appendChild(titleEl);
+      if (a.title_orig) {
+        const origEl = document.createElement('div');
+        origEl.className = 'article-title-orig';
+        origEl.textContent = a.title_orig;
+        card.appendChild(origEl);
+      }
       if (a.summary) card.appendChild(summaryEl);
       card.appendChild(metaEl);
       if (a.url) {
