@@ -99,6 +99,57 @@ body {
 
 #counter { position:fixed; bottom:14px; left:22px; color:#446677; font-size:12px; letter-spacing:1.5px; z-index:10; }
 #updated { position:fixed; bottom:14px; right:22px; color:#446677; font-size:12px; letter-spacing:1.5px; z-index:10; }
+
+/* ─── DAILY BRIEF + cluster pills ─── */
+#brief-toggle {
+  position:fixed; bottom:142px; left:50%; transform:translateX(-50%);
+  color:#5a8aa8; font-size:12px; letter-spacing:2px;
+  background:rgba(0,8,18,0.7); border:1px solid #003855;
+  padding:6px 14px; cursor:pointer; z-index:10;
+  font-family:'Share Tech Mono','Courier New',monospace;
+  transition:all 0.15s;
+}
+#brief-toggle:hover { color:#00e5ff; border-color:#00e5ff; }
+#brief-toggle.active { color:#00e5ff; border-color:#00e5ff; text-shadow:0 0 6px #00e5ff; }
+
+#brief-panel {
+  position:fixed; bottom:178px; left:50%; transform:translateX(-50%);
+  width:min(720px, 92vw);
+  background:linear-gradient(180deg, rgba(0,16,32,0.96), rgba(0,24,48,0.96));
+  border:1px solid #00415a; border-left:3px solid #00e5ff;
+  padding:18px 22px 16px; z-index:10;
+  color:#dceaf3; font-size:14px; line-height:1.75;
+  letter-spacing:0.5px;
+  display:none;
+  box-shadow:0 0 30px rgba(0,229,255,0.18);
+  max-height:42vh; overflow-y:auto;
+}
+#brief-panel.open { display:block; }
+#brief-summary {
+  white-space:pre-wrap;
+  margin-bottom:12px;
+}
+#brief-clusters {
+  display:flex; flex-wrap:wrap; gap:6px;
+  margin-top:8px; padding-top:10px;
+  border-top:1px dashed #003855;
+}
+.cluster-pill {
+  display:inline-block;
+  padding:4px 10px;
+  font-size:12px; letter-spacing:1px;
+  color:#9be7c4; background:rgba(0,40,30,0.5);
+  border:1px solid #2a6a4e;
+  cursor:pointer;
+  transition:all 0.15s;
+}
+.cluster-pill:hover {
+  color:#00ff9f; border-color:#00ff9f;
+  text-shadow:0 0 6px #00ff9f;
+}
+.cluster-pill .cluster-count {
+  color:#5a8a72; margin-left:6px; font-size:10px;
+}
 #loading {
   position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
   color:#00e5ff; font-size:18px; letter-spacing:4px; text-shadow:0 0 12px #00e5ff;
@@ -238,6 +289,12 @@ body {
 
 <div id="center-label">─</div>
 <div id="center-sub">─</div>
+
+<div id="brief-toggle">▼ BRIEF</div>
+<div id="brief-panel">
+  <div id="brief-summary"></div>
+  <div id="brief-clusters"></div>
+</div>
 
 <div id="counter">─</div>
 <div id="updated">INITIALIZING...</div>
@@ -638,7 +695,72 @@ function updateCenterLabel() {
       grp.userData.label.material.opacity = (slotAssignment[i] === 0) ? 0.0 : 0.85;
     }
   });
+  updateBrief(g);
 }
+
+// ── BRIEF パネル ──
+function updateBrief(g) {
+  const summaryEl  = document.getElementById('brief-summary');
+  const clustersEl = document.getElementById('brief-clusters');
+  const toggleEl   = document.getElementById('brief-toggle');
+
+  const hasSummary  = !!(g.summary && g.summary.trim());
+  const hasClusters = Array.isArray(g.clusters) && g.clusters.length > 0;
+
+  if (!hasSummary && !hasClusters) {
+    toggleEl.style.display = 'none';
+    document.getElementById('brief-panel').classList.remove('open');
+    toggleEl.classList.remove('active');
+    return;
+  }
+  toggleEl.style.display = 'inline-block';
+
+  summaryEl.textContent = hasSummary ? g.summary : '';
+  summaryEl.style.display = hasSummary ? 'block' : 'none';
+
+  clustersEl.innerHTML = '';
+  if (hasClusters) {
+    // 各クラスタの代表キーワードの記事数合計でソート
+    const kwCount = {};
+    (g.nodes || []).forEach(n => { kwCount[n.text] = n.count || 0; });
+    g.clusters.forEach(c => {
+      const total = (c.keywords || []).reduce((s, k) => s + (kwCount[k] || 0), 0);
+      const pill = document.createElement('span');
+      pill.className = 'cluster-pill';
+      pill.innerHTML = `${c.name}<span class="cluster-count">${total}</span>`;
+      pill.addEventListener('click', () => focusCluster(c, g));
+      clustersEl.appendChild(pill);
+    });
+  }
+}
+
+function focusCluster(cluster, globeData) {
+  // クラスタの代表キーワード記事を集約して詳細パネルに出す
+  const kws = cluster.keywords || [];
+  const nodes = (globeData.nodes || []).filter(n => kws.includes(n.text));
+  if (!nodes.length) return;
+  // 仮想キーワード: name 表示で記事を統合
+  const articles = [];
+  const seen = new Set();
+  nodes.forEach(n => (n.articles || []).forEach(a => {
+    const k = a.url || a.title;
+    if (k && !seen.has(k)) { seen.add(k); articles.push(a); }
+  }));
+  const totalCount = nodes.reduce((s, n) => s + (n.count || 0), 0);
+  showKeywordDetail({
+    text: cluster.name,
+    count: totalCount,
+    articles: articles.slice(0, 30),
+  });
+}
+
+document.getElementById('brief-toggle').addEventListener('click', () => {
+  const panel = document.getElementById('brief-panel');
+  const toggle = document.getElementById('brief-toggle');
+  const open = panel.classList.toggle('open');
+  toggle.classList.toggle('active', open);
+  toggle.textContent = open ? '▲ BRIEF' : '▼ BRIEF';
+});
 
 function rotateRevolver(direction) {
   if (animating) {
