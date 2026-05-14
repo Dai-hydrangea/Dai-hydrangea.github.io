@@ -100,44 +100,127 @@ body {
 #counter { position:fixed; bottom:14px; left:22px; color:#446677; font-size:12px; letter-spacing:1.5px; z-index:10; }
 #updated { position:fixed; bottom:14px; right:22px; color:#446677; font-size:12px; letter-spacing:1.5px; z-index:10; }
 
-/* ─── DAILY BRIEF + cluster pills ─── */
+/* ─── DAILY BRIEF (ホログラム風 floating button) ─── */
 #brief-toggle {
-  position:fixed; bottom:142px; left:50%; transform:translateX(-50%);
-  color:#5a8aa8; font-size:12px; letter-spacing:2px;
-  background:rgba(0,8,18,0.7); border:1px solid #003855;
-  padding:6px 14px; cursor:pointer; z-index:10;
+  position:fixed; top:34%; left:50%;
+  transform:translate(-50%, -50%);
+  display:none;                 /* JS が hasSummary 判定で inline-flex に */
+  align-items:center; justify-content:center; gap:8px;
+  padding:12px 26px;
+  z-index:12;
+  cursor:pointer;
+  user-select:none; -webkit-user-select:none;
   font-family:'Share Tech Mono','Courier New',monospace;
-  transition:all 0.15s;
+  font-size:13px; letter-spacing:5px;
+  color:#00e5ff; text-shadow:0 0 10px rgba(0,229,255,0.9);
+  background:
+    radial-gradient(ellipse at center,
+      rgba(0,229,255,0.18) 0%,
+      rgba(0,40,80,0.50) 60%,
+      rgba(0,8,18,0.60) 100%);
+  border:1px solid rgba(0,229,255,0.55);
+  /* 八角形 */
+  clip-path:polygon(12% 0, 88% 0, 100% 50%, 88% 100%, 12% 100%, 0 50%);
+  /* glow + 浮遊 */
+  animation:briefBreath 3.2s ease-in-out infinite, briefFloat 5.6s ease-in-out infinite;
+  transition:color 0.2s, transform 0.2s;
 }
-#brief-toggle:hover { color:#00e5ff; border-color:#00e5ff; }
-#brief-toggle.active { color:#00e5ff; border-color:#00e5ff; text-shadow:0 0 6px #00e5ff; }
+#brief-toggle::before, #brief-toggle::after {
+  content:""; position:absolute; inset:0;
+  pointer-events:none;
+  clip-path:polygon(12% 0, 88% 0, 100% 50%, 88% 100%, 12% 100%, 0 50%);
+}
+#brief-toggle::before {
+  border:1px solid rgba(0,229,255,0.25);
+  margin:-6px; transform:scale(1.06);
+  animation:briefRingPulse 3.2s ease-in-out infinite;
+}
+#brief-toggle::after {
+  /* scanline shimmer */
+  background:linear-gradient(180deg, transparent 0%,
+    rgba(0,229,255,0.25) 48%, rgba(0,229,255,0.25) 52%, transparent 100%);
+  background-size:100% 200%; opacity:0.4;
+  animation:briefScan 4s linear infinite;
+  mix-blend-mode:screen;
+}
+#brief-toggle .brief-arrow {
+  font-size:10px; opacity:0.8;
+  display:inline-block;
+}
+#brief-toggle.active {
+  color:#00ff9f; text-shadow:0 0 10px rgba(0,255,159,0.9);
+  background:radial-gradient(ellipse at center,
+    rgba(0,255,159,0.20) 0%, rgba(0,30,20,0.50) 60%, rgba(0,8,18,0.65) 100%);
+  border-color:rgba(0,255,159,0.6);
+}
+@keyframes briefBreath {
+  0%, 100% { box-shadow:0 0 18px rgba(0,229,255,0.35), inset 0 0 12px rgba(0,229,255,0.10); }
+  50%      { box-shadow:0 0 38px rgba(0,229,255,0.70), inset 0 0 20px rgba(0,229,255,0.25); }
+}
+@keyframes briefRingPulse {
+  0%, 100% { opacity:0.4; transform:scale(1.08); }
+  50%      { opacity:0.85; transform:scale(1.16); }
+}
+@keyframes briefFloat {
+  0%, 100% { transform:translate(-50%, -50%) translateY(0); }
+  50%      { transform:translate(-50%, -50%) translateY(-6px); }
+}
+@keyframes briefScan {
+  0%   { background-position:0% -100%; }
+  100% { background-position:0%  200%; }
+}
 
+/* ─── BRIEF panel: 下からふわっと slide-up ─── */
 #brief-panel {
-  position:fixed; bottom:178px; left:50%; transform:translateX(-50%);
-  width:min(720px, 92vw);
-  background:linear-gradient(180deg, rgba(0,16,32,0.96), rgba(0,24,48,0.96));
-  border:1px solid #00415a; border-left:3px solid #00e5ff;
-  padding:18px 22px 16px; z-index:10;
-  color:#dceaf3; font-size:14px; line-height:1.75;
+  position:fixed; left:50%; bottom:0;
+  transform:translateX(-50%) translateY(105%);
+  width:min(760px, 94vw);
+  background:linear-gradient(180deg, rgba(0,16,32,0.97), rgba(0,8,18,0.98));
+  backdrop-filter:blur(6px);
+  border:1px solid #00415a;
+  border-top:2px solid #00e5ff;
+  border-bottom:none;
+  padding:28px 30px 34px;
+  z-index:25;
+  color:#dceaf3;
+  font-size:14.5px; line-height:1.9;
   letter-spacing:0.5px;
-  display:none;
-  box-shadow:0 0 30px rgba(0,229,255,0.18);
-  max-height:42vh; overflow-y:auto;
+  box-shadow:0 -10px 50px rgba(0,229,255,0.30);
+  max-height:55vh; overflow-y:auto;
+  opacity:0; pointer-events:none;
+  transition:transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+             opacity 0.30s ease-out;
 }
-#brief-panel.open { display:block; }
-#brief-summary {
-  white-space:pre-wrap;
-  margin-bottom:12px;
+#brief-panel.open {
+  transform:translateX(-50%) translateY(0);
+  opacity:1; pointer-events:auto;
 }
+#brief-panel-header {
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:14px; padding-bottom:10px;
+  border-bottom:1px dashed #00415a;
+}
+#brief-panel-title {
+  font-size:13px; letter-spacing:5px; color:#00e5ff;
+  text-shadow:0 0 8px rgba(0,229,255,0.7);
+}
+#brief-panel-close {
+  cursor:pointer; color:#5a8aa8; font-size:12px;
+  letter-spacing:2px; padding:4px 10px;
+  border:1px solid #003855; background:rgba(0,8,18,0.5);
+  font-family:inherit;
+}
+#brief-panel-close:hover { color:#00e5ff; border-color:#00e5ff; }
+#brief-summary { white-space:pre-wrap; margin-bottom:14px; }
 #brief-clusters {
-  display:flex; flex-wrap:wrap; gap:6px;
-  margin-top:8px; padding-top:10px;
+  display:flex; flex-wrap:wrap; gap:7px;
+  margin-top:8px; padding-top:14px;
   border-top:1px dashed #003855;
 }
 .cluster-pill {
   display:inline-block;
-  padding:4px 10px;
-  font-size:12px; letter-spacing:1px;
+  padding:6px 12px;
+  font-size:12.5px; letter-spacing:1px;
   color:#9be7c4; background:rgba(0,40,30,0.5);
   border:1px solid #2a6a4e;
   cursor:pointer;
@@ -149,6 +232,12 @@ body {
 }
 .cluster-pill .cluster-count {
   color:#5a8a72; margin-left:6px; font-size:10px;
+}
+
+/* iPhone 狭幅 */
+@media (max-width: 480px) {
+  #brief-toggle { top:30%; padding:10px 20px; font-size:12px; letter-spacing:4px; }
+  #brief-panel { padding:22px 20px 28px; font-size:14px; }
 }
 #loading {
   position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
@@ -290,8 +379,15 @@ body {
 <div id="center-label">─</div>
 <div id="center-sub">─</div>
 
-<div id="brief-toggle">▼ BRIEF</div>
+<div id="brief-toggle">
+  <span class="brief-label">まとめ</span>
+  <span class="brief-arrow">▼</span>
+</div>
 <div id="brief-panel">
+  <div id="brief-panel-header">
+    <div id="brief-panel-title">まとめ ─ DAILY BRIEF</div>
+    <button id="brief-panel-close">CLOSE ✕</button>
+  </div>
   <div id="brief-summary"></div>
   <div id="brief-clusters"></div>
 </div>
@@ -713,7 +809,7 @@ function updateBrief(g) {
     toggleEl.classList.remove('active');
     return;
   }
-  toggleEl.style.display = 'inline-block';
+  toggleEl.style.display = 'inline-flex';
 
   summaryEl.textContent = hasSummary ? g.summary : '';
   summaryEl.style.display = hasSummary ? 'block' : 'none';
@@ -754,13 +850,23 @@ function focusCluster(cluster, globeData) {
   });
 }
 
-document.getElementById('brief-toggle').addEventListener('click', () => {
-  const panel = document.getElementById('brief-panel');
+function setBriefOpen(open) {
+  const panel  = document.getElementById('brief-panel');
   const toggle = document.getElementById('brief-toggle');
-  const open = panel.classList.toggle('open');
+  const arrow  = toggle.querySelector('.brief-arrow');
+  panel.classList.toggle('open', open);
   toggle.classList.toggle('active', open);
-  toggle.textContent = open ? '▲ BRIEF' : '▼ BRIEF';
+  if (arrow) arrow.textContent = open ? '▲' : '▼';
+}
+document.getElementById('brief-toggle').addEventListener('click', () => {
+  const isOpen = document.getElementById('brief-panel').classList.contains('open');
+  setBriefOpen(!isOpen);
 });
+document.getElementById('brief-panel-close').addEventListener('click', () => setBriefOpen(false));
+// 球エリアをタップしたら閉じる (panel 内のタップは閉じない)
+renderer.domElement.addEventListener('pointerdown', () => {
+  if (document.getElementById('brief-panel').classList.contains('open')) setBriefOpen(false);
+}, true);
 
 function rotateRevolver(direction) {
   if (animating) {
