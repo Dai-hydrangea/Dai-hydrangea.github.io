@@ -919,9 +919,13 @@ function updateCenterLabel() {
   document.getElementById('center-label').textContent = g.label;
   document.getElementById('center-sub').textContent =
     `${g.node_count} KEYWORDS  /  ${g.total_articles} ARTICLES`;
-  // 主役 globe のラベルは非表示 (HUD で表示してるので重複)
+  // FLOW 中は全ラベルを 出しっぱなし (main 切替の点滅を防ぐ)
+  // 非 FLOW (リボルバー) は main だけ HUD と重複するので非表示
   globesList.forEach((grp, i) => {
-    if (grp.userData.label) {
+    if (!grp.userData.label) return;
+    if (autoFlow) {
+      grp.userData.label.material.opacity = 0.85;
+    } else {
       grp.userData.label.material.opacity = (slotAssignment[i] === 0) ? 0.0 : 0.85;
     }
   });
@@ -1211,6 +1215,12 @@ function setFlow(on) {
   autoFlow = !!on;
   btnFlow.classList.toggle('active', autoFlow);
   btnFlow.textContent = autoFlow ? '■ FLOW' : '▶ FLOW';
+  if (autoFlow) {
+    // FLOW 開始時: 全 globe のラベルを 出しっぱなしに
+    globesList.forEach(grp => {
+      if (grp.userData.label) grp.userData.label.material.opacity = 0.85;
+    });
+  }
   if (!autoFlow) {
     // 保存していた slotAssignment を復元 → スナップで戻す
     if (savedSlotAssignment) {
