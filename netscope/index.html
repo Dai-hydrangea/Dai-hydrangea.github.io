@@ -442,9 +442,9 @@ body {
   <div class="app-mode"        data-app="search">🔍 SEARCH</div>
 </div>
 
-<div id="tabs">
+<!-- CATEGORY / SOURCE タブは撤廃 (カテゴリ表示のみ) -->
+<div id="tabs" style="display:none;">
   <div class="tab active" data-mode="category">CATEGORY</div>
-  <div class="tab" data-mode="source">SOURCE</div>
 </div>
 
 <!-- ⭐ SEARCH モード時のみ表示 -->
@@ -1939,46 +1939,221 @@ async function ssSearchGitHub(query) {
   }
 }
 
+// ⭐ Met Museum (メトロポリタン美術館、 焼き物 / 美術品、 CORS OK、 認証不要)
+async function ssSearchMetMuseum(query) {
+  try {
+    const r = await fetch(`https://collectionapi.metmuseum.org/public/collection/v1/search?q=${encodeURIComponent(query)}&hasImages=true`);
+    const data = await r.json();
+    const ids = (data.objectIDs || []).slice(0, 15);
+    if (!ids.length) return [];
+    const objs = await Promise.all(ids.map(id =>
+      fetch(`https://collectionapi.metmuseum.org/public/collection/v1/objects/${id}`)
+        .then(r => r.ok ? r.json() : null).catch(() => null)
+    ));
+    return objs.filter(o => o && o.title).map(o => ({
+      title: o.title,
+      summary: [o.culture, o.medium, o.objectDate].filter(Boolean).join(' · ').slice(0, 200),
+      url: o.objectURL || '',
+      source_name: 'Met Museum',
+    }));
+  } catch (e) {
+    console.warn('Met Museum failed', e);
+    return [];
+  }
+}
+
+// ⭐ Crossref (DOI metadata、 学術論文、 CORS OK、 認証不要)
+async function ssSearchCrossref(query) {
+  try {
+    const r = await fetch(`https://api.crossref.org/works?query=${encodeURIComponent(query)}&rows=25`);
+    const data = await r.json();
+    return (data?.message?.items || []).map(it => ({
+      title: (it.title || [''])[0],
+      summary: `${(it.author||[]).slice(0,2).map(a=>a.family||a.name).join(', ')} (${it.created?.['date-parts']?.[0]?.[0] || '?'})`,
+      url: it.URL || (it.DOI ? `https://doi.org/${it.DOI}` : ''),
+      source_name: 'Crossref',
+    })).filter(x => x.title);
+  } catch (e) {
+    console.warn('Crossref failed', e);
+    return [];
+  }
+}
+
+// ⭐ DBLP (CS 出版物、 CORS OK)
+async function ssSearchDBLP(query) {
+  try {
+    const r = await fetch(`https://dblp.org/search/publ/api?q=${encodeURIComponent(query)}&format=json&h=20`);
+    const data = await r.json();
+    const hits = data?.result?.hits?.hit || [];
+    return hits.map(h => ({
+      title: h.info?.title || '',
+      summary: `${h.info?.year || '?'} · ${[].concat(h.info?.authors?.author || []).slice(0,2).map(a=>typeof a==='string'?a:a.text||'').join(', ')}`,
+      url: h.info?.ee || h.info?.url || '',
+      source_name: 'DBLP',
+    })).filter(x => x.title);
+  } catch (e) {
+    console.warn('DBLP failed', e);
+    return [];
+  }
+}
+
+// ⭐ Project Gutenberg (Gutendex API、 古典書籍、 public domain、 CORS OK)
+async function ssSearchGutendex(query) {
+  try {
+    const r = await fetch(`https://gutendex.com/books?search=${encodeURIComponent(query)}`);
+    const data = await r.json();
+    return (data.results || []).slice(0, 25).map(b => ({
+      title: b.title || '',
+      summary: (b.authors || []).map(a => a.name).join(', '),
+      url: b.formats?.['text/html'] || `https://www.gutenberg.org/ebooks/${b.id}`,
+      source_name: 'Gutenberg',
+    })).filter(x => x.title);
+  } catch (e) {
+    console.warn('Gutendex failed', e);
+    return [];
+  }
+}
+
+// ⭐ Wiktionary (辞書、 多言語)
+async function ssSearchWiktionary(query, lang) {
+  const targets = (lang === 'ja') ? ['ja', 'en'] : ['en', 'ja'];
+  const all = await Promise.all(targets.map(async L => {
+    const host = `${L}.wiktionary.org`;
+    try {
+      const r = await fetch(`https://${host}/w/api.php?action=opensearch&search=${encodeURIComponent(query)}&limit=15&format=json&origin=*`);
+      const data = await r.json();
+      const titles = data[1] || [];
+      const urls = data[3] || [];
+      return titles.map((t, i) => ({
+        title: t, summary: '',
+        url: urls[i] || `https://${host}/wiki/${encodeURIComponent(t)}`,
+        source_name: `Wiktionary ${L.toUpperCase()}`,
+      }));
+    } catch { return []; }
+  }));
+  return all.flat();
+}
+
+// ⭐ Wikiquote (名言、 多言語)
+async function ssSearchWikiquote(query, lang) {
+  const targets = (lang === 'ja') ? ['ja', 'en'] : ['en', 'ja'];
+  const all = await Promise.all(targets.map(async L => {
+    const host = `${L}.wikiquote.org`;
+    try {
+      const r = await fetch(`https://${host}/w/api.php?action=opensearch&search=${encodeURIComponent(query)}&limit=15&format=json&origin=*`);
+      const data = await r.json();
+      const titles = data[1] || [];
+      const urls = data[3] || [];
+      return titles.map((t, i) => ({
+        title: t, summary: '',
+        url: urls[i] || `https://${host}/wiki/${encodeURIComponent(t)}`,
+        source_name: `Wikiquote ${L.toUpperCase()}`,
+      }));
+    } catch { return []; }
+  }));
+  return all.flat();
+}
+
+// ⭐ Internet Archive (デジタルアーカイブ、 CORS OK)
+async function ssSearchInternetArchive(query) {
+  const fields = ['identifier','title','creator','date','description'].map(f=>`fl[]=${f}`).join('&');
+  const url = `https://archive.org/advancedsearch.php?q=${encodeURIComponent(query)}&${fields}&rows=30&output=json`;
+  try {
+    const r = await fetch(url);
+    const data = await r.json();
+    const docs = data?.response?.docs || [];
+    return docs.map(d => ({
+      title: d.title || '',
+      summary: [d.creator, d.date].filter(Boolean).join(' · ').slice(0, 200),
+      url: `https://archive.org/details/${d.identifier}`,
+      source_name: 'Internet Archive',
+    })).filter(x => x.title);
+  } catch (e) {
+    console.warn('IA failed', e);
+    return [];
+  }
+}
+
+// ⭐ Wikibooks (オープン教科書、 多言語)
+async function ssSearchWikibooks(query, lang) {
+  const targets = (lang === 'ja') ? ['ja', 'en'] : ['en'];
+  const all = await Promise.all(targets.map(async L => {
+    const host = `${L}.wikibooks.org`;
+    try {
+      const r = await fetch(`https://${host}/w/api.php?action=opensearch&search=${encodeURIComponent(query)}&limit=15&format=json&origin=*`);
+      const data = await r.json();
+      const titles = data[1] || [];
+      const urls = data[3] || [];
+      return titles.map((t, i) => ({
+        title: t, summary: '',
+        url: urls[i] || `https://${host}/wiki/${encodeURIComponent(t)}`,
+        source_name: `Wikibooks ${L.toUpperCase()}`,
+      }));
+    } catch { return []; }
+  }));
+  return all.flat();
+}
+
 async function ssExecuteSearch(query) {
   query = (query || '').trim();
   if (!query) return;
   const status = document.getElementById('search-status');
   const btn    = document.getElementById('search-go');
   btn.disabled = true;
-  status.textContent = '9 ソース並列検索中...';
+  status.textContent = '15 ソース並列検索中...';
   const lang = ssDetectQueryLang(query);
   searchActiveQuery = query;
   try {
-    const [wiki, hn, wnews, openalex, arxiv, github, stack, books, semschol] = await Promise.all([
-      ssSearchWikipedia(query, lang),
-      ssSearchHackerNews(query),
-      ssSearchWikinews(query),
-      ssSearchOpenAlex(query),
-      ssSearchArXiv(query),
-      ssSearchGitHub(query),
-      ssSearchStackExchange(query),
-      ssSearchOpenLibrary(query),
-      ssSearchSemanticScholar(query),
+    const results = await Promise.all([
+      ssSearchWikipedia(query, lang),       // 0  REFERENCE
+      ssSearchWiktionary(query, lang),       // 1  REFERENCE
+      ssSearchWikiquote(query, lang),        // 2  REFERENCE
+      ssSearchWikibooks(query, lang),        // 3  REFERENCE
+      ssSearchWikinews(query),               // 4  NEWS
+      ssSearchHackerNews(query),             // 5  DISCUSSION
+      ssSearchStackExchange(query),          // 6  DISCUSSION
+      ssSearchOpenAlex(query),               // 7  ACADEMIA
+      ssSearchArXiv(query),                  // 8  ACADEMIA
+      ssSearchSemanticScholar(query),        // 9  ACADEMIA
+      ssSearchCrossref(query),               // 10 ACADEMIA
+      ssSearchDBLP(query),                   // 11 ACADEMIA
+      ssSearchGitHub(query),                 // 12 CODE
+      ssSearchOpenLibrary(query),            // 13 BOOKS
+      ssSearchGutendex(query),               // 14 BOOKS
+      ssSearchMetMuseum(query),              // 15 ART (焼き物)
+      ssSearchInternetArchive(query),        // 16 ARCHIVE
     ]);
+    const [wiki, wikt, wquot, wbook, wnews, hn, stack, openalex, arxiv, semschol, crossref, dblp, github, books, gutendex, met, ia] = results;
+    // per-source diagnostics
     console.log('[Search] hits per source:', {
-      wikipedia: wiki.length, hackerNews: hn.length, wikinews: wnews.length,
-      openAlex: openalex.length, arxiv: arxiv.length, github: github.length,
-      stackExchange: stack.length, openLibrary: books.length, semanticScholar: semschol.length,
+      wikipedia: wiki.length, wiktionary: wikt.length, wikiquote: wquot.length, wikibooks: wbook.length,
+      wikinews: wnews.length, hackerNews: hn.length, stackExchange: stack.length,
+      openAlex: openalex.length, arxiv: arxiv.length, semanticScholar: semschol.length,
+      crossref: crossref.length, dblp: dblp.length, github: github.length,
+      openLibrary: books.length, gutenberg: gutendex.length, metMuseum: met.length, internetArchive: ia.length,
     });
-    const sourceDefs = [
-      { id:'wikipedia',  label:'WIKIPEDIA',   color:'#00d4ff', articles: wiki },
-      { id:'wikinews',   label:'WIKINEWS',    color:'#9be7c4', articles: wnews },
-      { id:'hackernews', label:'HACKER NEWS', color:'#ff851b', articles: hn },
-      { id:'openalex',   label:'ACADEMIA',    color:'#b88aff', articles: openalex },
-      { id:'arxiv',      label:'arXiv',       color:'#ffdc00', articles: arxiv },
-      { id:'github',     label:'GITHUB',      color:'#ff7eb9', articles: github },
-      { id:'stackex',    label:'STACK EXCHANGE', color:'#7fdbff', articles: stack },
-      { id:'books',      label:'OPEN LIBRARY',color:'#ffb84d', articles: books },
-      { id:'semschol',   label:'SEMANTIC SCHOLAR', color:'#d473ff', articles: semschol },
+    // ⭐ カテゴリで統合 (ソースが多すぎないよう 7 球儀に纏める)
+    const categoryDefs = [
+      { id:'reference',  label:'REFERENCE',  color:'#00d4ff',
+        articles: [...wiki, ...wikt, ...wquot, ...wbook] },
+      { id:'news',       label:'NEWS',       color:'#9be7c4',
+        articles: wnews },
+      { id:'discussion', label:'DISCUSSION', color:'#ff851b',
+        articles: [...hn, ...stack] },
+      { id:'academia',   label:'ACADEMIA',   color:'#b88aff',
+        articles: [...openalex, ...arxiv, ...semschol, ...crossref, ...dblp] },
+      { id:'code',       label:'CODE',       color:'#ff7eb9',
+        articles: github },
+      { id:'books',      label:'BOOKS',      color:'#ffb84d',
+        articles: [...books, ...gutendex] },
+      { id:'art',        label:'ART',        color:'#ffd166',
+        articles: met },
+      { id:'archive',    label:'ARCHIVE',    color:'#a8e6cf',
+        articles: ia },
     ];
     const globes = [];
-    for (const sd of sourceDefs) {
-      const g = ssBuildGlobeData(sd.id, sd.label, sd.color, sd.articles);
+    for (const cd of categoryDefs) {
+      const g = ssBuildGlobeData(cd.id, cd.label, cd.color, cd.articles);
       if (g) globes.push(g);
     }
     searchGlobesData = globes;
@@ -1986,17 +2161,16 @@ async function ssExecuteSearch(query) {
       globesData = searchGlobesData;
       layoutRevolver();
     }
-    const total = sourceDefs.reduce((s, sd) => s + sd.articles.length, 0);
-    // per-source の hit 数を簡潔に
-    const breakdown = sourceDefs
-      .filter(sd => sd.articles.length > 0)
-      .map(sd => `${sd.label.split(' ')[0]}:${sd.articles.length}`)
+    const total = categoryDefs.reduce((s, cd) => s + cd.articles.length, 0);
+    const breakdown = categoryDefs
+      .filter(cd => cd.articles.length > 0)
+      .map(cd => `${cd.label}:${cd.articles.length}`)
       .join(' / ');
     status.textContent = globes.length
-      ? `${globes.length} 球 / ${total} hits (${breakdown})`
-      : `⚠ 全ソース 0 件 (CORS or rate-limit の可能性、 console 参照)`;
+      ? `${globes.length} カテゴリ / ${total} hits (${breakdown})`
+      : `⚠ 全ソース 0 件 (console 参照)`;
     document.getElementById('counter').textContent =
-      `GLOBES: ${globes.length}  /  KEYWORDS: ${globes.reduce((s,g)=>s+g.node_count,0)}  /  HITS: ${total}`;
+      `CATEGORIES: ${globes.length}  /  KEYWORDS: ${globes.reduce((s,g)=>s+g.node_count,0)}  /  HITS: ${total}`;
   } catch (e) {
     console.error('search failed', e);
     status.textContent = '⚠ 検索失敗 (console 参照)';
