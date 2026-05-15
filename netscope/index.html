@@ -1431,53 +1431,48 @@ function animate(now) {
   controls.update();
   updateRevolverAnim(dt);
 
-  // ⭐ FLOW モード: おにぎり型 (前=平らな base、 後=広がる apex)
+  // ⭐ FLOW モード: 寿司レーン式 (前=4 球 一列、 後=5 球 小さく下に、 重ならない)
   if (autoFlow && globesList.length && !animating) {
-    flowAngle += dt / FLOW_PERIOD_SEC;          // [0, 1) で 1 周
+    flowAngle += dt / FLOW_PERIOD_SEC;
     if (flowAngle > 1) flowAngle -= 1;
 
     const N = globesList.length;
-    // ── onigiri 寸法 ──
-    const W = 350;            // 前面 base 半分幅 (camera FOV に収まる)
-    const D = 1300;           // 背面 apex 深さ
-    const FLOW_MAIN = MAIN_SCALE * 0.75;        // main を 25% 縮小 (重なり対策)
-    const FLOW_SAT  = SAT_SCALE;
-    const sideLen = Math.sqrt(W * W + D * D);
-    const total   = 2 * W + 2 * sideLen;
+    const W_F = 750;
+    const W_B = 900;
+    const D   = 1500;
+    const Y   = 200;
+    const FRONT_FRAC = 0.39;
+    const BACK_FRAC  = 0.50;
+    const END_FRAC   = 0.055;
+    const FRONT_PEAK = 1.10;   // 前列中央の最大 scale
+    const BACK_S     = 0.40;
 
     let bestIdx = 0, bestSq = Infinity;
     globesList.forEach((g, i) => {
       const s = ((i / N) + flowAngle) % 1;
-      const sn = s * total;
-      let x, z;
-      if (sn < 2 * W) {
-        // 前面 base: A(-W, 0) → B(+W, 0)
-        x = -W + sn;
-        z = 0;
-      } else if (sn < 2 * W + sideLen) {
-        // 右側面 BC: B(+W, 0) → C(0, -D)
-        const u = (sn - 2 * W) / sideLen;
-        x =  W * (1 - u);
-        z = -D * u;
+      let x, y, z;
+      if (s < FRONT_FRAC) {
+        const t = s / FRONT_FRAC;
+        x = -W_F + 2 * W_F * t; y = 0; z = 0;
+      } else if (s < FRONT_FRAC + END_FRAC) {
+        const t = (s - FRONT_FRAC) / END_FRAC;
+        x =  W_F + (W_B - W_F) * t; y = -Y * t; z = -D * t;
+      } else if (s < FRONT_FRAC + END_FRAC + BACK_FRAC) {
+        const t = (s - FRONT_FRAC - END_FRAC) / BACK_FRAC;
+        x =  W_B - 2 * W_B * t; y = -Y; z = -D;
       } else {
-        // 左側面 CA: C(0, -D) → A(-W, 0)
-        const u = (sn - 2 * W - sideLen) / sideLen;
-        x = -W * u;
-        z = -D * (1 - u);
+        const t = (s - FRONT_FRAC - END_FRAC - BACK_FRAC) / END_FRAC;
+        x = -W_B + (W_B - W_F) * t; y = -Y * (1 - t); z = -D * (1 - t);
       }
-      g.position.x = x;
-      g.position.y = 0;
-      g.position.z = z;
-
-      // scale: 原点 (0, 0) を spotlight 中心に Gaussian 減衰
-      const xN = x / W;
-      const zN = z / D;
-      const ww = Math.exp(-1.4 * (xN * xN + 2 * zN * zN));
-      const scale = FLOW_SAT + (FLOW_MAIN - FLOW_SAT) * ww;
+      g.position.set(x, y, z);
+      // スケール: 前 line 上は spotlight (中央が PEAK、 両端は小さく → 4 球並んでも重ならない)
+      const depthFrac = Math.min(1, Math.max(0, (-z + Math.abs(y)) / (D + Y)));
+      const xN = x / W_F;
+      const wx = Math.max(0.5, 1 - xN * xN * 0.5);  // 中央 1.0、 両端 0.5
+      const frontScale = FRONT_PEAK * wx;
+      const scale = BACK_S + (frontScale - BACK_S) * (1 - depthFrac);
       g.scale.setScalar(scale);
-
-      // 「現在の主役」 = 原点に最も近い球
-      const sq = x * x + z * z;
+      const sq = x * x + z * z + y * y;
       if (sq < bestSq) { bestSq = sq; bestIdx = i; }
     });
     if (flowMainIdx !== bestIdx) {
