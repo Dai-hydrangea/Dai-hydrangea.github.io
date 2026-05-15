@@ -143,8 +143,8 @@ body {
   box-shadow:0 -10px 50px rgba(0,229,255,0.30);
   max-height:55vh; overflow-y:auto;
   opacity:0; pointer-events:none;
-  transition:transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
-             opacity 0.30s ease-out;
+  transition:transform 0.70s cubic-bezier(0.16, 1, 0.3, 1),
+             opacity 0.55s ease-out;
 }
 #brief-panel.open {
   transform:translateX(-50%) translateY(0);
@@ -161,15 +161,6 @@ body {
 #brief-panel-title {
   font-size:14px; letter-spacing:5px; color:#00e5ff;
   text-shadow:0 0 8px rgba(0,229,255,0.7);
-  transition:opacity 0.28s ease-out;
-}
-#brief-summary, #brief-clusters {
-  transition:opacity 0.28s ease-out;
-}
-#brief-panel-title.fading-content,
-#brief-summary.fading-content,
-#brief-clusters.fading-content {
-  opacity:0;
 }
 #brief-panel-close {
   cursor:pointer; color:#5a8aa8; font-size:12px;
@@ -990,28 +981,26 @@ function updateBrief(g) {
     }
   };
 
-  // パネル開いていて、 main 切替の時のみ crossfade
+  // パネル開いていて、 main 切替の時のみ「下に引っ込めて、 入替後 また出す」
   const isOpen = panel.classList.contains('open');
   const idChanged = lastBriefGlobeId !== null && lastBriefGlobeId !== g.id;
   lastBriefGlobeId = g.id;
 
   if (isOpen && idChanged) {
     if (briefFadeTimer) clearTimeout(briefFadeTimer);
-    titleEl?.classList.add('fading-content');
-    summaryEl.classList.add('fading-content');
-    clustersEl.classList.add('fading-content');
+    // ① パネルを 下へ slide down (0.70s transition)
+    panel.classList.remove('open');
     briefFadeTimer = setTimeout(() => {
+      // ② パネル消えてる間に content 差し替え
       applySwap();
-      titleEl?.classList.remove('fading-content');
-      summaryEl.classList.remove('fading-content');
-      clustersEl.classList.remove('fading-content');
-      briefFadeTimer = null;
-    }, 230);
+      // ③ 少し間を置いてから再 slide up
+      setTimeout(() => {
+        panel.classList.add('open');
+        briefFadeTimer = null;
+      }, 120);
+    }, 720);
   } else {
     if (briefFadeTimer) { clearTimeout(briefFadeTimer); briefFadeTimer = null; }
-    titleEl?.classList.remove('fading-content');
-    summaryEl.classList.remove('fading-content');
-    clustersEl.classList.remove('fading-content');
     applySwap();
   }
 }
