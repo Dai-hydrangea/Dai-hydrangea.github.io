@@ -403,7 +403,7 @@ body {
 
 <div id="ctrl-buttons">
   <div class="ctrl-btn" id="btn-refresh" title="JSON を再読込">↻ RELOAD</div>
-  <div class="ctrl-btn" id="btn-auto"    title="30 秒ごとに主役球を自動切替">▶ AUTO</div>
+  <div class="ctrl-btn" id="btn-auto"    title="メリーゴーランド式に球を滑らかに自動回転 (一周 90 秒)">▶ FLOW</div>
 </div>
 
 <button id="settings-gear" aria-label="settings"></button>
@@ -1152,22 +1152,31 @@ btnRefresh.addEventListener('click', async () => {
   }
 });
 
-// ── AUTO ボタン (30 秒ごとにリボルバーを 1 つ進める) ──
-const AUTO_INTERVAL_MS = 30000;
-let autoTimer = null;
+// ── FLOW ボタン (メリーゴーランド式: 円周上を等速で滑らかに自転) ──
+//   一周 = FLOW_PERIOD_SEC 秒。 9 球なら 1 球あたり 90/9 ≒ 10 秒 で前を通過。
+const FLOW_PERIOD_SEC = 90;
+let autoFlow = false;
+let flowAngle = 0;
+let flowMainIdx = -1;
 const btnAuto = document.getElementById('btn-auto');
 function setAuto(on) {
-  if (on) {
-    btnAuto.classList.add('active');
-    btnAuto.textContent = '■ AUTO';
-    autoTimer = setInterval(() => rotateRevolver(+1), AUTO_INTERVAL_MS);
-  } else {
-    btnAuto.classList.remove('active');
-    btnAuto.textContent = '▶ AUTO';
-    if (autoTimer) { clearInterval(autoTimer); autoTimer = null; }
+  autoFlow = !!on;
+  btnAuto.classList.toggle('active', autoFlow);
+  btnAuto.textContent = autoFlow ? '■ FLOW' : '▶ FLOW';
+  if (!autoFlow) {
+    // 通常レイアウト (リボルバー) へスナップ復帰
+    if (slots.length && globesList.length) {
+      globesList.forEach((g, i) => {
+        const slot = slots[slotAssignment[i]];
+        if (!slot) return;
+        g.position.copy(slot.pos);
+        g.scale.setScalar(slot.scale);
+      });
+    }
+    flowMainIdx = -1;
   }
 }
-btnAuto.addEventListener('click', () => setAuto(autoTimer === null));
+btnAuto.addEventListener('click', () => setAuto(!autoFlow));
 
 // ── 設定ギア (iPhone): tabs + ctrl-buttons を popup で表示 ──
 const gearEl  = document.getElementById('settings-gear');
@@ -1390,7 +1399,39 @@ function animate(now) {
   lastT = now;
   controls.update();
   updateRevolverAnim(dt);
-  // 主役 globe を ゆっくり自転 (2/3 に減速: 0.10→0.067、 0.25→0.167)
+
+  // ⭐ FLOW モード: 円周上を等速で滑らかに自動移動
+  if (autoFlow && globesList.length && !animating) {
+    flowAngle += dt * (2 * Math.PI / FLOW_PERIOD_SEC);
+    if (flowAngle > 2 * Math.PI) flowAngle -= 2 * Math.PI;
+    const N = globesList.length;
+    const r = SAT_RING_RADIUS;
+    let bestIdx = 0, bestDist = Infinity;
+    globesList.forEach((g, i) => {
+      // 各球は 2π/N の位相差で均等配置
+      const baseAngle = (i / N) * 2 * Math.PI;
+      let t = (baseAngle - flowAngle) % (2 * Math.PI);
+      if (t < -Math.PI) t += 2 * Math.PI;
+      if (t >  Math.PI) t -= 2 * Math.PI;
+      // 円周 (水平リング): t=0 が前面、 t=±π が背面
+      g.position.x = r * Math.sin(t);
+      g.position.y = 0;
+      g.position.z = r * (Math.cos(t) - 1);    // 0 (front) → -2r (back)
+      // scale: 前面で最大、 背面で最小 (cosine 補間)
+      const w = (1 + Math.cos(t)) / 2;
+      const scale = SAT_SCALE + (MAIN_SCALE - SAT_SCALE) * w;
+      g.scale.setScalar(scale);
+      if (Math.abs(t) < bestDist) { bestDist = Math.abs(t); bestIdx = i; }
+    });
+    // 「現在の主役」 が切り替わったら slotAssignment を更新して center label 等を再描画
+    if (flowMainIdx !== bestIdx) {
+      flowMainIdx = bestIdx;
+      globesList.forEach((_, i) => { slotAssignment[i] = (i === bestIdx) ? 0 : 1; });
+      updateCenterLabel();
+    }
+  }
+
+  // 自転 (主役は ゆっくり、 衛星は速め)
   globesList.forEach((g, i) => {
     const isMain = (slotAssignment[i] === 0);
     g.rotation.y += dt * (isMain ? 0.067 : 0.167);
