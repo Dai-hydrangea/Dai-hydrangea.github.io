@@ -403,7 +403,8 @@ body {
 
 <div id="ctrl-buttons">
   <div class="ctrl-btn" id="btn-refresh" title="JSON を再読込">↻ RELOAD</div>
-  <div class="ctrl-btn" id="btn-auto"    title="メリーゴーランド式に球を滑らかに自動回転 (一周 90 秒)">▶ FLOW</div>
+  <div class="ctrl-btn" id="btn-auto"    title="30 秒ごとに主役球を 1 つ進める (snap)">▶ AUTO</div>
+  <div class="ctrl-btn" id="btn-flow"    title="メリーゴーランド式に球を滑らかに自動回転 (一周 180 秒)">▶ FLOW</div>
 </div>
 
 <button id="settings-gear" aria-label="settings"></button>
@@ -1152,19 +1153,36 @@ btnRefresh.addEventListener('click', async () => {
   }
 });
 
+// ── AUTO ボタン (30 秒ごとにスナップ rotate) ──
+const AUTO_INTERVAL_MS = 30000;
+let autoTimer = null;
+const btnAuto = document.getElementById('btn-auto');
+function setAuto(on) {
+  if (on) {
+    setFlow(false);                            // mutex
+    btnAuto.classList.add('active');
+    btnAuto.textContent = '■ AUTO';
+    autoTimer = setInterval(() => rotateRevolver(+1), AUTO_INTERVAL_MS);
+  } else {
+    btnAuto.classList.remove('active');
+    btnAuto.textContent = '▶ AUTO';
+    if (autoTimer) { clearInterval(autoTimer); autoTimer = null; }
+  }
+}
+btnAuto.addEventListener('click', () => setAuto(autoTimer === null));
+
 // ── FLOW ボタン (メリーゴーランド式: 円周上を等速で滑らかに自転) ──
-//   一周 = FLOW_PERIOD_SEC 秒。 9 球なら 1 球あたり 90/9 ≒ 10 秒 で前を通過。
-const FLOW_PERIOD_SEC = 90;
+const FLOW_PERIOD_SEC = 180;                   // 一周 180 秒 (slow)
 let autoFlow = false;
 let flowAngle = 0;
 let flowMainIdx = -1;
-const btnAuto = document.getElementById('btn-auto');
-function setAuto(on) {
+const btnFlow = document.getElementById('btn-flow');
+function setFlow(on) {
+  if (on) setAuto(false);                      // mutex
   autoFlow = !!on;
-  btnAuto.classList.toggle('active', autoFlow);
-  btnAuto.textContent = autoFlow ? '■ FLOW' : '▶ FLOW';
+  btnFlow.classList.toggle('active', autoFlow);
+  btnFlow.textContent = autoFlow ? '■ FLOW' : '▶ FLOW';
   if (!autoFlow) {
-    // 通常レイアウト (リボルバー) へスナップ復帰
     if (slots.length && globesList.length) {
       globesList.forEach((g, i) => {
         const slot = slots[slotAssignment[i]];
@@ -1176,7 +1194,7 @@ function setAuto(on) {
     flowMainIdx = -1;
   }
 }
-btnAuto.addEventListener('click', () => setAuto(!autoFlow));
+btnFlow.addEventListener('click', () => setFlow(!autoFlow));
 
 // ── 設定ギア (iPhone): tabs + ctrl-buttons を popup で表示 ──
 const gearEl  = document.getElementById('settings-gear');
@@ -1405,21 +1423,21 @@ function animate(now) {
     flowAngle += dt * (2 * Math.PI / FLOW_PERIOD_SEC);
     if (flowAngle > 2 * Math.PI) flowAngle -= 2 * Math.PI;
     const N = globesList.length;
-    const r = SAT_RING_RADIUS;
+    const r = SAT_RING_RADIUS * 1.15;          // ⭐ リング半径を広げて重なり防止
     let bestIdx = 0, bestDist = Infinity;
     globesList.forEach((g, i) => {
-      // 各球は 2π/N の位相差で均等配置
       const baseAngle = (i / N) * 2 * Math.PI;
       let t = (baseAngle - flowAngle) % (2 * Math.PI);
       if (t < -Math.PI) t += 2 * Math.PI;
       if (t >  Math.PI) t -= 2 * Math.PI;
-      // 円周 (水平リング): t=0 が前面、 t=±π が背面
       g.position.x = r * Math.sin(t);
       g.position.y = 0;
-      g.position.z = r * (Math.cos(t) - 1);    // 0 (front) → -2r (back)
-      // scale: 前面で最大、 背面で最小 (cosine 補間)
-      const w = (1 + Math.cos(t)) / 2;
-      const scale = SAT_SCALE + (MAIN_SCALE - SAT_SCALE) * w;
+      g.position.z = r * (Math.cos(t) - 1);
+      // ⭐ scale カーブを尖らせる: 前 ±45° の範囲だけ大きく、 横は SAT_SCALE で小さい
+      const cosT = Math.cos(t);
+      const w = Math.max(0, cosT);             // 1 at front, 0 at ±π/2 and back
+      const wSharp = w * w;                    // 二乗で更に尖らせる
+      const scale = SAT_SCALE + (MAIN_SCALE - SAT_SCALE) * wSharp;
       g.scale.setScalar(scale);
       if (Math.abs(t) < bestDist) { bestDist = Math.abs(t); bestIdx = i; }
     });
