@@ -2724,14 +2724,38 @@ function ssRefreshGlobeSprites(globeData) {
   });
 }
 
-// ⭐ Sphere keyword 自動翻訳 (MyMemory のみ、 球儀ごとに sprite を JA に差替え)
+// ⭐ Sphere keyword 自動翻訳 (MyMemory 優先 → 失敗時 Gemini フォールバック)
 async function ssAutoTranslateSphereKeywords(globe, targetLang = 'ja') {
-  if (globe.kwAutoTranslated === targetLang) return;
+  if (globe.kwAutoTranslated === targetLang) return { changed: 0, total: 0, engine: 'cached' };
   const TOP_N = 25;
   const topNodes = globe.nodes.slice(0, TOP_N);
   const texts = topNodes.map(n => n.text);
-  // 強制 MyMemory (キーなしで動く)
-  const translated = await ssTranslateBatch(texts, targetLang, { engine: 'mymemory' });
+  const countChanged = (translated) => {
+    let c = 0;
+    for (let i = 0; i < texts.length; i++) {
+      if (translated[i] && translated[i] !== texts[i]) c++;
+    }
+    return c;
+  };
+  // ① MyMemory 先行
+  let translated = await ssTranslateBatch(texts, targetLang, { engine: 'mymemory' });
+  let changed = countChanged(translated);
+  let engineUsed = 'mymemory';
+  // ② MyMemory が 30% 未満しか訳せなかった場合、 Gemini key があれば自動フォールバック
+  //    (例: MyMemory 1日上限到達時、 仕方なく Gemini を使う)
+  const apiKey = ssLoadGeminiKey();
+  // 「JA→JA」 既に該当言語のものは除外、 純粋な要翻訳 (元と異なる lang) だけで成功率を見たい
+  const needCount = texts.filter(t => ssDetectStringLang(t) !== targetLang).length;
+  if (needCount > 0 && changed < needCount * 0.3 && apiKey) {
+    console.log(`[Translate] ${globe.label}: MyMemory ${changed}/${needCount} → Gemini fallback`);
+    const fb = await ssTranslateBatch(texts, targetLang, { engine: 'gemini' });
+    const fbChanged = countChanged(fb);
+    if (fbChanged > changed) {
+      translated = fb;
+      changed = fbChanged;
+      engineUsed = 'gemini-fallback';
+    }
+  }
   topNodes.forEach((n, i) => {
     const t = translated[i];
     if (t && t !== n.text) {
@@ -2740,7 +2764,9 @@ async function ssAutoTranslateSphereKeywords(globe, targetLang = 'ja') {
     }
   });
   globe.kwAutoTranslated = targetLang;
+  console.log(`[Translate] ${globe.label}: ${changed}/${needCount} translated via ${engineUsed}`);
   if (currentApp === 'search') ssRefreshGlobeSprites(globe);
+  return { changed, total: needCount, engine: engineUsed };
 }
 
 // 球儀リストを 主役 から順次翻訳 (status で進捗表示)
@@ -2757,18 +2783,30 @@ async function ssAutoTranslateAllSearchGlobes() {
       globes.unshift(main);
     }
   }
+  let okGlobes = 0, totalChanged = 0, totalNeed = 0;
   for (let i = 0; i < globes.length; i++) {
     if (currentApp !== 'search') return;  // ユーザーが NEWS に切替えたら停止
     const g = globes[i];
     if (status) status.textContent = `球儀翻訳中: ${g.label} (${i + 1}/${globes.length})`;
     try {
-      await ssAutoTranslateSphereKeywords(g, 'ja');
+      const result = await ssAutoTranslateSphereKeywords(g, 'ja');
+      if (result) {
+        if (result.changed > 0) okGlobes++;
+        totalChanged += result.changed;
+        totalNeed += result.total;
+      }
     } catch (e) {
       console.warn(`auto-translate failed for ${g.label}`, e);
     }
   }
   if (status && status.textContent.startsWith('球儀翻訳中')) {
-    status.textContent = `✓ 翻訳完了 (${globes.length} カテゴリ)`;
+    if (totalNeed === 0) {
+      status.textContent = `✓ ${globes.length} カテゴリ (翻訳対象なし、 既に日本語)`;
+    } else if (totalChanged === 0) {
+      status.textContent = `⚠ 翻訳 0/${totalNeed} 語 (MyMemory 上限到達? console 参照)`;
+    } else {
+      status.textContent = `✓ 翻訳: ${totalChanged}/${totalNeed} 語 (${okGlobes}/${globes.length} カテゴリ)`;
+    }
   }
 }
 
