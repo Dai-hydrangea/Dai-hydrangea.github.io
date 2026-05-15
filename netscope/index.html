@@ -1196,7 +1196,7 @@ function setAuto(on) {
 btnAuto.addEventListener('click', () => setAuto(autoTimer === null));
 
 // ── FLOW ボタン (メリーゴーランド式: 円周上を等速で滑らかに自転) ──
-const FLOW_PERIOD_SEC = 180;                   // 一周 180 秒 (slow)
+const FLOW_PERIOD_SEC = 540;                   // 一周 540 秒 (流し見ペース、 9 分で 1 周)
 let autoFlow = false;
 let flowAngle = 0;
 let flowMainIdx = -1;
@@ -1497,8 +1497,8 @@ function animate(now) {
       const scale = BACK_S + (frontScale - BACK_S) * (1 - depthFrac);
       g.scale.setScalar(scale);
 
-      // ⭐ 自転速度: front は遅く、 back は速く、 連続補間
-      const rotSpeed = 0.067 + (0.167 - 0.067) * depthFrac;
+      // ⭐ 自転速度: 1/3 化して 流し見ペース (前 0.022 → 後 0.056)
+      const rotSpeed = 0.022 + (0.056 - 0.022) * depthFrac;
       g.rotation.y += dt * rotSpeed;
 
       // ⭐ 観 sprite の alpha も連続補間 (snap 防止)
