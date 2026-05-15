@@ -1714,11 +1714,19 @@ let newsGlobesData = [];           // NEWS モードの球儀キャッシュ
 let searchGlobesData = [];         // SEARCH モードの球儀キャッシュ
 let searchActiveQuery = '';
 
-// NEWS の rebuildGlobes を上書きラッピング (既存挙動 保ちつつキャッシュ)
+// NEWS の rebuildGlobes をラッピング
+// ⭐ search モード中は scene を触らず、 news データだけバックグラウンドでキャッシュ
 const _origRebuildGlobes = rebuildGlobes;
 rebuildGlobes = function() {
+  if (currentApp === 'search') {
+    // 5 分ごとの auto-refresh で search 球儀が消える事故を防ぐ
+    if (currentData && currentData.globes) {
+      newsGlobesData = currentData.globes.slice();
+    }
+    return;  // scene には触らない
+  }
   _origRebuildGlobes.apply(this, arguments);
-  if (currentApp === 'news') newsGlobesData = globesData.slice();
+  newsGlobesData = globesData.slice();
 };
 
 function setAppMode(mode) {
@@ -2132,17 +2140,19 @@ async function ssSearchWikiquote(query, lang) {
   return all.flat();
 }
 
-// ⭐ Internet Archive (デジタルアーカイブ、 CORS OK)
+// ⭐ Internet Archive (デジタルアーカイブ、 書籍・画像のみで アニメ動画除外)
 async function ssSearchInternetArchive(query) {
-  const fields = ['identifier','title','creator','date','description'].map(f=>`fl[]=${f}`).join('&');
-  const url = `https://archive.org/advancedsearch.php?q=${encodeURIComponent(query)}&${fields}&rows=30&output=json`;
+  const fields = ['identifier','title','creator','date','description','mediatype'].map(f=>`fl[]=${f}`).join('&');
+  // mediatype フィルタ: texts (書籍/論文) + image (画像/写真) のみ、 movies/audio (アニメ/動画) は除外
+  const fq = encodeURIComponent('mediatype:(texts OR image)');
+  const url = `https://archive.org/advancedsearch.php?q=${encodeURIComponent(query)}&fq=${fq}&${fields}&rows=30&output=json`;
   try {
     const r = await fetch(url);
     const data = await r.json();
     const docs = data?.response?.docs || [];
     return docs.map(d => ({
       title: d.title || '',
-      summary: [d.creator, d.date].filter(Boolean).join(' · ').slice(0, 200),
+      summary: [d.creator, d.date, d.mediatype].filter(Boolean).join(' · ').slice(0, 200),
       url: `https://archive.org/details/${d.identifier}`,
       source_name: 'Internet Archive',
     })).filter(x => x.title);
