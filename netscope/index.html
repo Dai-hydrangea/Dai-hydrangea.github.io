@@ -1745,25 +1745,29 @@ function ssDetectQueryLang(q) {
 }
 
 async function ssSearchWikipedia(query, lang) {
-  const host = (lang === 'ja') ? 'ja.wikipedia.org' : 'en.wikipedia.org';
-  const url = `https://${host}/w/api.php?action=opensearch&search=${encodeURIComponent(query)}&limit=30&format=json&origin=*`;
-  try {
-    const r = await fetch(url);
-    const data = await r.json();
-    // opensearch returns [term, titles[], descs[], urls[]]
-    const titles = data[1] || [];
-    const descs  = data[2] || [];
-    const urls   = data[3] || [];
-    return titles.map((t, i) => ({
-      title: t,
-      summary: descs[i] || '',
-      url: urls[i] || `https://${host}/wiki/${encodeURIComponent(t)}`,
-      source_name: `Wikipedia ${lang.toUpperCase()}`,
-    }));
-  } catch (e) {
-    console.warn('Wikipedia search failed', e);
-    return [];
-  }
+  // 両言語 並列取得 (lang は labeling のみで、 両方を試す)
+  const targets = (lang === 'ja') ? ['ja', 'en'] : ['en', 'ja'];
+  const results = await Promise.all(targets.map(async L => {
+    const host = `${L}.wikipedia.org`;
+    const url = `https://${host}/w/api.php?action=opensearch&search=${encodeURIComponent(query)}&limit=20&format=json&origin=*`;
+    try {
+      const r = await fetch(url);
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const data = await r.json();
+      const titles = data[1] || [];
+      const descs  = data[2] || [];
+      const urls   = data[3] || [];
+      return titles.map((t, i) => ({
+        title: t, summary: descs[i] || '',
+        url: urls[i] || `https://${host}/wiki/${encodeURIComponent(t)}`,
+        source_name: `Wikipedia ${L.toUpperCase()}`,
+      }));
+    } catch (e) {
+      console.warn(`Wikipedia ${L} search failed`, e);
+      return [];
+    }
+  }));
+  return results.flat();
 }
 
 async function ssSearchHackerNews(query) {
@@ -1783,21 +1787,83 @@ async function ssSearchHackerNews(query) {
   }
 }
 
-async function ssSearchWikinews(query, lang) {
-  const host = (lang === 'ja') ? 'ja.wikinews.org' : 'en.wikinews.org';
-  const url = `https://${host}/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&srlimit=30&format=json&origin=*`;
+async function ssSearchWikinews(query) {
+  // 多言語 並列 (Wikinews は JA/EN 両方試す)
+  const targets = ['ja', 'en'];
+  const results = await Promise.all(targets.map(async L => {
+    const host = `${L}.wikinews.org`;
+    const url = `https://${host}/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&srlimit=20&format=json&origin=*`;
+    try {
+      const r = await fetch(url);
+      const data = await r.json();
+      const hits = data?.query?.search || [];
+      return hits.map(h => ({
+        title: h.title || '',
+        summary: (h.snippet || '').replace(/<[^>]+>/g, '').slice(0, 200),
+        url: `https://${host}/wiki/${encodeURIComponent(h.title)}`,
+        source_name: `Wikinews ${L.toUpperCase()}`,
+      })).filter(x => x.title);
+    } catch (e) {
+      console.warn(`Wikinews ${L} search failed`, e);
+      return [];
+    }
+  }));
+  return results.flat();
+}
+
+// 学術 (OpenAlex、 CC0、 CORS OK、 認証不要)
+async function ssSearchOpenAlex(query) {
+  const url = `https://api.openalex.org/works?search=${encodeURIComponent(query)}&per-page=40&select=title,doi,abstract_inverted_index,publication_year,authorships`;
   try {
     const r = await fetch(url);
     const data = await r.json();
-    const hits = data?.query?.search || [];
-    return hits.map(h => ({
-      title: h.title || '',
-      summary: (h.snippet || '').replace(/<[^>]+>/g, '').slice(0, 200),
-      url: `https://${host}/wiki/${encodeURIComponent(h.title)}`,
-      source_name: `Wikinews ${lang.toUpperCase()}`,
+    return (data.results || []).map(w => ({
+      title: w.title || '',
+      summary: w.publication_year ? `(${w.publication_year})` : '',
+      url: w.doi ? `https://doi.org/${w.doi.replace('https://doi.org/', '')}` : '',
+      source_name: 'OpenAlex',
     })).filter(x => x.title);
   } catch (e) {
-    console.warn('Wikinews search failed', e);
+    console.warn('OpenAlex search failed', e);
+    return [];
+  }
+}
+
+// arXiv (XML だが CORS は OK な機能ベース)
+async function ssSearchArXiv(query) {
+  const url = `https://export.arxiv.org/api/query?search_query=all:${encodeURIComponent(query)}&max_results=30`;
+  try {
+    const r = await fetch(url);
+    const xml = await r.text();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(xml, 'text/xml');
+    const entries = [...doc.querySelectorAll('entry')];
+    return entries.map(e => {
+      const title = (e.querySelector('title')?.textContent || '').replace(/\s+/g, ' ').trim();
+      const id    = e.querySelector('id')?.textContent || '';
+      const sum   = (e.querySelector('summary')?.textContent || '').slice(0, 200);
+      return { title, summary: sum, url: id, source_name: 'arXiv' };
+    }).filter(x => x.title);
+  } catch (e) {
+    console.warn('arXiv search failed', e);
+    return [];
+  }
+}
+
+// GitHub リポジトリ検索 (CORS OK、 認証不要、 rate-limit あり)
+async function ssSearchGitHub(query) {
+  const url = `https://api.github.com/search/repositories?q=${encodeURIComponent(query)}&per_page=30&sort=stars`;
+  try {
+    const r = await fetch(url, { headers: { Accept: 'application/vnd.github+json' } });
+    const data = await r.json();
+    return (data.items || []).map(it => ({
+      title: it.full_name || it.name || '',
+      summary: (it.description || '').slice(0, 200) + ` · ★ ${it.stargazers_count || 0}`,
+      url: it.html_url || '',
+      source_name: 'GitHub',
+    })).filter(x => x.title);
+  } catch (e) {
+    console.warn('GitHub search failed', e);
     return [];
   }
 }
@@ -1808,34 +1874,55 @@ async function ssExecuteSearch(query) {
   const status = document.getElementById('search-status');
   const btn    = document.getElementById('search-go');
   btn.disabled = true;
-  status.textContent = '検索中...';
+  status.textContent = '5 ソース並列検索中...';
   const lang = ssDetectQueryLang(query);
   searchActiveQuery = query;
   try {
-    const [wiki, hn, wnews] = await Promise.all([
+    const [wiki, hn, wnews, openalex, arxiv, github] = await Promise.all([
       ssSearchWikipedia(query, lang),
       ssSearchHackerNews(query),
-      ssSearchWikinews(query, lang),
+      ssSearchWikinews(query),
+      ssSearchOpenAlex(query),
+      ssSearchArXiv(query),
+      ssSearchGitHub(query),
     ]);
+    // per-source ログ (デバッグ用)
+    console.log('[Search] hits per source:', {
+      wikipedia: wiki.length, hackerNews: hn.length, wikinews: wnews.length,
+      openAlex: openalex.length, arxiv: arxiv.length, github: github.length,
+    });
+    const sourceDefs = [
+      { id:'wikipedia',  label:'WIKIPEDIA',   color:'#00d4ff', articles: wiki },
+      { id:'wikinews',   label:'WIKINEWS',    color:'#9be7c4', articles: wnews },
+      { id:'hackernews', label:'HACKER NEWS', color:'#ff851b', articles: hn },
+      { id:'openalex',   label:'ACADEMIA',    color:'#b88aff', articles: openalex },
+      { id:'arxiv',      label:'arXiv',       color:'#ffdc00', articles: arxiv },
+      { id:'github',     label:'GITHUB',      color:'#ff7eb9', articles: github },
+    ];
     const globes = [];
-    const w = ssBuildGlobeData('wikipedia', `WIKIPEDIA ${lang.toUpperCase()}`, '#00d4ff', wiki);
-    if (w) globes.push(w);
-    const h = ssBuildGlobeData('hackernews', 'HACKER NEWS', '#ff851b', hn);
-    if (h) globes.push(h);
-    const n = ssBuildGlobeData('wikinews', `WIKINEWS ${lang.toUpperCase()}`, '#9be7c4', wnews);
-    if (n) globes.push(n);
+    for (const sd of sourceDefs) {
+      const g = ssBuildGlobeData(sd.id, sd.label, sd.color, sd.articles);
+      if (g) globes.push(g);
+    }
     searchGlobesData = globes;
     if (currentApp === 'search') {
       globesData = searchGlobesData;
       layoutRevolver();
     }
-    const total = wiki.length + hn.length + wnews.length;
-    status.textContent = `${globes.length} 球 / ${total} hits`;
+    const total = sourceDefs.reduce((s, sd) => s + sd.articles.length, 0);
+    // per-source の hit 数を簡潔に
+    const breakdown = sourceDefs
+      .filter(sd => sd.articles.length > 0)
+      .map(sd => `${sd.label.split(' ')[0]}:${sd.articles.length}`)
+      .join(' / ');
+    status.textContent = globes.length
+      ? `${globes.length} 球 / ${total} hits (${breakdown})`
+      : `⚠ 全ソース 0 件 (CORS or rate-limit の可能性、 console 参照)`;
     document.getElementById('counter').textContent =
       `GLOBES: ${globes.length}  /  KEYWORDS: ${globes.reduce((s,g)=>s+g.node_count,0)}  /  HITS: ${total}`;
   } catch (e) {
     console.error('search failed', e);
-    status.textContent = '⚠ 検索失敗';
+    status.textContent = '⚠ 検索失敗 (console 参照)';
   } finally {
     btn.disabled = false;
   }
