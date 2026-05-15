@@ -1802,12 +1802,23 @@ function ssBuildGlobeData(id, label, color, articles) {
     }
   }
   const positions = ssSpringLayout(top.length, GLOBE_RADIUS);
-  const nodes = top.map(([w, count], i) => ({
-    text: w, count,
-    articles: (wordArticles.get(w) || []).slice(0, 8),
-    pos: positions[i] || [0, 0, 0],
-    en_ratio: 0, tr_lang_short: '',
-  }));
+  const nodes = top.map(([w, count], i) => {
+    const arts = wordArticles.get(w) || [];
+    // ⭐ source_name に 「JA」 が含まれてなければ海外発 (EN) と判定
+    let foreign = 0;
+    for (const a of arts) {
+      const src = a.source_name || '';
+      if (!/\bJA\b/i.test(src)) foreign++;
+    }
+    const en_ratio = arts.length ? foreign / arts.length : 0;
+    return {
+      text: w, count,
+      articles: arts.slice(0, 8),
+      pos: positions[i] || [0, 0, 0],
+      en_ratio: +en_ratio.toFixed(2),
+      tr_lang_short: 'EN',
+    };
+  });
   return {
     id, label, color,
     node_count: nodes.length,
@@ -2167,83 +2178,102 @@ async function ssExecuteSearch(query) {
   const status = document.getElementById('search-status');
   const btn    = document.getElementById('search-go');
   btn.disabled = true;
-  status.textContent = '15 ソース並列検索中...';
   const lang = ssDetectQueryLang(query);
   searchActiveQuery = query;
-  try {
-    const results = await Promise.all([
-      ssSearchWikipedia(query, lang),       // 0  REFERENCE
-      ssSearchWiktionary(query, lang),       // 1  REFERENCE
-      ssSearchWikiquote(query, lang),        // 2  REFERENCE
-      ssSearchWikibooks(query, lang),        // 3  REFERENCE
-      ssSearchWikinews(query),               // 4  NEWS
-      ssSearchHackerNews(query),             // 5  DISCUSSION
-      ssSearchStackExchange(query),          // 6  DISCUSSION
-      ssSearchOpenAlex(query),               // 7  ACADEMIA
-      ssSearchArXiv(query),                  // 8  ACADEMIA
-      ssSearchSemanticScholar(query),        // 9  ACADEMIA
-      ssSearchCrossref(query),               // 10 ACADEMIA
-      ssSearchDBLP(query),                   // 11 ACADEMIA
-      ssSearchGitHub(query),                 // 12 CODE
-      ssSearchOpenLibrary(query),            // 13 BOOKS
-      ssSearchGutendex(query),               // 14 BOOKS
-      ssSearchMetMuseum(query),              // 15 ART (焼き物)
-      ssSearchInternetArchive(query),        // 16 ARCHIVE
-    ]);
-    const [wiki, wikt, wquot, wbook, wnews, hn, stack, openalex, arxiv, semschol, crossref, dblp, github, books, gutendex, met, ia] = results;
-    // per-source diagnostics
-    console.log('[Search] hits per source:', {
-      wikipedia: wiki.length, wiktionary: wikt.length, wikiquote: wquot.length, wikibooks: wbook.length,
-      wikinews: wnews.length, hackerNews: hn.length, stackExchange: stack.length,
-      openAlex: openalex.length, arxiv: arxiv.length, semanticScholar: semschol.length,
-      crossref: crossref.length, dblp: dblp.length, github: github.length,
-      openLibrary: books.length, gutenberg: gutendex.length, metMuseum: met.length, internetArchive: ia.length,
-    });
-    // ⭐ カテゴリで統合 (ソースが多すぎないよう 7 球儀に纏める)
-    const categoryDefs = [
-      { id:'reference',  label:'REFERENCE',  color:'#00d4ff',
-        articles: [...wiki, ...wikt, ...wquot, ...wbook] },
-      { id:'news',       label:'NEWS',       color:'#9be7c4',
-        articles: wnews },
-      { id:'discussion', label:'DISCUSSION', color:'#ff851b',
-        articles: [...hn, ...stack] },
-      { id:'academia',   label:'ACADEMIA',   color:'#b88aff',
-        articles: [...openalex, ...arxiv, ...semschol, ...crossref, ...dblp] },
-      { id:'code',       label:'CODE',       color:'#ff7eb9',
-        articles: github },
-      { id:'books',      label:'BOOKS',      color:'#ffb84d',
-        articles: [...books, ...gutendex] },
-      { id:'art',        label:'ART',        color:'#ffd166',
-        articles: met },
-      { id:'archive',    label:'ARCHIVE',    color:'#a8e6cf',
-        articles: ia },
-    ];
+
+  // ⭐ ソース → カテゴリ map、 progressive 取得用
+  const sources = [
+    { id:'wikipedia',  cat:'reference',  fn:() => ssSearchWikipedia(query, lang) },
+    { id:'wiktionary', cat:'reference',  fn:() => ssSearchWiktionary(query, lang) },
+    { id:'wikiquote',  cat:'reference',  fn:() => ssSearchWikiquote(query, lang) },
+    { id:'wikibooks',  cat:'reference',  fn:() => ssSearchWikibooks(query, lang) },
+    { id:'wikinews',   cat:'news',       fn:() => ssSearchWikinews(query) },
+    { id:'hn',         cat:'discussion', fn:() => ssSearchHackerNews(query) },
+    { id:'stackex',    cat:'discussion', fn:() => ssSearchStackExchange(query) },
+    { id:'openalex',   cat:'academia',   fn:() => ssSearchOpenAlex(query) },
+    { id:'arxiv',      cat:'academia',   fn:() => ssSearchArXiv(query) },
+    { id:'semschol',   cat:'academia',   fn:() => ssSearchSemanticScholar(query) },
+    { id:'crossref',   cat:'academia',   fn:() => ssSearchCrossref(query) },
+    { id:'dblp',       cat:'academia',   fn:() => ssSearchDBLP(query) },
+    { id:'github',     cat:'code',       fn:() => ssSearchGitHub(query) },
+    { id:'openlib',    cat:'books',      fn:() => ssSearchOpenLibrary(query) },
+    { id:'gutendex',   cat:'books',      fn:() => ssSearchGutendex(query) },
+    { id:'met',        cat:'art',        fn:() => ssSearchMetMuseum(query) },
+    { id:'ia',         cat:'archive',    fn:() => ssSearchInternetArchive(query) },
+  ];
+  const categoryDefs = [
+    { id:'reference',  label:'REFERENCE',  color:'#00d4ff' },
+    { id:'news',       label:'NEWS',       color:'#9be7c4' },
+    { id:'discussion', label:'DISCUSSION', color:'#ff851b' },
+    { id:'academia',   label:'ACADEMIA',   color:'#b88aff' },
+    { id:'code',       label:'CODE',       color:'#ff7eb9' },
+    { id:'books',      label:'BOOKS',      color:'#ffb84d' },
+    { id:'art',        label:'ART',        color:'#ffd166' },
+    { id:'archive',    label:'ARCHIVE',    color:'#a8e6cf' },
+  ];
+  const TIMEOUT_MS = 7000;
+  const withTimeout = (p, ms) =>
+    Promise.race([p, new Promise(res => setTimeout(() => res([]), ms))]);
+
+  // ⭐ 各カテゴリの articles 蓄積、 progressive rebuild
+  const catArticles = {};
+  categoryDefs.forEach(c => { catArticles[c.id] = []; });
+  let done = 0;
+  let rebuildTimer = null;
+  const rebuildGlobesFromCats = () => {
     const globes = [];
+    let total = 0;
     for (const cd of categoryDefs) {
-      const g = ssBuildGlobeData(cd.id, cd.label, cd.color, cd.articles);
+      const g = ssBuildGlobeData(cd.id, cd.label, cd.color, catArticles[cd.id]);
       if (g) globes.push(g);
+      total += catArticles[cd.id].length;
     }
     searchGlobesData = globes;
     if (currentApp === 'search') {
       globesData = searchGlobesData;
       layoutRevolver();
     }
-    const total = categoryDefs.reduce((s, cd) => s + cd.articles.length, 0);
-    const breakdown = categoryDefs
-      .filter(cd => cd.articles.length > 0)
-      .map(cd => `${cd.label}:${cd.articles.length}`)
-      .join(' / ');
-    status.textContent = globes.length
-      ? `${globes.length} カテゴリ / ${total} hits (${breakdown})`
-      : `⚠ 全ソース 0 件 (console 参照)`;
     document.getElementById('counter').textContent =
       `CATEGORIES: ${globes.length}  /  KEYWORDS: ${globes.reduce((s,g)=>s+g.node_count,0)}  /  HITS: ${total}`;
-  } catch (e) {
-    console.error('search failed', e);
-    status.textContent = '⚠ 検索失敗 (console 参照)';
-  } finally {
-    btn.disabled = false;
-  }
+    return { globes, total };
+  };
+  const scheduleRebuild = () => {
+    if (rebuildTimer) clearTimeout(rebuildTimer);
+    rebuildTimer = setTimeout(() => { rebuildGlobesFromCats(); rebuildTimer = null; }, 350);
+  };
+
+  status.textContent = `0 / ${sources.length} ソース...`;
+
+  // ⭐ 各ソースを並列で投げて、 完了ごとに progressive 描画
+  const perSourceCounts = {};
+  await Promise.all(sources.map(async s => {
+    try {
+      const articles = await withTimeout(s.fn(), TIMEOUT_MS);
+      perSourceCounts[s.id] = articles.length;
+      catArticles[s.cat].push(...articles);
+      done++;
+      status.textContent = `${done} / ${sources.length} ソース (${articles.length} hits from ${s.id})`;
+      scheduleRebuild();
+    } catch (e) {
+      done++;
+      perSourceCounts[s.id] = 0;
+      console.warn(`[${s.id}] failed`, e);
+      status.textContent = `${done} / ${sources.length} ソース (${s.id} ✗)`;
+    }
+  }));
+
+  // 最終 rebuild
+  if (rebuildTimer) clearTimeout(rebuildTimer);
+  const { globes, total } = rebuildGlobesFromCats();
+  console.log('[Search] hits per source:', perSourceCounts);
+  const breakdown = categoryDefs
+    .filter(cd => catArticles[cd.id].length > 0)
+    .map(cd => `${cd.label}:${catArticles[cd.id].length}`)
+    .join(' / ');
+  status.textContent = globes.length
+    ? `✓ ${globes.length} カテゴリ / ${total} hits (${breakdown})`
+    : '⚠ 全ソース 0 件 (console 参照)';
+  btn.disabled = false;
 }
 
 // 入力イベント
