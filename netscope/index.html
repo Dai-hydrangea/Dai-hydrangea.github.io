@@ -2347,16 +2347,36 @@ function ssDetectStringLang(text) {
   if (/[一-鿿]/.test(text)) return 'zh';
   return 'en';
 }
+// ⭐ MyMemory daily limit (1000 words/IP/day) を検出して以降スキップ
+let ssMyMemoryLimitHit = false;
 async function ssMyMemoryOne(text, sourceLang, targetLang) {
+  if (ssMyMemoryLimitHit) return text;
   const pair = `${sourceLang}|${targetLang}`;
   const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${pair}`;
   try {
     const r = await fetch(url);
     const d = await r.json();
     if (d?.responseStatus === 200 && d?.responseData?.translatedText) {
-      return String(d.responseData.translatedText);
+      const t = String(d.responseData.translatedText);
+      // MyMemory が API キー未認証で 「Mymemory」 などを返した場合は失敗扱い
+      if (/MYMEMORY WARNING|QUOTA EXCEEDED|USED ALL/i.test(t)) {
+        console.warn('[MyMemory] quota warning in text:', t);
+        return text;
+      }
+      return t;
     }
-  } catch (e) { /* swallow */ }
+    const details = String(d?.responseDetails || '');
+    if (/DAILY LIMIT|USED ALL AVAILABLE|QUOTA/i.test(details)) {
+      ssMyMemoryLimitHit = true;
+      console.warn('[MyMemory] ⚠️ 1000 words/日 上限到達:', details);
+      const status = document.getElementById('search-status');
+      if (status) status.textContent = '⚠ MyMemory 1日上限到達 (明日復活)';
+    } else {
+      console.warn(`[MyMemory] "${text.slice(0,40)}" failed: status=${d?.responseStatus}, ${details.slice(0,80)}`);
+    }
+  } catch (e) {
+    console.warn(`[MyMemory] "${text.slice(0,40)}" exception:`, e.message || e);
+  }
   return text;
 }
 
@@ -2446,10 +2466,14 @@ async function ssTranslateBatch(texts, targetLang, opts = {}) {
         try {
           const translated = await ssGeminiBatch(chunk.map(c => c.text), targetLang, apiKey);
           chunk.forEach((c, k) => {
-            const trans = translated[k] || c.text;
-            for (const idx of c.indices) out[idx] = trans;
-            cache[c.k] = cache[c.k] || {};
-            cache[c.k][targetLang] = trans;
+            const trans = translated[k];
+            if (trans && trans !== c.text) {
+              for (const idx of c.indices) out[idx] = trans;
+              cache[c.k] = cache[c.k] || {};
+              cache[c.k][targetLang] = trans;
+            } else {
+              for (const idx of c.indices) out[idx] = c.text;
+            }
           });
         } catch (e) {
           console.warn('gemini batch failed, falling back to MyMemory', e);
@@ -2474,9 +2498,14 @@ async function ssTranslateBatch(texts, targetLang, opts = {}) {
         if (j >= toFetch.length) return;
         const c = toFetch[j];
         const trans = await ssMyMemoryOne(c.text, c.src, targetLang);
-        for (const i of c.indices) out[i] = trans || c.text;
-        cache[c.k] = cache[c.k] || {};
-        cache[c.k][targetLang] = trans || c.text;
+        // ⭐ 翻訳成功時のみキャッシュ (失敗 = trans === c.text なら キャッシュせず 次回再試行)
+        if (trans && trans !== c.text) {
+          for (const i of c.indices) out[i] = trans;
+          cache[c.k] = cache[c.k] || {};
+          cache[c.k][targetLang] = trans;
+        } else {
+          for (const i of c.indices) out[i] = c.text;
+        }
       }
     }));
   }
