@@ -152,11 +152,14 @@ body {
 }
 #brief-panel-header {
   display:flex; align-items:center; justify-content:space-between;
-  margin-bottom:14px; padding-bottom:10px;
+  margin:-28px -30px 14px;
+  padding:18px 30px 12px;
+  position:sticky; top:-28px; z-index:2;
+  background:linear-gradient(180deg, rgba(0,16,32,0.99), rgba(0,12,24,0.96));
   border-bottom:1px dashed #00415a;
 }
 #brief-panel-title {
-  font-size:13px; letter-spacing:5px; color:#00e5ff;
+  font-size:14px; letter-spacing:5px; color:#00e5ff;
   text-shadow:0 0 8px rgba(0,229,255,0.7);
 }
 #brief-panel-close {
@@ -332,10 +335,12 @@ body {
 }
 #detail-panel.active { transform:translateX(0); }
 #detail-close {
-  position:absolute; top:18px; right:18px;
+  position:sticky; top:0; float:right;
+  margin:-20px -18px 0 0;
   color:#00e5ff; font-size:15px; font-weight:bold; letter-spacing:2px;
   cursor:pointer; padding:10px 16px; border:1px solid #00e5ff;
-  background:transparent;
+  background:rgba(0,12,24,0.92);
+  z-index:5;
 }
 #detail-keyword {
   font-size:40px; font-weight:bold; color:#00e5ff;
@@ -566,10 +571,12 @@ scene.add(orreryGroup);
 // SLOT 0 が常に主役表示。
 //
 const N_GLOBES_MAX = 9;
-const GLOBE_RADIUS = 170;      // ⭐ export.py の GLOBE_RADIUS と完全一致必須 (140→170 +21%)
-const MAIN_SCALE = 2.6;        // ⭐ 球本体が大きいので scale は控えめ
-const SAT_SCALE  = 0.32;
-const SAT_RING_RADIUS = 720;   // ⭐ 主役巨大化に伴い衛星をさらに遠くへ (620→720)
+const GLOBE_RADIUS = 170;      // ⭐ export.py の GLOBE_RADIUS と完全一致必須
+// iPhone は画面狭いので主球に集中させる (衛星を半分以下に)
+const _IS_MOBILE = innerWidth < 600;
+const MAIN_SCALE = 2.6;
+const SAT_SCALE  = _IS_MOBILE ? 0.18 : 0.32;
+const SAT_RING_RADIUS = _IS_MOBILE ? 600 : 720;
 const SAT_RING_Z      = -120;
 const SAT_RING_Y_SCALE = 0.65; // 縦圧縮 (楕円リング)
 
@@ -924,7 +931,11 @@ function updateCenterLabel() {
 function updateBrief(g) {
   const summaryEl  = document.getElementById('brief-summary');
   const clustersEl = document.getElementById('brief-clusters');
+  const titleEl    = document.getElementById('brief-panel-title');
   const panel      = document.getElementById('brief-panel');
+
+  // header に現在の球名を入れる
+  if (titleEl) titleEl.textContent = `${g.label || '─'} ─ 観 / SCAN`;
 
   const hasSummary  = !!(g.summary && g.summary.trim());
   const hasClusters = Array.isArray(g.clusters) && g.clusters.length > 0;
@@ -1337,7 +1348,13 @@ renderer.domElement.addEventListener('pointerup', e => {
   if (pState.mode === 'tap-candidate' && dist <= 10 && dt <= 400) {
     // タップ判定
     const hit = pState.initialHit;
-    if (hit) {
+    if (!hit) {
+      // 何もない場所をタップ → 開いてるパネルを閉じる
+      const briefOpen  = document.getElementById('brief-panel').classList.contains('open');
+      const detailOpen = document.getElementById('detail-panel').classList.contains('active');
+      if (briefOpen)  setBriefOpen(false);
+      if (detailOpen) document.getElementById('detail-panel').classList.remove('active');
+    } else if (hit) {
       if (hit.type === 'keyword') {
         showKeywordDetail(hit.node);
       } else if (hit.type === 'brief') {
@@ -1373,10 +1390,10 @@ function animate(now) {
   lastT = now;
   controls.update();
   updateRevolverAnim(dt);
-  // 主役 globe を ゆっくり自転
+  // 主役 globe を ゆっくり自転 (2/3 に減速: 0.10→0.067、 0.25→0.167)
   globesList.forEach((g, i) => {
     const isMain = (slotAssignment[i] === 0);
-    g.rotation.y += dt * (isMain ? 0.10 : 0.25);
+    g.rotation.y += dt * (isMain ? 0.067 : 0.167);
   });
   // BRIEF core: 呼吸 (scale) + 浮遊 (y) + alpha 揺らぎ
   const tsec = now * 0.001;
