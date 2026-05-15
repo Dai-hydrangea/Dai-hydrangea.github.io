@@ -1405,7 +1405,18 @@ function showKeywordDetail(keyword) {
     keyword.articles.forEach(a => {
       const card = document.createElement('div');
       card.className = 'article-card';
-      const titleEl   = document.createElement('div'); titleEl.className   = 'article-title';   titleEl.textContent   = a.title || '─';
+      // ⭐ タイトル自体を元ソースへのリンクに
+      let titleEl;
+      if (a.url) {
+        titleEl = document.createElement('a');
+        titleEl.href = a.url; titleEl.target = '_blank'; titleEl.rel = 'noopener';
+        titleEl.style.color = 'inherit';
+        titleEl.style.textDecoration = 'none';
+      } else {
+        titleEl = document.createElement('div');
+      }
+      titleEl.className = 'article-title';
+      titleEl.textContent = a.title || '─';
       const summaryEl = document.createElement('div'); summaryEl.className = 'article-summary'; summaryEl.textContent = a.summary || '';
       const metaEl    = document.createElement('div'); metaEl.className    = 'article-meta';
       metaEl.innerHTML = `<span>SOURCE: ${a.source_name || '─'}</span>` +
@@ -1850,6 +1861,66 @@ async function ssSearchArXiv(query) {
   }
 }
 
+// Stack Exchange (StackOverflow + 他 175 サイト、 CORS OK、 認証不要)
+async function ssSearchStackExchange(query) {
+  // 主要 SE サイトで並列、 タイトル一致 (intitle) で抽出
+  const sites = ['stackoverflow', 'philosophy', 'math', 'physics'];
+  const results = await Promise.all(sites.map(async site => {
+    const url = `https://api.stackexchange.com/2.3/search?intitle=${encodeURIComponent(query)}&site=${site}&pagesize=20&order=desc&sort=votes`;
+    try {
+      const r = await fetch(url);
+      const data = await r.json();
+      return (data.items || []).map(it => ({
+        title: it.title || '',
+        summary: `${it.score || 0} votes · ${it.answer_count || 0} answers`,
+        url: it.link || '',
+        source_name: `SE ${site}`,
+      })).filter(x => x.title);
+    } catch (e) {
+      console.warn(`StackExchange ${site} failed`, e);
+      return [];
+    }
+  }));
+  return results.flat();
+}
+
+// OpenLibrary 書籍検索 (CORS OK)
+async function ssSearchOpenLibrary(query) {
+  const url = `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=30`;
+  try {
+    const r = await fetch(url);
+    const data = await r.json();
+    return (data.docs || []).map(d => ({
+      title: d.title || '',
+      summary: `${(d.author_name||[]).slice(0,2).join(', ')} (${d.first_publish_year || '?'})`,
+      url: d.key ? `https://openlibrary.org${d.key}` : '',
+      source_name: 'OpenLibrary',
+    })).filter(x => x.title);
+  } catch (e) {
+    console.warn('OpenLibrary search failed', e);
+    return [];
+  }
+}
+
+// Semantic Scholar 学術論文 (CORS OK、 rate-limit あり)
+async function ssSearchSemanticScholar(query) {
+  const url = `https://api.semanticscholar.org/graph/v1/paper/search?query=${encodeURIComponent(query)}&limit=30&fields=title,abstract,year,authors,externalIds`;
+  try {
+    const r = await fetch(url);
+    const data = await r.json();
+    return (data.data || []).map(p => ({
+      title: p.title || '',
+      summary: `${p.year || '?'} · ${(p.authors||[]).slice(0,2).map(a=>a.name).join(', ')}`,
+      url: p.externalIds?.DOI ? `https://doi.org/${p.externalIds.DOI}` :
+           (p.externalIds?.ArXiv ? `https://arxiv.org/abs/${p.externalIds.ArXiv}` : ''),
+      source_name: 'Semantic Scholar',
+    })).filter(x => x.title);
+  } catch (e) {
+    console.warn('Semantic Scholar failed', e);
+    return [];
+  }
+}
+
 // GitHub リポジトリ検索 (CORS OK、 認証不要、 rate-limit あり)
 async function ssSearchGitHub(query) {
   const url = `https://api.github.com/search/repositories?q=${encodeURIComponent(query)}&per_page=30&sort=stars`;
@@ -1874,22 +1945,25 @@ async function ssExecuteSearch(query) {
   const status = document.getElementById('search-status');
   const btn    = document.getElementById('search-go');
   btn.disabled = true;
-  status.textContent = '5 ソース並列検索中...';
+  status.textContent = '9 ソース並列検索中...';
   const lang = ssDetectQueryLang(query);
   searchActiveQuery = query;
   try {
-    const [wiki, hn, wnews, openalex, arxiv, github] = await Promise.all([
+    const [wiki, hn, wnews, openalex, arxiv, github, stack, books, semschol] = await Promise.all([
       ssSearchWikipedia(query, lang),
       ssSearchHackerNews(query),
       ssSearchWikinews(query),
       ssSearchOpenAlex(query),
       ssSearchArXiv(query),
       ssSearchGitHub(query),
+      ssSearchStackExchange(query),
+      ssSearchOpenLibrary(query),
+      ssSearchSemanticScholar(query),
     ]);
-    // per-source ログ (デバッグ用)
     console.log('[Search] hits per source:', {
       wikipedia: wiki.length, hackerNews: hn.length, wikinews: wnews.length,
       openAlex: openalex.length, arxiv: arxiv.length, github: github.length,
+      stackExchange: stack.length, openLibrary: books.length, semanticScholar: semschol.length,
     });
     const sourceDefs = [
       { id:'wikipedia',  label:'WIKIPEDIA',   color:'#00d4ff', articles: wiki },
@@ -1898,6 +1972,9 @@ async function ssExecuteSearch(query) {
       { id:'openalex',   label:'ACADEMIA',    color:'#b88aff', articles: openalex },
       { id:'arxiv',      label:'arXiv',       color:'#ffdc00', articles: arxiv },
       { id:'github',     label:'GITHUB',      color:'#ff7eb9', articles: github },
+      { id:'stackex',    label:'STACK EXCHANGE', color:'#7fdbff', articles: stack },
+      { id:'books',      label:'OPEN LIBRARY',color:'#ffb84d', articles: books },
+      { id:'semschol',   label:'SEMANTIC SCHOLAR', color:'#d473ff', articles: semschol },
     ];
     const globes = [];
     for (const sd of sourceDefs) {
@@ -1937,11 +2014,195 @@ document.getElementById('search-input').addEventListener('keydown', e => {
 });
 
 // ⭐ 詳細パネルからクロスモード bridge: キーワード詳細を見ながら 「この単語で検索」
-// (将来追加。 今はキーワード自体を検索ボックスに転送する機能のみ)
 window.searchThisKeyword = function(text) {
   setAppMode('search');
   document.getElementById('search-input').value = text;
   ssExecuteSearch(text);
+};
+
+// ════════════════════════════════════════════════════════════════════
+//   ⭐ MyMemory 翻訳 (no-key、 観 ボタン押したときだけ起動)
+//   キャッシュは NITS と共有 (同一 origin の localStorage)
+// ════════════════════════════════════════════════════════════════════
+const SS_TR_CACHE_KEY = 'nits_tr_cache_v1';
+function ssLoadTrCache() {
+  try { return JSON.parse(localStorage.getItem(SS_TR_CACHE_KEY) || '{}'); }
+  catch { return {}; }
+}
+function ssSaveTrCache(c) {
+  const entries = Object.entries(c);
+  if (entries.length > 3000) c = Object.fromEntries(entries.slice(-2500));
+  try { localStorage.setItem(SS_TR_CACHE_KEY, JSON.stringify(c)); } catch {}
+}
+function ssTrKey(text) {
+  let h = 0;
+  for (let i = 0; i < text.length; i++) h = ((h*31) + text.charCodeAt(i)) | 0;
+  return h.toString(36);
+}
+function ssDetectStringLang(text) {
+  if (!text) return 'en';
+  if (/[ぁ-ゟ゠-ヿ]/.test(text)) return 'ja';
+  if (/[一-鿿]/.test(text)) return 'zh';
+  return 'en';
+}
+async function ssMyMemoryOne(text, sourceLang, targetLang) {
+  const pair = `${sourceLang}|${targetLang}`;
+  const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${pair}`;
+  try {
+    const r = await fetch(url);
+    const d = await r.json();
+    if (d?.responseStatus === 200 && d?.responseData?.translatedText) {
+      return String(d.responseData.translatedText);
+    }
+  } catch (e) { /* swallow */ }
+  return text;
+}
+// 並列 (3 concurrent) で文字列リストを翻訳、 キャッシュ使う
+async function ssTranslateBatch(texts, targetLang) {
+  const cache = ssLoadTrCache();
+  const out = new Array(texts.length);
+  const toFetch = [];
+  texts.forEach((t, i) => {
+    const src = ssDetectStringLang(t);
+    if (src === targetLang) { out[i] = t; return; }
+    const k = ssTrKey(t);
+    if (cache[k] && cache[k][targetLang]) { out[i] = cache[k][targetLang]; return; }
+    toFetch.push({ i, t, src, k });
+  });
+  if (toFetch.length === 0) return out;
+  let idx = 0;
+  const CONC = 3;
+  await Promise.all(Array.from({ length: CONC }, async () => {
+    while (true) {
+      const j = idx++;
+      if (j >= toFetch.length) return;
+      const { i, t, src, k } = toFetch[j];
+      const trans = await ssMyMemoryOne(t, src, targetLang);
+      out[i] = trans || t;
+      cache[k] = cache[k] || {};
+      cache[k][targetLang] = out[i];
+    }
+  }));
+  ssSaveTrCache(cache);
+  return out;
+}
+
+// 球儀の keywords + 上位記事タイトルを翻訳してキャッシュ
+async function ssTranslateGlobe(globe, targetLang = 'ja') {
+  if (globe.searchTranslation && globe.searchTranslation.lang === targetLang) return globe.searchTranslation;
+  const status = document.getElementById('search-status');
+  if (status) status.textContent = `翻訳中: ${globe.label}...`;
+  // top 30 keywords
+  const topKw = globe.nodes.slice(0, 30).map(n => n.text);
+  // top 12 article titles
+  const seen = new Set();
+  const topArticles = [];
+  for (const n of globe.nodes.slice(0, 12)) {
+    for (const a of n.articles || []) {
+      if (!seen.has(a.title)) { seen.add(a.title); topArticles.push(a); }
+      if (topArticles.length >= 12) break;
+    }
+    if (topArticles.length >= 12) break;
+  }
+  const kwTranslated     = await ssTranslateBatch(topKw, targetLang);
+  const titleTranslated  = await ssTranslateBatch(topArticles.map(a => a.title), targetLang);
+  globe.searchTranslation = {
+    lang: targetLang,
+    keywords: topKw.map((orig, i) => ({ orig, ja: kwTranslated[i] })),
+    articles: topArticles.map((a, i) => ({
+      orig: a.title, ja: titleTranslated[i],
+      url: a.url, source_name: a.source_name,
+    })),
+  };
+  if (status) status.textContent = '';
+  return globe.searchTranslation;
+}
+
+// search globe に 観 sprite を常に表示する (updateBrief の挙動を search モード向けに拡張)
+const _origUpdateBrief = updateBrief;
+updateBrief = function(g) {
+  if (currentApp !== 'search') {
+    _origUpdateBrief.call(this, g);
+    return;
+  }
+  // ── search モード専用 BRIEF ──
+  const summaryEl  = document.getElementById('brief-summary');
+  const clustersEl = document.getElementById('brief-clusters');
+  const titleEl    = document.getElementById('brief-panel-title');
+  const panel      = document.getElementById('brief-panel');
+
+  // 観 sprite: search 球儀は常に表示 (FLOW モードは animate 側で位置 alpha 管理)
+  if (!autoFlow) {
+    globesList.forEach((grp, i) => {
+      const isMain = (slotAssignment[i] === 0);
+      if (grp.userData.brief) grp.userData.brief.visible = isMain;
+    });
+  }
+
+  const applySwap = () => {
+    if (titleEl) titleEl.textContent = `${g.label || '─'} ─ 観 / TRANSLATE`;
+    const tr = g.searchTranslation;
+    if (!tr) {
+      summaryEl.innerHTML = `<span style="color:#5a7c92;font-style:italic;line-height:1.7;">
+        観 をタップすると MyMemory 翻訳が走り、 主要キーワード + 上位記事タイトルが日本語化されます (キー不要、 自分の IP の 1000 words/日 上限内、 結果はキャッシュ)。</span>`;
+      summaryEl.style.display = 'block';
+      clustersEl.innerHTML = '';
+      return;
+    }
+    // 翻訳済 → 表示
+    let html = '<div style="margin-bottom:14px;"><b style="color:#ffd166;">▼ 主要キーワード (JA)</b><br>';
+    html += tr.keywords.slice(0, 20).map(k =>
+      `<span style="display:inline-block;margin:3px 6px 3px 0;color:#dceaf3;">${k.ja}<span style="color:#5a7c92;font-size:11px;"> (${k.orig})</span></span>`
+    ).join('');
+    html += '</div>';
+    html += '<div><b style="color:#ffd166;">▼ 上位記事 (JA タイトル)</b><br>';
+    html += tr.articles.map(a => {
+      const linkStart = a.url ? `<a href="${a.url}" target="_blank" rel="noopener" style="color:#cfe7f5;text-decoration:none;">` : '<span>';
+      const linkEnd   = a.url ? '</a>' : '</span>';
+      return `<div style="margin:8px 0;padding:6px 10px;background:rgba(0,30,50,0.4);border-left:2px solid #00415a;">
+        ${linkStart}${a.ja}${linkEnd}
+        <div style="color:#5a7c92;font-size:11px;font-style:italic;margin-top:2px;">${a.orig}</div>
+      </div>`;
+    }).join('');
+    html += '</div>';
+    summaryEl.innerHTML = html;
+    summaryEl.style.display = 'block';
+    clustersEl.innerHTML = '';
+  };
+  // crossfade ロジックは既存 updateBrief と同じ
+  const isOpen = panel.classList.contains('open');
+  const idChanged = lastBriefGlobeId !== null && lastBriefGlobeId !== g.id;
+  lastBriefGlobeId = g.id;
+  if (isOpen && idChanged) {
+    if (briefFadeTimer) clearTimeout(briefFadeTimer);
+    panel.classList.remove('open');
+    briefFadeTimer = setTimeout(() => {
+      applySwap();
+      setTimeout(() => { panel.classList.add('open'); briefFadeTimer = null; }, 120);
+    }, 720);
+  } else {
+    if (briefFadeTimer) { clearTimeout(briefFadeTimer); briefFadeTimer = null; }
+    applySwap();
+  }
+};
+
+// 観 sprite タップ時の挙動を拡張: search モードなら MyMemory 翻訳を走らせる
+const _origSetBriefOpen = setBriefOpen;
+setBriefOpen = function(open) {
+  if (open && currentApp === 'search') {
+    const g = getMainGlobeData();
+    if (g && !g.searchTranslation) {
+      _origSetBriefOpen(true);
+      document.getElementById('brief-summary').innerHTML =
+        '<span style="color:#ffd166;font-style:italic;">MyMemory で翻訳中... (キー不要、 結果はキャッシュ)</span>';
+      document.getElementById('brief-clusters').innerHTML = '';
+      ssTranslateGlobe(g, 'ja').then(() => {
+        if (currentApp === 'search') updateBrief(g);
+      });
+      return;
+    }
+  }
+  _origSetBriefOpen(open);
 };
 </script>
 
