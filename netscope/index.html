@@ -32,10 +32,53 @@ body {
 #hud .title { font-size:24px; font-weight:bold; letter-spacing:6px; margin-bottom:4px; }
 #hud .sub   { font-size:13px; color:#006677; letter-spacing:1.5px; }
 
-#tabs {
+/* ⭐ App モード (NEWS / SEARCH) */
+#app-modes {
   position:fixed; top:18px; left:50%; transform:translateX(-50%);
+  display:flex; gap:6px; z-index:11;
+}
+.app-mode {
+  padding:8px 18px; font-size:12px; letter-spacing:2px;
+  color:#ffb84d; border:1px solid #663300; cursor:pointer;
+  background:rgba(20,12,0,0.7); transition:all 0.15s;
+  font-family:inherit;
+}
+.app-mode.active {
+  color:#ffd166; border-color:#ffd166; text-shadow:0 0 6px #ffd166;
+  background:rgba(40,28,0,0.8);
+}
+.app-mode:hover { color:#ffd166; border-color:#995500; }
+
+/* ⭐ SEARCH バー (App モード = search の時のみ) */
+#search-bar {
+  position:fixed; top:62px; left:50%; transform:translateX(-50%);
+  display:none; gap:6px; z-index:11;
+  background:rgba(0,8,18,0.9);
+  border:1px solid #00415a;
+  padding:8px 12px;
+}
+#search-bar.active { display:flex; align-items:center; }
+#search-input {
+  width:min(360px, 60vw); padding:8px 12px;
+  background:rgba(0,8,18,0.8); border:1px solid #003855;
+  color:#dceaf3; font-family:inherit;
+  font-size:14px; letter-spacing:1px;
+}
+#search-input:focus { outline:none; border-color:#ffd166; }
+#search-go {
+  padding:8px 18px; font-size:13px; letter-spacing:2px;
+  color:#ffd166; border:1px solid #ffd166; background:transparent;
+  cursor:pointer; font-family:inherit;
+}
+#search-go:hover { background:rgba(255,209,102,0.15); }
+#search-go:disabled { color:#5a5040; border-color:#5a5040; cursor:not-allowed; }
+#search-status { font-size:11px; color:#5a8aa8; letter-spacing:1px; margin-left:8px; }
+
+#tabs {
+  position:fixed; top:54px; left:50%; transform:translateX(-50%);
   display:flex; gap:8px; z-index:10;
 }
+#tabs.search-mode { display:none; }
 .tab {
   padding:10px 22px; font-size:14px; letter-spacing:2.5px;
   color:#006677; border:1px solid #003344; cursor:pointer;
@@ -393,9 +436,22 @@ body {
   <div class="sub">REVOLVER MODE :: ◀ ▶ ROTATE :: TAP KEYWORD</div>
 </div>
 
+<!-- ⭐ App モード (NEWS / SEARCH) — tabs の上 -->
+<div id="app-modes">
+  <div class="app-mode active" data-app="news">📰 NEWS</div>
+  <div class="app-mode"        data-app="search">🔍 SEARCH</div>
+</div>
+
 <div id="tabs">
   <div class="tab active" data-mode="category">CATEGORY</div>
   <div class="tab" data-mode="source">SOURCE</div>
+</div>
+
+<!-- ⭐ SEARCH モード時のみ表示 -->
+<div id="search-bar">
+  <input id="search-input" type="search" placeholder="キーワードを入れて GO" autocomplete="off">
+  <button id="search-go">GO</button>
+  <div id="search-status"></div>
 </div>
 
 <div id="nav-prev">◀</div>
@@ -1571,6 +1627,235 @@ window.addEventListener('resize', () => {
 // ── 初回ロード + 5 分ごと再読込 ──
 loadData();
 setInterval(loadData, 300000);
+
+// ════════════════════════════════════════════════════════════════════
+//   ⭐ SearchScope: NEWS / SEARCH 二モード切替 + 並列検索
+// ════════════════════════════════════════════════════════════════════
+let currentApp = 'news';           // 'news' | 'search'
+let newsGlobesData = [];           // NEWS モードの球儀キャッシュ
+let searchGlobesData = [];         // SEARCH モードの球儀キャッシュ
+let searchActiveQuery = '';
+
+// NEWS の rebuildGlobes を上書きラッピング (既存挙動 保ちつつキャッシュ)
+const _origRebuildGlobes = rebuildGlobes;
+rebuildGlobes = function() {
+  _origRebuildGlobes.apply(this, arguments);
+  if (currentApp === 'news') newsGlobesData = globesData.slice();
+};
+
+function setAppMode(mode) {
+  if (mode === currentApp) return;
+  currentApp = mode;
+  document.querySelectorAll('.app-mode').forEach(el => {
+    el.classList.toggle('active', el.dataset.app === mode);
+  });
+  document.getElementById('tabs').classList.toggle('search-mode', mode === 'search');
+  document.getElementById('search-bar').classList.toggle('active', mode === 'search');
+  if (mode === 'news') {
+    globesData = newsGlobesData;
+    layoutRevolver();
+    document.getElementById('counter').textContent =
+      `GLOBES: ${globesData.length}  /  KEYWORDS: ${globesData.reduce((s,g)=>s+g.node_count,0)}  /  ARTICLES: ${globesData.reduce((s,g)=>s+g.total_articles,0)}`;
+  } else {
+    globesData = searchGlobesData;
+    layoutRevolver();
+    setTimeout(() => document.getElementById('search-input').focus(), 50);
+  }
+}
+document.querySelectorAll('.app-mode').forEach(el => {
+  el.addEventListener('click', () => setAppMode(el.dataset.app));
+});
+
+// ─── キーワード抽出 (JA katakana / kanji + EN tokens) ───
+const SS_STOP_WORDS = new Set([
+  'について','による','として','ている','された','される','など','ため','この','その','また','さらに',
+  'ことで','において','に関して','以上','以下','可能','必要','重要','this','that','with','from',
+  'have','will','their','there','these','those','about','which','would','could','should','been',
+  'were','when','where','what','your','also','more','some','such','only','after','before','through',
+]);
+function ssExtractKeywords(text) {
+  if (!text) return [];
+  const out = new Set();
+  for (const m of text.matchAll(/[ァ-ヴー]{3,}/g)) out.add(m[0]);
+  for (const m of text.matchAll(/[一-鿿]{2,6}/g)) {
+    if (!SS_STOP_WORDS.has(m[0])) out.add(m[0]);
+  }
+  for (const m of text.matchAll(/[A-Za-z][A-Za-z0-9]{3,}/g)) {
+    const w = m[0].toLowerCase();
+    if (!SS_STOP_WORDS.has(w) && w.length <= 20) out.add(w);
+  }
+  return [...out];
+}
+
+// ─── 球面 spring layout (Python と同じロジックの JS 簡易版) ───
+function ssSpringLayout(n, radius) {
+  if (n === 0) return [];
+  const pts = [];
+  for (let i = 0; i < n; i++) {
+    const phi   = Math.acos(1 - 2 * (i + 0.5) / n);
+    const theta = Math.PI * (1 + Math.sqrt(5)) * i;
+    pts.push([
+      radius * Math.sin(phi) * Math.cos(theta),
+      radius * Math.cos(phi),
+      radius * Math.sin(phi) * Math.sin(theta),
+    ]);
+  }
+  return pts;
+}
+
+// ─── 検索結果から球儀データを構築 ───
+function ssBuildGlobeData(id, label, color, articles) {
+  if (!articles.length) return null;
+  const counter = new Map();
+  for (const a of articles) {
+    for (const k of ssExtractKeywords(a.title || '')) {
+      counter.set(k, (counter.get(k) || 0) + 1);
+    }
+  }
+  const top = [...counter.entries()].sort((a,b) => b[1]-a[1]).slice(0, 60);
+  if (!top.length) return null;
+  const topSet = new Set(top.map(t => t[0]));
+  const wordArticles = new Map();
+  for (const a of articles) {
+    const kws = ssExtractKeywords(a.title || '').filter(k => topSet.has(k));
+    for (const k of kws) {
+      if (!wordArticles.has(k)) wordArticles.set(k, []);
+      wordArticles.get(k).push(a);
+    }
+  }
+  const positions = ssSpringLayout(top.length, GLOBE_RADIUS);
+  const nodes = top.map(([w, count], i) => ({
+    text: w, count,
+    articles: (wordArticles.get(w) || []).slice(0, 8),
+    pos: positions[i] || [0, 0, 0],
+    en_ratio: 0, tr_lang_short: '',
+  }));
+  return {
+    id, label, color,
+    node_count: nodes.length,
+    total_articles: articles.length,
+    nodes, edges: [],
+  };
+}
+
+// ─── 検索 API クライアント (CORS OK のみ) ───
+function ssDetectQueryLang(q) {
+  if (/[ァ-ヴーぁ-ゟ]/.test(q)) return 'ja';
+  return 'en';
+}
+
+async function ssSearchWikipedia(query, lang) {
+  const host = (lang === 'ja') ? 'ja.wikipedia.org' : 'en.wikipedia.org';
+  const url = `https://${host}/w/api.php?action=opensearch&search=${encodeURIComponent(query)}&limit=30&format=json&origin=*`;
+  try {
+    const r = await fetch(url);
+    const data = await r.json();
+    // opensearch returns [term, titles[], descs[], urls[]]
+    const titles = data[1] || [];
+    const descs  = data[2] || [];
+    const urls   = data[3] || [];
+    return titles.map((t, i) => ({
+      title: t,
+      summary: descs[i] || '',
+      url: urls[i] || `https://${host}/wiki/${encodeURIComponent(t)}`,
+      source_name: `Wikipedia ${lang.toUpperCase()}`,
+    }));
+  } catch (e) {
+    console.warn('Wikipedia search failed', e);
+    return [];
+  }
+}
+
+async function ssSearchHackerNews(query) {
+  const url = `https://hn.algolia.com/api/v1/search?query=${encodeURIComponent(query)}&tags=story&hitsPerPage=40`;
+  try {
+    const r = await fetch(url);
+    const data = await r.json();
+    return (data.hits || []).map(h => ({
+      title: h.title || '',
+      summary: `${h.points || 0} points · ${h.num_comments || 0} comments`,
+      url: h.url || `https://news.ycombinator.com/item?id=${h.objectID}`,
+      source_name: 'Hacker News',
+    })).filter(x => x.title);
+  } catch (e) {
+    console.warn('HN search failed', e);
+    return [];
+  }
+}
+
+async function ssSearchWikinews(query, lang) {
+  const host = (lang === 'ja') ? 'ja.wikinews.org' : 'en.wikinews.org';
+  const url = `https://${host}/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&srlimit=30&format=json&origin=*`;
+  try {
+    const r = await fetch(url);
+    const data = await r.json();
+    const hits = data?.query?.search || [];
+    return hits.map(h => ({
+      title: h.title || '',
+      summary: (h.snippet || '').replace(/<[^>]+>/g, '').slice(0, 200),
+      url: `https://${host}/wiki/${encodeURIComponent(h.title)}`,
+      source_name: `Wikinews ${lang.toUpperCase()}`,
+    })).filter(x => x.title);
+  } catch (e) {
+    console.warn('Wikinews search failed', e);
+    return [];
+  }
+}
+
+async function ssExecuteSearch(query) {
+  query = (query || '').trim();
+  if (!query) return;
+  const status = document.getElementById('search-status');
+  const btn    = document.getElementById('search-go');
+  btn.disabled = true;
+  status.textContent = '検索中...';
+  const lang = ssDetectQueryLang(query);
+  searchActiveQuery = query;
+  try {
+    const [wiki, hn, wnews] = await Promise.all([
+      ssSearchWikipedia(query, lang),
+      ssSearchHackerNews(query),
+      ssSearchWikinews(query, lang),
+    ]);
+    const globes = [];
+    const w = ssBuildGlobeData('wikipedia', `WIKIPEDIA ${lang.toUpperCase()}`, '#00d4ff', wiki);
+    if (w) globes.push(w);
+    const h = ssBuildGlobeData('hackernews', 'HACKER NEWS', '#ff851b', hn);
+    if (h) globes.push(h);
+    const n = ssBuildGlobeData('wikinews', `WIKINEWS ${lang.toUpperCase()}`, '#9be7c4', wnews);
+    if (n) globes.push(n);
+    searchGlobesData = globes;
+    if (currentApp === 'search') {
+      globesData = searchGlobesData;
+      layoutRevolver();
+    }
+    const total = wiki.length + hn.length + wnews.length;
+    status.textContent = `${globes.length} 球 / ${total} hits`;
+    document.getElementById('counter').textContent =
+      `GLOBES: ${globes.length}  /  KEYWORDS: ${globes.reduce((s,g)=>s+g.node_count,0)}  /  HITS: ${total}`;
+  } catch (e) {
+    console.error('search failed', e);
+    status.textContent = '⚠ 検索失敗';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// 入力イベント
+document.getElementById('search-go').addEventListener('click', () => {
+  ssExecuteSearch(document.getElementById('search-input').value);
+});
+document.getElementById('search-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') ssExecuteSearch(e.target.value);
+});
+
+// ⭐ 詳細パネルからクロスモード bridge: キーワード詳細を見ながら 「この単語で検索」
+// (将来追加。 今はキーワード自体を検索ボックスに転送する機能のみ)
+window.searchThisKeyword = function(text) {
+  setAppMode('search');
+  document.getElementById('search-input').value = text;
+  ssExecuteSearch(text);
+};
 </script>
 
 </body>
