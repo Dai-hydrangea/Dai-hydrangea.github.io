@@ -161,6 +161,15 @@ body {
 #brief-panel-title {
   font-size:14px; letter-spacing:5px; color:#00e5ff;
   text-shadow:0 0 8px rgba(0,229,255,0.7);
+  transition:opacity 0.28s ease-out;
+}
+#brief-summary, #brief-clusters {
+  transition:opacity 0.28s ease-out;
+}
+#brief-panel-title.fading-content,
+#brief-summary.fading-content,
+#brief-clusters.fading-content {
+  opacity:0;
 }
 #brief-panel-close {
   cursor:pointer; color:#5a8aa8; font-size:12px;
@@ -929,20 +938,18 @@ function updateCenterLabel() {
 }
 
 // ── BRIEF パネル ──
+let lastBriefGlobeId = null;
+let briefFadeTimer = null;
 function updateBrief(g) {
   const summaryEl  = document.getElementById('brief-summary');
   const clustersEl = document.getElementById('brief-clusters');
   const titleEl    = document.getElementById('brief-panel-title');
   const panel      = document.getElementById('brief-panel');
 
-  // header に現在の球名を入れる
-  if (titleEl) titleEl.textContent = `${g.label || '─'} ─ 観 / SCAN`;
-
   const hasSummary  = !!(g.summary && g.summary.trim());
   const hasClusters = Array.isArray(g.clusters) && g.clusters.length > 0;
 
-  // 球内 BRIEF sprite の表示制御 (main かつ summary/clusters があるとき)
-  // FLOW モード中は animate ループ側で smooth に管理しているのでここではスキップ
+  // 球内 BRIEF sprite の表示制御 (FLOW 時は animate 側で smooth 管理)
   if (!autoFlow) {
     globesList.forEach((grp, i) => {
       const isMain = (slotAssignment[i] === 0);
@@ -952,35 +959,60 @@ function updateBrief(g) {
     });
   }
 
-  // 要約がない球儀でもパネルは開いたまま (リボルバー回しても消えない)
-  if (!hasSummary && !hasClusters) {
-    summaryEl.innerHTML =
-      '<span style="color:#5a7c92;font-style:italic;line-height:1.7;">' +
-      '─ NO SCAN AVAILABLE ─<br>' +
-      'このカテゴリは今回 要約が生成できませんでした。<br>' +
-      '次の自動更新 (朝 7 / 昼 13 / 夜 22 時) で復活する見込みです。' +
-      '</span>';
-    summaryEl.style.display = 'block';
+  // ── 実際のコンテンツ差し替え ──
+  const applySwap = () => {
+    if (titleEl) titleEl.textContent = `${g.label || '─'} ─ 観 / SCAN`;
+    if (!hasSummary && !hasClusters) {
+      summaryEl.innerHTML =
+        '<span style="color:#5a7c92;font-style:italic;line-height:1.7;">' +
+        '─ NO SCAN AVAILABLE ─<br>' +
+        'このカテゴリは今回 要約が生成できませんでした。<br>' +
+        '次の自動更新で復活する見込みです。' +
+        '</span>';
+      summaryEl.style.display = 'block';
+      clustersEl.innerHTML = '';
+      return;
+    }
+    summaryEl.textContent = hasSummary ? g.summary : '';
+    summaryEl.style.display = hasSummary ? 'block' : 'none';
     clustersEl.innerHTML = '';
-    return;
-  }
+    if (hasClusters) {
+      const kwCount = {};
+      (g.nodes || []).forEach(n => { kwCount[n.text] = n.count || 0; });
+      g.clusters.forEach(c => {
+        const total = (c.keywords || []).reduce((s, k) => s + (kwCount[k] || 0), 0);
+        const pill = document.createElement('span');
+        pill.className = 'cluster-pill';
+        pill.innerHTML = `${c.name}<span class="cluster-count">${total}</span>`;
+        pill.addEventListener('click', () => focusCluster(c, g));
+        clustersEl.appendChild(pill);
+      });
+    }
+  };
 
-  summaryEl.textContent = hasSummary ? g.summary : '';
-  summaryEl.style.display = hasSummary ? 'block' : 'none';
+  // パネル開いていて、 main 切替の時のみ crossfade
+  const isOpen = panel.classList.contains('open');
+  const idChanged = lastBriefGlobeId !== null && lastBriefGlobeId !== g.id;
+  lastBriefGlobeId = g.id;
 
-  clustersEl.innerHTML = '';
-  if (hasClusters) {
-    // 各クラスタの代表キーワードの記事数合計でソート
-    const kwCount = {};
-    (g.nodes || []).forEach(n => { kwCount[n.text] = n.count || 0; });
-    g.clusters.forEach(c => {
-      const total = (c.keywords || []).reduce((s, k) => s + (kwCount[k] || 0), 0);
-      const pill = document.createElement('span');
-      pill.className = 'cluster-pill';
-      pill.innerHTML = `${c.name}<span class="cluster-count">${total}</span>`;
-      pill.addEventListener('click', () => focusCluster(c, g));
-      clustersEl.appendChild(pill);
-    });
+  if (isOpen && idChanged) {
+    if (briefFadeTimer) clearTimeout(briefFadeTimer);
+    titleEl?.classList.add('fading-content');
+    summaryEl.classList.add('fading-content');
+    clustersEl.classList.add('fading-content');
+    briefFadeTimer = setTimeout(() => {
+      applySwap();
+      titleEl?.classList.remove('fading-content');
+      summaryEl.classList.remove('fading-content');
+      clustersEl.classList.remove('fading-content');
+      briefFadeTimer = null;
+    }, 230);
+  } else {
+    if (briefFadeTimer) { clearTimeout(briefFadeTimer); briefFadeTimer = null; }
+    titleEl?.classList.remove('fading-content');
+    summaryEl.classList.remove('fading-content');
+    clustersEl.classList.remove('fading-content');
+    applySwap();
   }
 }
 
