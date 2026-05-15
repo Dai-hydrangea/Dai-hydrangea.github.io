@@ -942,12 +942,15 @@ function updateBrief(g) {
   const hasClusters = Array.isArray(g.clusters) && g.clusters.length > 0;
 
   // 球内 BRIEF sprite の表示制御 (main かつ summary/clusters があるとき)
-  globesList.forEach((grp, i) => {
-    const isMain = (slotAssignment[i] === 0);
-    const data   = grp.userData?.globeData;
-    const has    = !!(data && (data.summary || (data.clusters && data.clusters.length)));
-    if (grp.userData.brief) grp.userData.brief.visible = (isMain && has);
-  });
+  // FLOW モード中は animate ループ側で smooth に管理しているのでここではスキップ
+  if (!autoFlow) {
+    globesList.forEach((grp, i) => {
+      const isMain = (slotAssignment[i] === 0);
+      const data   = grp.userData?.globeData;
+      const has    = !!(data && (data.summary || (data.clusters && data.clusters.length)));
+      if (grp.userData.brief) grp.userData.brief.visible = (isMain && has);
+    });
+  }
 
   // 要約がない球儀でもパネルは開いたまま (リボルバー回しても消えない)
   if (!hasSummary && !hasClusters) {
@@ -1472,6 +1475,27 @@ function animate(now) {
       const frontScale = FRONT_PEAK * wx;
       const scale = BACK_S + (frontScale - BACK_S) * (1 - depthFrac);
       g.scale.setScalar(scale);
+
+      // ⭐ 自転速度: front は遅く、 back は速く、 連続補間
+      const rotSpeed = 0.067 + (0.167 - 0.067) * depthFrac;
+      g.rotation.y += dt * rotSpeed;
+
+      // ⭐ 観 sprite の alpha も連続補間 (snap 防止)
+      const brief = g.userData?.brief;
+      if (brief) {
+        const data = g.userData?.globeData;
+        const hasSummary = !!(data && (data.summary || (data.clusters && data.clusters.length)));
+        if (!hasSummary) {
+          brief.visible = false;
+          brief.userData.flowAlpha = 0;
+        } else {
+          // 前面 spotlight: x も z もゼロに近いほど濃い
+          const proximity = Math.exp(-(xN * xN * 1.5 + depthFrac * depthFrac * 4));
+          brief.visible = proximity > 0.04;
+          brief.userData.flowAlpha = proximity;
+        }
+      }
+
       const sq = x * x + z * z + y * y;
       if (sq < bestSq) { bestSq = sq; bestIdx = i; }
     });
@@ -1482,11 +1506,13 @@ function animate(now) {
     }
   }
 
-  // 自転 (主役は ゆっくり、 衛星は速め)
-  globesList.forEach((g, i) => {
-    const isMain = (slotAssignment[i] === 0);
-    g.rotation.y += dt * (isMain ? 0.067 : 0.167);
-  });
+  // 自転 (FLOW モードでは上記の loop が処理済、 ここは非 FLOW のみ)
+  if (!autoFlow) {
+    globesList.forEach((g, i) => {
+      const isMain = (slotAssignment[i] === 0);
+      g.rotation.y += dt * (isMain ? 0.067 : 0.167);
+    });
+  }
   // BRIEF core: 呼吸 (scale) + 浮遊 (y) + alpha 揺らぎ
   const tsec = now * 0.001;
   globesList.forEach(g => {
@@ -1495,7 +1521,10 @@ function animate(now) {
     const pulse = 1.0 + Math.sin(tsec * 1.6) * 0.06;
     b.scale.set(58 * pulse, 47 * pulse, 1);
     b.position.y = Math.sin(tsec * 0.7) * 10;
-    b.material.opacity = 0.78 + 0.20 * (0.5 + 0.5 * Math.sin(tsec * 1.2));
+    const baseAlpha = 0.78 + 0.20 * (0.5 + 0.5 * Math.sin(tsec * 1.2));
+    // FLOW 時は proximity に基づく flowAlpha を乗じて滑らかに fade
+    const flowA = autoFlow ? (b.userData.flowAlpha ?? 1) : 1;
+    b.material.opacity = baseAlpha * flowA;
   });
   renderer.render(scene, camera);
 }
