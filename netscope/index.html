@@ -2478,14 +2478,49 @@ async function ssTranslateBatch(texts, targetLang) {
   return out;
 }
 
-// 球儀の keywords + 上位記事タイトルを翻訳してキャッシュ
+// ⭐ Gemini で 要約 + クラスタ 生成 (NEWS の SCAN 機能を SEARCH に持ってくる)
+async function ssSummarizeGlobeGemini(globe, apiKey, targetLang = 'ja') {
+  const langName = targetLang === 'ja' ? '日本語' : 'English';
+  const keywords = globe.nodes.slice(0, 20).map(n => n.text);
+  const seen = new Set();
+  const titles = [];
+  for (const n of globe.nodes.slice(0, 12)) {
+    for (const a of n.articles || []) {
+      if (a.title && !seen.has(a.title)) { seen.add(a.title); titles.push(a.title); }
+      if (titles.length >= 12) break;
+    }
+    if (titles.length >= 12) break;
+  }
+  if (!keywords.length || !titles.length) return null;
+  const prompt =
+    `Cat: ${globe.label}, Query: "${searchActiveQuery}", Lang: ${langName}\n` +
+    `JSON: {"summary":"3-5行(各50-70字), 検索結果の概観 (具体的な対象/出来事)","clusters":[{"name":"<=15字","keywords":["入力KWのみ"]}](3-6個)}\n` +
+    `KW: ${JSON.stringify(keywords)}\n` +
+    `T: ${JSON.stringify(titles)}`;
+  try {
+    const r = await ssGeminiCall(prompt, apiKey);
+    if (!r || typeof r !== 'object') return null;
+    const kwSet = new Set(keywords);
+    const summary = (r.summary || '').trim();
+    const clusters = Array.isArray(r.clusters) ? r.clusters
+      .filter(c => c && c.name && Array.isArray(c.keywords))
+      .map(c => ({ name: String(c.name).trim(), keywords: c.keywords.filter(k => kwSet.has(k)) }))
+      .filter(c => c.name && c.keywords.length)
+      : [];
+    if (!summary && !clusters.length) return null;
+    return { summary, clusters };
+  } catch (e) {
+    console.warn('summarize failed', e);
+    return null;
+  }
+}
+
+// 球儀の keywords + 上位記事タイトルを翻訳 + (Gemini 時) 要約
 async function ssTranslateGlobe(globe, targetLang = 'ja') {
   if (globe.searchTranslation && globe.searchTranslation.lang === targetLang) return globe.searchTranslation;
   const status = document.getElementById('search-status');
   if (status) status.textContent = `翻訳中: ${globe.label}...`;
-  // top 30 keywords
   const topKw = globe.nodes.slice(0, 30).map(n => n.text);
-  // top 12 article titles
   const seen = new Set();
   const topArticles = [];
   for (const n of globe.nodes.slice(0, 12)) {
@@ -2495,8 +2530,8 @@ async function ssTranslateGlobe(globe, targetLang = 'ja') {
     }
     if (topArticles.length >= 12) break;
   }
-  const kwTranslated     = await ssTranslateBatch(topKw, targetLang);
-  const titleTranslated  = await ssTranslateBatch(topArticles.map(a => a.title), targetLang);
+  const kwTranslated    = await ssTranslateBatch(topKw, targetLang);
+  const titleTranslated = await ssTranslateBatch(topArticles.map(a => a.title), targetLang);
   globe.searchTranslation = {
     lang: targetLang,
     keywords: topKw.map((orig, i) => ({ orig, ja: kwTranslated[i] })),
@@ -2504,7 +2539,19 @@ async function ssTranslateGlobe(globe, targetLang = 'ja') {
       orig: a.title, ja: titleTranslated[i],
       url: a.url, source_name: a.source_name,
     })),
+    summary: '',
+    clusters: [],
   };
+  // ⭐ Gemini engine 限定: 要約 + クラスタも生成
+  const apiKey = ssLoadGeminiKey();
+  if (ssLoadEngine() === 'gemini' && apiKey) {
+    if (status) status.textContent = `要約生成中: ${globe.label}...`;
+    const sum = await ssSummarizeGlobeGemini(globe, apiKey, targetLang);
+    if (sum) {
+      globe.searchTranslation.summary  = sum.summary;
+      globe.searchTranslation.clusters = sum.clusters;
+    }
+  }
   if (status) status.textContent = '';
   return globe.searchTranslation;
 }
@@ -2531,22 +2578,39 @@ updateBrief = function(g) {
   }
 
   const applySwap = () => {
-    if (titleEl) titleEl.textContent = `${g.label || '─'} ─ 観 / TRANSLATE`;
     const tr = g.searchTranslation;
+    const hasSummary  = tr && tr.summary;
+    const hasClusters = tr && tr.clusters && tr.clusters.length;
+    // タイトル: 要約あれば SCAN、 翻訳のみなら TRANSLATE
+    if (titleEl) titleEl.textContent = `${g.label || '─'} ─ 観 / ${hasSummary ? 'SCAN' : 'TRANSLATE'}`;
     if (!tr) {
+      const engine = ssLoadEngine();
+      const engineDesc = (engine === 'gemini' && ssLoadGeminiKey())
+        ? 'Gemini が翻訳 + 要約 + クラスタ生成します (キャッシュあり、 ¥0 推奨)。'
+        : 'MyMemory が翻訳します (キー不要、 1000 words/日)。 Gemini にすると 要約 + クラスタも生成。';
       summaryEl.innerHTML = `<span style="color:#5a7c92;font-style:italic;line-height:1.7;">
-        観 をタップすると MyMemory 翻訳が走り、 主要キーワード + 上位記事タイトルが日本語化されます (キー不要、 自分の IP の 1000 words/日 上限内、 結果はキャッシュ)。</span>`;
+        観 をタップで実行。 ${engineDesc}</span>`;
       summaryEl.style.display = 'block';
       clustersEl.innerHTML = '';
       return;
     }
     // 翻訳済 → 表示
-    let html = '<div style="margin-bottom:14px;"><b style="color:#ffd166;">▼ 主要キーワード (JA)</b><br>';
+    let html = '';
+    // ① 要約 (Gemini 時のみ)
+    if (hasSummary) {
+      html += `<div style="margin-bottom:14px; padding:12px 14px; background:rgba(0,229,255,0.06); border-left:3px solid #00e5ff;">
+        <b style="color:#00e5ff; font-size:12px; letter-spacing:2px;">▼ DAILY SCAN</b>
+        <div style="white-space:pre-wrap; line-height:1.85; color:#dceaf3; margin-top:8px; font-size:14px;">${tr.summary}</div>
+      </div>`;
+    }
+    // ② キーワード一覧
+    html += '<div style="margin-bottom:14px;"><b style="color:#ffd166; font-size:12px; letter-spacing:2px;">▼ 主要キーワード (JA)</b><br>';
     html += tr.keywords.slice(0, 20).map(k =>
       `<span style="display:inline-block;margin:3px 6px 3px 0;color:#dceaf3;">${k.ja}<span style="color:#5a7c92;font-size:11px;"> (${k.orig})</span></span>`
     ).join('');
     html += '</div>';
-    html += '<div><b style="color:#ffd166;">▼ 上位記事 (JA タイトル)</b><br>';
+    // ③ 上位記事
+    html += '<div style="margin-bottom:14px;"><b style="color:#ffd166; font-size:12px; letter-spacing:2px;">▼ 上位記事 (JA タイトル)</b>';
     html += tr.articles.map(a => {
       const linkStart = a.url ? `<a href="${a.url}" target="_blank" rel="noopener" style="color:#cfe7f5;text-decoration:none;">` : '<span>';
       const linkEnd   = a.url ? '</a>' : '</span>';
@@ -2558,7 +2622,20 @@ updateBrief = function(g) {
     html += '</div>';
     summaryEl.innerHTML = html;
     summaryEl.style.display = 'block';
+    // ④ クラスタピル (Gemini 時のみ)
     clustersEl.innerHTML = '';
+    if (hasClusters) {
+      const kwCount = {};
+      (g.nodes || []).forEach(n => { kwCount[n.text] = n.count || 0; });
+      tr.clusters.forEach(c => {
+        const total = (c.keywords || []).reduce((s, k) => s + (kwCount[k] || 0), 0);
+        const pill = document.createElement('span');
+        pill.className = 'cluster-pill';
+        pill.innerHTML = `${c.name}<span class="cluster-count">${total}</span>`;
+        pill.addEventListener('click', () => focusCluster(c, g));
+        clustersEl.appendChild(pill);
+      });
+    }
   };
   // crossfade ロジックは既存 updateBrief と同じ
   const isOpen = panel.classList.contains('open');
