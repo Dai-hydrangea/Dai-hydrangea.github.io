@@ -744,7 +744,10 @@ function buildSlots(count) {
 //   関連強 (ratio=1) → 大・濃・くっきり、 関連弱 (ratio=0) → 小・薄・控えめ。
 function makeKeywordSprite(node, fontSize, ratio, colorHex) {
   const text  = node.text;
-  const isEn  = (node.en_ratio || 0) >= 0.3;     // 海外発の話 indicator
+  // ⭐ キーワード自体が日本語表記 (ひらがな/カタカナ/漢字) なら EN バッジは付けない
+  // (日本語表記時点で 「海外発」 シグナルは無意味、 視覚的に混乱を招くため)
+  const isJapaneseText = /[ぁ-ゟ゠-ヿ一-鿿]/.test(text);
+  const isEn  = !isJapaneseText && (node.en_ratio || 0) >= 0.3;
   const canvas = document.createElement('canvas');
   const ctx    = canvas.getContext('2d');
   const fs     = Math.round(Math.max(14, Math.min(70, fontSize)));
@@ -1910,14 +1913,15 @@ async function ssSearchWikinews(query) {
 
 // 学術 (OpenAlex、 CC0、 CORS OK、 認証不要)
 async function ssSearchOpenAlex(query) {
-  const url = `https://api.openalex.org/works?search=${encodeURIComponent(query)}&per-page=40&select=title,doi,abstract_inverted_index,publication_year,authorships`;
+  const url = `https://api.openalex.org/works?search=${encodeURIComponent(query)}&per-page=40&select=id,title,doi,publication_year,authorships`;
   try {
     const r = await fetch(url);
     const data = await r.json();
     return (data.results || []).map(w => ({
       title: w.title || '',
       summary: w.publication_year ? `(${w.publication_year})` : '',
-      url: w.doi ? `https://doi.org/${w.doi.replace('https://doi.org/', '')}` : '',
+      // ⭐ DOI 無くても OpenAlex 自身の URL (w.id) があるので fallback
+      url: w.doi ? `https://doi.org/${w.doi.replace('https://doi.org/', '')}` : (w.id || ''),
       source_name: 'OpenAlex',
     })).filter(x => x.title);
   } catch (e) {
@@ -1990,15 +1994,17 @@ async function ssSearchOpenLibrary(query) {
 
 // Semantic Scholar 学術論文 (CORS OK、 rate-limit あり)
 async function ssSearchSemanticScholar(query) {
-  const url = `https://api.semanticscholar.org/graph/v1/paper/search?query=${encodeURIComponent(query)}&limit=30&fields=title,abstract,year,authors,externalIds`;
+  const url = `https://api.semanticscholar.org/graph/v1/paper/search?query=${encodeURIComponent(query)}&limit=30&fields=title,year,authors,externalIds,paperId`;
   try {
     const r = await fetch(url);
     const data = await r.json();
     return (data.data || []).map(p => ({
       title: p.title || '',
       summary: `${p.year || '?'} · ${(p.authors||[]).slice(0,2).map(a=>a.name).join(', ')}`,
+      // ⭐ DOI / arXiv なくても paperId で Semantic Scholar の記事ページに飛べる
       url: p.externalIds?.DOI ? `https://doi.org/${p.externalIds.DOI}` :
-           (p.externalIds?.ArXiv ? `https://arxiv.org/abs/${p.externalIds.ArXiv}` : ''),
+           (p.externalIds?.ArXiv ? `https://arxiv.org/abs/${p.externalIds.ArXiv}` :
+           (p.paperId ? `https://www.semanticscholar.org/paper/${p.paperId}` : '')),
       source_name: 'Semantic Scholar',
     })).filter(x => x.title);
   } catch (e) {
@@ -2074,7 +2080,9 @@ async function ssSearchDBLP(query) {
     return hits.map(h => ({
       title: h.info?.title || '',
       summary: `${h.info?.year || '?'} · ${[].concat(h.info?.authors?.author || []).slice(0,2).map(a=>typeof a==='string'?a:a.text||'').join(', ')}`,
-      url: h.info?.ee || h.info?.url || '',
+      // ⭐ DBLP の record url を必ず保持、 ee (External link) / url / fallback search
+      url: h.info?.ee || h.info?.url ||
+           (h.info?.title ? `https://dblp.org/search?q=${encodeURIComponent(h.info.title)}` : 'https://dblp.org/'),
       source_name: 'DBLP',
     })).filter(x => x.title);
   } catch (e) {
