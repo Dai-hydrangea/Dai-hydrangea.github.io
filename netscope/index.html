@@ -73,14 +73,8 @@ body {
 #search-go:hover { background:rgba(255,209,102,0.15); }
 #search-go:disabled { color:#5a5040; border-color:#5a5040; cursor:not-allowed; }
 #search-status { font-size:11px; color:#5a8aa8; letter-spacing:1px; margin-left:8px; }
-#search-ai-toggle {
-  padding:8px 12px; font-size:14px;
-  color:#ffd166; border:1px solid #663300; background:transparent;
-  cursor:pointer; font-family:inherit;
-}
-#search-ai-toggle:hover, #search-ai-toggle.active {
-  background:rgba(255,209,102,0.12); border-color:#ffd166;
-}
+/* ⭐ Gemini エンジン UI は SearchScope から削除 (MyMemory のみで sphere 翻訳) */
+#search-ai-toggle, #search-ai-settings { display:none !important; }
 
 #search-ai-settings {
   position:fixed; top:108px; left:50%; transform:translateX(-50%);
@@ -2292,6 +2286,9 @@ async function ssExecuteSearch(query) {
     ? `✓ ${globes.length} カテゴリ / ${total} hits (${breakdown})`
     : '⚠ 全ソース 0 件 (console 参照)';
   btn.disabled = false;
+  // ⭐ 検索完了後、 sphere 上のキーワードを MyMemory で順次 JA 化
+  // (バックグラウンド、 ユーザーの操作を妨げない)
+  ssAutoTranslateAllSearchGlobes().catch(e => console.warn('auto-translate batch failed', e));
 }
 
 // 入力イベント
@@ -2410,10 +2407,11 @@ async function ssGeminiBatch(texts, targetLang, apiKey) {
   return result.map(s => String(s));
 }
 // ⭐ 並列翻訳 (engine routing + キャッシュ + dedup)
-async function ssTranslateBatch(texts, targetLang) {
+// opts.engine: 'mymemory' | 'gemini' で強制 (省略時 localStorage の設定)
+async function ssTranslateBatch(texts, targetLang, opts = {}) {
   const cache = ssLoadTrCache();
   const out = new Array(texts.length);
-  const engine = ssLoadEngine();
+  const engine = opts.engine || ssLoadEngine();
   const apiKey = ssLoadGeminiKey();
   const useGemini = (engine === 'gemini') && apiKey;
 
@@ -2564,26 +2562,28 @@ async function ssTranslateGlobe(globe, targetLang = 'ja') {
   return globe.searchTranslation;
 }
 
-// search globe に 観 sprite を常に表示する (updateBrief の挙動を search モード向けに拡張)
+// search globe では 観 sprite を完全に非表示 (SearchScope は sphere そのものを翻訳して観察)
 const _origUpdateBrief = updateBrief;
 updateBrief = function(g) {
   if (currentApp !== 'search') {
     _origUpdateBrief.call(this, g);
     return;
   }
-  // ── search モード専用 BRIEF ──
+  // ── SearchScope: 観 / BRIEF パネル機能を撤去、 sphere 翻訳でカバー ──
+  globesList.forEach(grp => {
+    if (grp.userData.brief) grp.userData.brief.visible = false;
+  });
+  // BRIEF パネルが開いていれば閉じる
+  document.getElementById('brief-panel').classList.remove('open');
+  return;
+};
+
+// 旧: 翻訳結果を BRIEF panel に描画していたコード (dead code、 互換性保持)
+function ssRenderSearchBriefDeprecated(g) {
   const summaryEl  = document.getElementById('brief-summary');
   const clustersEl = document.getElementById('brief-clusters');
   const titleEl    = document.getElementById('brief-panel-title');
   const panel      = document.getElementById('brief-panel');
-
-  // 観 sprite: search 球儀は常に表示 (FLOW モードは animate 側で位置 alpha 管理)
-  if (!autoFlow) {
-    globesList.forEach((grp, i) => {
-      const isMain = (slotAssignment[i] === 0);
-      if (grp.userData.brief) grp.userData.brief.visible = isMain;
-    });
-  }
 
   const applySwap = () => {
     const tr = g.searchTranslation;
@@ -2662,28 +2662,88 @@ updateBrief = function(g) {
   }
 };
 
-// 観 sprite タップ時: search モードなら 選択エンジンで翻訳開始
-const _origSetBriefOpen = setBriefOpen;
-setBriefOpen = function(open) {
-  if (open && currentApp === 'search') {
-    const g = getMainGlobeData();
-    if (g && !g.searchTranslation) {
-      _origSetBriefOpen(true);
-      const engine = ssLoadEngine();
-      const engineName = (engine === 'gemini' && ssLoadGeminiKey()) ? 'Gemini' : 'MyMemory';
-      document.getElementById('brief-summary').innerHTML =
-        `<span style="color:#ffd166;font-style:italic;">${engineName} で翻訳中...</span>`;
-      document.getElementById('brief-clusters').innerHTML = '';
-      ssTranslateGlobe(g, 'ja').then(() => {
-        if (currentApp === 'search') updateBrief(g);
-      });
-      return;
+// SearchScope では 観 を撤去したので setBriefOpen のラッピングは無効化
+// (NEWS 側の挙動は orig のまま、 search では brief sprite 非表示なのでタップ不可)
+
+// ⭐ Sphere 上のキーワード sprite を node.text の最新値で再構築 (in-place 翻訳反映)
+function ssRefreshGlobeSprites(globeData) {
+  if (!globesData || !globesList || !globeData) return;
+  const idx = globesData.indexOf(globeData);
+  if (idx < 0) return;
+  const group = globesList[idx];
+  if (!group) return;
+  // 既存の keyword sprite を dispose
+  const toRemove = [];
+  group.traverse(o => { if (o.isSprite && o.userData?.keyword) toRemove.push(o); });
+  for (const s of toRemove) {
+    if (s.material?.map) s.material.map.dispose();
+    if (s.material) s.material.dispose();
+    group.remove(s);
+  }
+  // node.text (翻訳後) で再生成
+  const colorHex = parseInt(globeData.color.replace('#', ''), 16);
+  const maxC = globeData.nodes[0]?.count || 1;
+  const minC = globeData.nodes[globeData.nodes.length - 1]?.count || 1;
+  const range = Math.max(1, maxC - minC);
+  globeData.nodes.forEach(node => {
+    const r = Math.pow((node.count - minC) / range, 0.7);
+    const fs = 18 + r * 38;
+    const sprite = makeKeywordSprite(node, fs, r, colorHex);
+    sprite.position.set(node.pos[0], node.pos[1], node.pos[2]);
+    sprite.userData = { keyword: node, globeId: globeData.id };
+    group.add(sprite);
+  });
+}
+
+// ⭐ Sphere keyword 自動翻訳 (MyMemory のみ、 球儀ごとに sprite を JA に差替え)
+async function ssAutoTranslateSphereKeywords(globe, targetLang = 'ja') {
+  if (globe.kwAutoTranslated === targetLang) return;
+  const TOP_N = 25;
+  const topNodes = globe.nodes.slice(0, TOP_N);
+  const texts = topNodes.map(n => n.text);
+  // 強制 MyMemory (キーなしで動く)
+  const translated = await ssTranslateBatch(texts, targetLang, { engine: 'mymemory' });
+  topNodes.forEach((n, i) => {
+    const t = translated[i];
+    if (t && t !== n.text) {
+      n.textOrig = n.text;
+      n.text = t;
+    }
+  });
+  globe.kwAutoTranslated = targetLang;
+  if (currentApp === 'search') ssRefreshGlobeSprites(globe);
+}
+
+// 球儀リストを 主役 から順次翻訳 (status で進捗表示)
+async function ssAutoTranslateAllSearchGlobes() {
+  if (currentApp !== 'search') return;
+  const status = document.getElementById('search-status');
+  const globes = searchGlobesData.slice();
+  if (!globes.length) return;
+  // 主役 (slot 0) を最初に
+  if (globesList.length) {
+    const mainGlobeIdx = globesList.findIndex((_, i) => slotAssignment[i] === 0);
+    if (mainGlobeIdx >= 0 && mainGlobeIdx < globes.length) {
+      const main = globes.splice(mainGlobeIdx, 1)[0];
+      globes.unshift(main);
     }
   }
-  _origSetBriefOpen(open);
-};
+  for (let i = 0; i < globes.length; i++) {
+    if (currentApp !== 'search') return;  // ユーザーが NEWS に切替えたら停止
+    const g = globes[i];
+    if (status) status.textContent = `球儀翻訳中: ${g.label} (${i + 1}/${globes.length})`;
+    try {
+      await ssAutoTranslateSphereKeywords(g, 'ja');
+    } catch (e) {
+      console.warn(`auto-translate failed for ${g.label}`, e);
+    }
+  }
+  if (status && status.textContent.startsWith('球儀翻訳中')) {
+    status.textContent = `✓ 翻訳完了 (${globes.length} カテゴリ)`;
+  }
+}
 
-// ⭐ AI 設定 UI のワイヤリング
+// ⭐ AI 設定 UI のワイヤリング (Gemini option 削除済、 UI 非表示だが安全のため残置)
 (function setupSsAiSettings() {
   const tog  = document.getElementById('search-ai-toggle');
   const pane = document.getElementById('search-ai-settings');
