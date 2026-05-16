@@ -2924,7 +2924,7 @@ async function ssAutoTranslateSphereKeywords(globe, targetLang = 'ja') {
   }
   const apiKey = ssLoadGeminiKey();
   let translated, engineUsed;
-  // ⭐ 優先順位: Chrome 端末内 (無料・無制限) > Gemini BYOK > MyMemory
+  // ⭐ Pass 1 主エンジン: 優先順位 Chrome 端末内 > Gemini BYOK > MyMemory
   if (ssHasNative) {
     translated = await ssTranslateBatch(texts, targetLang, { engine: 'native' });
     engineUsed = 'native';
@@ -2935,8 +2935,32 @@ async function ssAutoTranslateSphereKeywords(globe, targetLang = 'ja') {
     translated = await ssTranslateBatch(texts, targetLang, { engine: 'mymemory' });
     engineUsed = 'mymemory';
   }
+  // ⭐ Pass 2 fallback: native が固有名詞・特殊語で 「unchanged」 を返した分を Gemini で補完
+  // (Chrome の Translator は知らない単語を訳さず元のまま返す挙動)
+  if (engineUsed === 'native' && apiKey) {
+    const stillEnIdx = [];
+    const stillEnTxt = [];
+    for (let i = 0; i < texts.length; i++) {
+      if (translated[i] === texts[i] && ssDetectStringLang(texts[i]) !== targetLang) {
+        stillEnIdx.push(i);
+        stillEnTxt.push(texts[i]);
+      }
+    }
+    if (stillEnTxt.length) {
+      console.log(`[Translate] ${globe.label}: native 訳せず ${stillEnTxt.length} 個 → Gemini fallback`);
+      try {
+        const gemTr = await ssTranslateBatch(stillEnTxt, targetLang, { engine: 'gemini' });
+        for (let k = 0; k < stillEnIdx.length; k++) {
+          const i = stillEnIdx[k];
+          if (gemTr[k] && gemTr[k] !== texts[i]) translated[i] = gemTr[k];
+        }
+        engineUsed = 'native+gemini';
+      } catch (e) {
+        console.warn(`[Translate] Gemini fallback failed:`, e.message || e);
+      }
+    }
+  }
   // ⭐ 翻訳結果は live な globe.nodes に書き込む (snapshot 時の node が swap されてても OK)
-  // 元テキストで globe.nodes の現在 node を検索 → そこに上書き
   let changed = 0;
   for (let i = 0; i < texts.length; i++) {
     const origText = texts[i];
