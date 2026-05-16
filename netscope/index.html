@@ -1776,7 +1776,15 @@ function ssExtractKeywords(text) {
   }
   for (const m of text.matchAll(/[A-Za-z][A-Za-z0-9]{3,}/g)) {
     const w = m[0].toLowerCase();
-    if (!SS_STOP_WORDS.has(w) && w.length <= 20) out.add(w);
+    if (SS_STOP_WORDS.has(w) || w.length > 20) continue;
+    // ⭐ garbage tokens を除外:
+    //   - 子音/母音バランス極端 (例: dujltqzv, lwgykto = ランダム ID 風)
+    //   - 数字が半分以上含まれる
+    const hasVowel = /[aeiouAEIOU]/.test(w);
+    const digitRatio = (w.match(/[0-9]/g) || []).length / w.length;
+    if (!hasVowel && w.length >= 5) continue;   // 母音ゼロの長い文字列 = ID 系
+    if (digitRatio >= 0.4) continue;            // 数字 40% 以上 = ID 系
+    out.add(w);
   }
   return [...out];
 }
@@ -2425,7 +2433,9 @@ function ssTrKey(text) {
 function ssDetectStringLang(text) {
   if (!text) return 'en';
   if (/[ぁ-ゟ゠-ヿ]/.test(text)) return 'ja';
-  if (/[一-鿿]/.test(text)) return 'zh';
+  // kanji-only: 日本語熟語と中国語熟語の区別は不可。 本アプリは JA 視点なので ja として扱う
+  // (例: 「曜変天目」 は zh 誤検出すると Chrome native の zh→ja モデル無で失敗する)
+  if (/[一-鿿]/.test(text)) return 'ja';
   return 'en';
 }
 // ⭐ MyMemory daily limit (1000 words/IP/day) を検出して以降スキップ
@@ -3000,12 +3010,16 @@ async function ssAutoTranslateAllSearchGlobesInner() {
     }
   }
   if (status && status.textContent.startsWith('球儀翻訳中')) {
+    const alreadyJa = globes.length - okGlobes - (totalNeed > 0 && totalChanged === 0 ? 1 : 0);
     if (totalNeed === 0) {
-      status.textContent = `✓ ${globes.length} カテゴリ (翻訳対象なし、 既に日本語)`;
+      status.textContent = `✓ ${globes.length} カテゴリ 全て日本語済み`;
     } else if (totalChanged === 0) {
       status.textContent = `⚠ 翻訳 0/${totalNeed} 語 (engine 失敗、 console 参照)`;
+    } else if (totalChanged === totalNeed) {
+      status.textContent = `✓ 翻訳完了: ${totalChanged} 語 (${okGlobes} カテゴリ訳済 / ${globes.length - okGlobes} 元から日本語)`;
     } else {
-      status.textContent = `✓ 翻訳: ${totalChanged}/${totalNeed} 語 (${okGlobes}/${globes.length} カテゴリ)`;
+      const missing = totalNeed - totalChanged;
+      status.textContent = `✓ 翻訳: ${totalChanged}/${totalNeed} 語 (未訳 ${missing} 語は固有名詞/ID等)`;
     }
   }
 }
