@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FingerLinga - サポート</title>
+    <style>
+        body { font-family: -apple-system, sans-serif; max-width: 760px; margin: 40px auto; padding: 0 20px; line-height: 1.8; color: #333; }
+        h1 { font-size: 28px; border-bottom: 2px solid #b87333; padding-bottom: 8px; }
+        h2 { font-size: 20px; margin-top: 36px; color: #8a5524; }
+        h3 { font-size: 16px; margin-top: 20px; color: #555; }
+        p { margin: 10px 0; }
+        .date { color: #888; font-size: 14px; }
+        .feature-list { background: #fbf6f0; padding: 14px 20px; border-radius: 8px; margin: 16px 0; }
+        .lang-switch { margin-bottom: 20px; font-size: 14px; }
+        .lang-switch a { margin-right: 10px; color: #b87333; text-decoration: none; }
+        .note-box { background: #f5ece1; padding: 16px 20px; border-radius: 10px; margin: 20px 0; }
+        hr { margin: 60px 0 30px; border: none; border-top: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+    <div class="lang-switch">
+        <a href="#ja">日本語</a> |
+        <a href="#en">English</a> |
+        <a href="#zh">中文</a>
+    </div>
+
+    <section id="ja">
+    <h1>FingerLinga サポート</h1>
+    <p class="date">アプリバージョン: 1.0</p>
+
+    <h2>FingerLinga とは</h2>
+    <p>FingerLinga (フィンガーリンガ) は、 トランペットの <strong>指</strong> に特化した練習アプリです。 マイクを使わずに、 画面上の 3 つのピストンボタンをタップしてリズムに合わせて指を回す ── ゲーム的な判定フィードバックで、 教則本では分からなかった <strong>「自分の指の癖」 を見える化</strong> します。</p>
+    <p>「制御工学者が、 アマチュアラッパふきのために本気で作った指トレーニング」 という尖った 1 つの目的だけに絞っています。 チューナー・録音・マイク検出は SoundCraft 等の他アプリにお任せ。</p>
+
+    <div class="feature-list">
+    <h3>主な機能</h3>
+    <p>1. <strong>練習メニュー</strong>: 13 パターン (音階・半音階・三和音・五度・アルペジオ・ドミナント7・三度) × 12 調 × 3 方向 × 4 難易度</p>
+    <p>2. <strong>指の癖レポート</strong>: どの指の組み合わせ遷移で 遅れる/間違える かを定量化。 苦手な動きが Top N で出る</p>
+    <p>3. <strong>アルバン式 テンポビルダー</strong>: 80% 越えで自動 +5 BPM 提案、 徐々に追い込む練習設計</p>
+    <p>4. <strong>換え指許容</strong>: 主指 + 1〜3 通りの変え指を判定で受理 (例: C♯5 は 1-2 / 1-2-3 / 2-3 を全部正解)</p>
+    <p>5. <strong>管種対応</strong>: B♭ / C / Es 管 で 譜面が自動移調。 ドの位置は管に合わせて常にホームキーから</p>
+    <p>6. <strong>チューニング (A 基準周波数)</strong>: 420〜450 Hz スライダー (吹奏楽 442、 オーケストラ 440 等)</p>
+    <p>7. <strong>キャリブレーション</strong>: 4 拍タップで端末オーディオ遅延を測定・補正</p>
+    <p>8. <strong>ベストスコア</strong>: 曲ごとの最高記録、 自己ベスト更新を視覚化</p>
+    <p>9. <strong>フリーモード</strong>: 練習開始前のウォームアップ。 ピストンを押すと管種に応じた音が鳴る</p>
+    <p>10. <strong>3 言語対応</strong>: 日本語 / 英語 / 中国語</p>
+    <p>11. <strong>ライト / ダーク テーマ</strong>: 設定から切替</p>
+    </div>
+
+    <h2>よくある質問</h2>
+
+    <h3>Q. マイクの許可は必要ですか?</h3>
+    <p>不要です。 本アプリは <strong>タッチ判定のみ</strong> で動作します。 マイクへのアクセス要求は一切ありません。</p>
+
+    <h3>Q. チューニングを A=442 Hz にしたのに少しフラットに聴こえます</h3>
+    <p>v1.0 で修正済みです。 設定の 「チューニング (A)」 スライダーで 442 を指定すると、 サンプラーの globalTuning に +7.85 cents が反映され、 全ての音が正しい A=442 基準で鳴ります。</p>
+
+    <h3>Q. C♯5 (チューニング上の H) の指が 1-2-3 ではなく 1-2 で出る</h3>
+    <p>これは仕様です。 ラッパふき一般的な partial 5 経由の 1-2 を主指として表記しています。 旧来の 1-2-3 (partial 6 経由) も alternate として正解扱いです。 五線の下の H (C♯4) は 1-2-3 のままです。</p>
+
+    <h3>Q. 管を C / Es に変えたら 譜面 と フリーモードの音 はどうなる?</h3>
+    <p>譜面の調号と音符位置が自動で移調されます。 フリーモードのピストン押下も管種に応じた concert pitch を出します (B♭ 管 1+3 → C、 C 管 1+3 → D、 Es 管 1+3 → F)。</p>
+
+    <h3>Q. 両手で 1+2+3 を押すと音が止まることがある</h3>
+    <p>v1.0 で 6 タッチ時の defensive 対策を入れています。 改善しない場合は App Store の開発者連絡先からご連絡ください。</p>
+
+    <h3>Q. 横置きで結果画面のボタンが押せない</h3>
+    <p>v1.0 で結果画面 (閉じる / もう一度) をスクロール対応にしました。 横置きでもスクロールで到達可能です。</p>
+
+    <h3>Q. ライトテーマ / ダークテーマの切替</h3>
+    <p>設定画面 → 表示 → 「ライトテーマ」 トグル で切替。 初期値はライト (SoundCraft 風 白背景) です。</p>
+
+    <h3>Q. データのリセット</h3>
+    <p>ベストスコア・ボトルネック分析のデータは、 それぞれの画面下部の 「リセット」 ボタンから個別に削除できます。 アプリ全体を初期化したい場合は iOS の設定 → 一般 → iPhone ストレージ → FingerLinga → 削除 でアンインストールしてください。</p>
+
+    <h2>お問い合わせ</h2>
+    <div class="note-box">
+    <p>App Store の FingerLinga ページの 「開発者連絡先」 からお問い合わせください。 バグ報告・機能要望もお気軽にどうぞ。</p>
+    </div>
+    </section>
+
+    <hr>
+
+    <section id="en">
+    <h1>FingerLinga Support</h1>
+    <p class="date">App version: 1.0</p>
+
+    <h2>About FingerLinga</h2>
+    <p>FingerLinga is a practice app focused exclusively on trumpet <strong>fingering</strong>. No microphone needed ── just tap the 3 piston buttons on screen in time, and get game-style judgment feedback that visualizes <strong>your fingering habits</strong> in a way method books can't.</p>
+    <p>Built by a control engineer for amateur trumpet players, it intentionally does one thing well. Tuners, recording, pitch detection ── leave those to dedicated apps.</p>
+
+    <div class="feature-list">
+    <h3>Features</h3>
+    <p>1. <strong>Practice menu</strong>: 13 patterns (scales, chromatic, triads, fifths, arpeggios, dominant 7, thirds) × 12 keys × 3 directions × 4 difficulties</p>
+    <p>2. <strong>Fingering bottleneck report</strong>: Quantifies which finger transitions slow you down or trip you up. Top N weak transitions surface automatically.</p>
+    <p>3. <strong>Arban-style tempo builder</strong>: Auto-suggest +5 BPM on 80%+ accuracy. Progressive difficulty.</p>
+    <p>4. <strong>Alternate fingerings accepted</strong>: Primary + 1–3 alternate fingerings all judged correct (e.g., C♯5 accepts 1-2, 1-2-3, and 2-3).</p>
+    <p>5. <strong>Multi-trumpet</strong>: B♭ / C / E♭ trumpet, with automatic notation transposition. Home key always reads C for the player.</p>
+    <p>6. <strong>Tuning (A reference)</strong>: 420–450 Hz slider (442 for wind band, 440 for orchestra, etc.)</p>
+    <p>7. <strong>Calibration</strong>: 4-beat tap to measure and compensate for device audio latency.</p>
+    <p>8. <strong>Best scores</strong>: Per-song high records with personal-best detection.</p>
+    <p>9. <strong>Free mode</strong>: Warm-up. Press pistons to hear concert pitches matching your trumpet type.</p>
+    <p>10. <strong>3 languages</strong>: Japanese / English / Chinese.</p>
+    <p>11. <strong>Light / Dark theme</strong>: Toggle in settings.</p>
+    </div>
+
+    <h2>FAQ</h2>
+
+    <h3>Q. Do I need microphone permission?</h3>
+    <p>No. FingerLinga is <strong>touch-only</strong>. The app never requests microphone access.</p>
+
+    <h3>Q. After setting A=442 Hz, the pitch sounds slightly flat</h3>
+    <p>Fixed in v1.0. The tuning slider's value now also shifts the sampler's globalTuning (e.g., +7.85 cents for 442 vs 440 baseline), so all pitches sound at the correct A=442 reference.</p>
+
+    <h3>Q. The primary fingering for C♯5 is 1-2 instead of 1-2-3</h3>
+    <p>By design. The 1-2 via partial 5 is what most trumpet players actually use. The older 1-2-3 via partial 6 is still accepted as an alternate. The low C♯4 (below the staff) keeps 1-2-3 as primary.</p>
+
+    <h3>Q. What happens to the score and Free Mode pitch when I switch trumpet types?</h3>
+    <p>Notation auto-transposes for the selected trumpet. Free Mode also outputs the correct concert pitch per trumpet (B♭ trumpet 1+3 → C concert, C trumpet 1+3 → D concert, E♭ trumpet 1+3 → F concert).</p>
+
+    <h3>Q. Sound stops when pressing 1+2+3 with both hands</h3>
+    <p>v1.0 includes a defensive fix for the 6-touch case. If it persists, please reach out via the App Store developer contact.</p>
+
+    <h3>Q. Result screen buttons are unreachable in landscape</h3>
+    <p>v1.0 wraps the result screen (Close / Retry) in a scroll view, so all buttons are reachable in landscape too.</p>
+
+    <h3>Q. Switching between Light and Dark theme</h3>
+    <p>Settings → Display → Light theme toggle. Default is Light (SoundCraft-style white background).</p>
+
+    <h3>Q. Resetting data</h3>
+    <p>Best scores and bottleneck analysis can each be cleared from a Reset button on their respective screens. To wipe everything, uninstall via iOS Settings → General → iPhone Storage → FingerLinga → Delete App.</p>
+
+    <h2>Contact</h2>
+    <div class="note-box">
+    <p>Please use the developer contact link on the FingerLinga App Store page for bug reports and feature requests.</p>
+    </div>
+    </section>
+
+    <hr>
+
+    <section id="zh">
+    <h1>FingerLinga 支持</h1>
+    <p class="date">应用版本: 1.0</p>
+
+    <h2>关于 FingerLinga</h2>
+    <p>FingerLinga 是一款专注于小号 <strong>指法</strong> 练习的应用。 不使用麦克风 ── 仅通过点击屏幕上的 3 个活塞按钮跟随节奏完成训练。 游戏化的判定反馈让教本中看不见的 <strong>「指法习惯」 可视化</strong>。</p>
+    <p>由控制工程师为业余小号爱好者倾力打造、 专注于一件事做到极致。 调音器、 录音、 音高检测请交给其他专用应用。</p>
+
+    <div class="feature-list">
+    <h3>主要功能</h3>
+    <p>1. <strong>练习菜单</strong>: 13 种模式 (音阶、 半音阶、 三和弦、 五度、 琶音、 属七、 三度) × 12 个调 × 3 种方向 × 4 个难度</p>
+    <p>2. <strong>指法瓶颈报告</strong>: 量化哪些指法切换会导致迟滞或失误。 自动呈现 Top N 弱项。</p>
+    <p>3. <strong>Arban 式速度构建器</strong>: 在准确率 80% 以上时自动建议 +5 BPM。 渐进式训练设计。</p>
+    <p>4. <strong>替代指法容许</strong>: 主指法 + 1〜3 种变化指法均判定为正确 (例如 C♯5 接受 1-2 / 1-2-3 / 2-3)。</p>
+    <p>5. <strong>多种小号支持</strong>: B♭ / C / E♭ 调小号自动移调记谱、 演奏者视角的 home key 一致。</p>
+    <p>6. <strong>调音 (A 基准频率)</strong>: 420〜450 Hz 滑块 (吹奏乐 442、 管弦乐团 440 等)。</p>
+    <p>7. <strong>校准</strong>: 4 拍点击测量并补偿设备音频延迟。</p>
+    <p>8. <strong>最佳成绩</strong>: 各曲最高记录、 自我突破可视化。</p>
+    <p>9. <strong>自由模式</strong>: 暖身用。 按下活塞按钮即播放对应小号种类的 concert 音高。</p>
+    <p>10. <strong>3 种语言</strong>: 日语 / 英语 / 中文。</p>
+    <p>11. <strong>浅色 / 深色主题</strong>: 设置中切换。</p>
+    </div>
+
+    <h2>常见问题</h2>
+
+    <h3>Q. 需要麦克风权限吗?</h3>
+    <p>不需要。 本应用 <strong>仅通过触控判定</strong>。 不会请求麦克风权限。</p>
+
+    <h3>Q. 已设置 A=442 Hz 但音听起来略偏低</h3>
+    <p>v1.0 已修复。 调音滑块的值会同时反映到采样器的 globalTuning (例如 442 相对 440 基准为 +7.85 cents)、 所有音高均以正确的 A=442 基准发声。</p>
+
+    <h3>Q. C♯5 (调音 C 上方的 H) 的主指法显示为 1-2 而非 1-2-3</h3>
+    <p>这是设计。 经过 partial 5 的 1-2 是大多数小号演奏者实际使用的指法。 经过 partial 6 的旧 1-2-3 仍作为 alternate 判定为正确。 五线下方的 C♯4 仍以 1-2-3 为主。</p>
+
+    <h3>Q. 切换为 C 调 / E♭ 调小号后、 记谱与 Free Mode 的音如何变化?</h3>
+    <p>记谱会根据所选小号种类自动移调。 Free Mode 也输出对应小号种类的 concert pitch (B♭ 小号 1+3 → C、 C 小号 1+3 → D、 E♭ 小号 1+3 → F)。</p>
+
+    <h3>Q. 双手同时按 1+2+3 时声音中断</h3>
+    <p>v1.0 已加入对 6 点触控场景的 defensive 处理。 若仍发生、 请通过 App Store 开发者联系方式反馈。</p>
+
+    <h3>Q. 横置时结果页面的按钮无法点击</h3>
+    <p>v1.0 已将结果页面 (关闭 / 再来一次) 改为可滚动布局、 横置下也可滚动到达。</p>
+
+    <h3>Q. 浅色 / 深色主题切换</h3>
+    <p>设置 → 显示 → 「浅色主题」 开关。 默认为浅色 (SoundCraft 风格的白底)。</p>
+
+    <h3>Q. 数据重置</h3>
+    <p>最佳成绩与指法瓶颈分析可在各自页面底部的 「重置」 按钮分别清除。 如需完全初始化、 请通过 iOS 的设置 → 通用 → iPhone 储存空间 → FingerLinga → 删除应用 进行卸载。</p>
+
+    <h2>联系方式</h2>
+    <div class="note-box">
+    <p>请通过 App Store 的 FingerLinga 页面的 「开发者联系方式」 与我们联系。 欢迎报告 bug 或提出功能建议。</p>
+    </div>
+    </section>
+</body>
+</html>
