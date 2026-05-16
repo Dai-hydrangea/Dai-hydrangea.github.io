@@ -73,8 +73,18 @@ body {
 #search-go:hover { background:rgba(255,209,102,0.15); }
 #search-go:disabled { color:#5a5040; border-color:#5a5040; cursor:not-allowed; }
 #search-status { font-size:11px; color:#5a8aa8; letter-spacing:1px; margin-left:8px; }
-/* ⭐ Gemini エンジン UI は SearchScope から削除 (MyMemory のみで sphere 翻訳) */
-#search-ai-toggle, #search-ai-settings { display:none !important; }
+#search-ai-toggle {
+  width:38px; height:38px;
+  font-size:20px; line-height:1;
+  color:#ffd166; background:rgba(255,209,102,0.06);
+  border:1px solid #ffd166; cursor:pointer;
+  display:inline-flex !important; align-items:center; justify-content:center;
+  padding:0; font-family:inherit;
+  flex-shrink:0;
+}
+#search-ai-toggle:hover { background:rgba(255,209,102,0.18); }
+#search-ai-toggle.active { background:rgba(255,209,102,0.22); }
+/* ⭐ Gemini エンジン UI: MyMemory 上限到達時の fallback として再有効化 */
 
 #search-ai-settings {
   position:fixed; top:108px; left:50%; transform:translateX(-50%);
@@ -499,8 +509,9 @@ body {
   <div class="ai-row">
     <label>翻訳エンジン</label>
     <select id="search-engine">
-      <option value="mymemory">MyMemory (無料、 キー不要)</option>
+      <option value="native">端末内 (Chrome 138+、 無料・無制限・オフライン)</option>
       <option value="gemini">Gemini (BYOK、 高品質 + 速い)</option>
+      <option value="mymemory">MyMemory (無料、 1000語/日 上限)</option>
     </select>
   </div>
   <div class="ai-row">
@@ -2233,25 +2244,76 @@ async function ssExecuteSearch(query) {
   let done = 0;
   let rebuildTimer = null;
   const rebuildGlobesFromCats = () => {
-    const globes = [];
+    const newGlobes = [];
     let total = 0;
     for (const cd of categoryDefs) {
       const g = ssBuildGlobeData(cd.id, cd.label, cd.color, catArticles[cd.id]);
-      if (g) globes.push(g);
+      if (g) newGlobes.push(g);
       total += catArticles[cd.id].length;
     }
-    searchGlobesData = globes;
-    if (currentApp === 'search') {
-      globesData = searchGlobesData;
-      layoutRevolver();
+    // ⭐ カテゴリ集合 (id 列) が前回と完全一致なら in-place 更新のみ (layoutRevolver 不要)
+    const oldIds = searchGlobesData.map(g => g.id).join(',');
+    const newIds = newGlobes.map(g => g.id).join(',');
+    const setsMatch = oldIds === newIds && searchGlobesData.length === newGlobes.length;
+
+    if (setsMatch && currentApp === 'search' && globesList.length === newGlobes.length) {
+      // 既存 globe の中身だけ更新 (nodes/edges を mutate して同じ object 参照を保つ)
+      newGlobes.forEach((ng, i) => {
+        const og = searchGlobesData[i];
+        // 翻訳済みフラグはリセットしない (翻訳キャッシュ活用)
+        const wasTranslated = og.kwAutoTranslated;
+        const oldTextMap = {};
+        (og.nodes || []).forEach(n => { if (n.textOrig) oldTextMap[n.textOrig] = n.text; });
+        Object.assign(og, ng);
+        // 翻訳済みなら新しい nodes にも翻訳結果を適用
+        if (wasTranslated && og.nodes) {
+          og.nodes.forEach(n => {
+            const translated = oldTextMap[n.text];
+            if (translated) { n.textOrig = n.text; n.text = translated; }
+          });
+          og.kwAutoTranslated = wasTranslated;
+        }
+        // sprite だけ再構築 (globe group / カメラ位置はそのまま)
+        ssRefreshGlobeSprites(og);
+      });
+    } else {
+      // ⭐ カテゴリ追加/削除あり: layoutRevolver 経由で再構築 + main 保持
+      let prevMainId = null;
+      if (currentApp === 'search' && globesList.length && slotAssignment.length) {
+        const mainIdx = slotAssignment.findIndex(s => s === 0);
+        if (mainIdx >= 0 && globesList[mainIdx]) {
+          prevMainId = globesList[mainIdx].userData?.globeData?.id;
+        }
+      }
+      searchGlobesData = newGlobes;
+      if (currentApp === 'search') {
+        globesData = searchGlobesData;
+        layoutRevolver();
+        if (prevMainId && globesData.length > 0) {
+          const newIdx = globesData.findIndex(g => g.id === prevMainId);
+          if (newIdx > 0 && newIdx < globesList.length) {
+            const N = globesList.length;
+            slotAssignment = globesList.map((_, i) => ((i - newIdx) % N + N) % N);
+            globesList.forEach((g, i) => {
+              const slot = slots[slotAssignment[i]];
+              if (slot) {
+                g.position.copy(slot.pos);
+                g.scale.setScalar(slot.scale);
+              }
+            });
+            updateCenterLabel();
+          }
+        }
+      }
     }
     document.getElementById('counter').textContent =
-      `CATEGORIES: ${globes.length}  /  KEYWORDS: ${globes.reduce((s,g)=>s+g.node_count,0)}  /  HITS: ${total}`;
-    return { globes, total };
+      `CATEGORIES: ${newGlobes.length}  /  KEYWORDS: ${newGlobes.reduce((s,g)=>s+g.node_count,0)}  /  HITS: ${total}`;
+    return { globes: newGlobes, total };
   };
   const scheduleRebuild = () => {
     if (rebuildTimer) clearTimeout(rebuildTimer);
-    rebuildTimer = setTimeout(() => { rebuildGlobesFromCats(); rebuildTimer = null; }, 350);
+    // 700ms debounce
+    rebuildTimer = setTimeout(() => { rebuildGlobesFromCats(); rebuildTimer = null; }, 700);
   };
 
   status.textContent = `0 / ${sources.length} ソース...`;
@@ -2312,9 +2374,12 @@ window.searchThisKeyword = function(text) {
 // ════════════════════════════════════════════════════════════════════
 const SS_TR_CACHE_KEY    = 'nits_tr_cache_v1';
 const SS_STORAGE_GEMINI  = 'nits_gemini_key_v1';   // NITS と完全共有
-const SS_STORAGE_ENGINE  = 'ss_search_engine_v1';  // 'mymemory' | 'gemini'
+const SS_STORAGE_ENGINE  = 'ss_search_engine_v1';  // 'native' | 'mymemory' | 'gemini'
 const SS_GEMINI_MODEL    = 'gemini-2.5-flash';
 const SS_GEMINI_URL      = `https://generativelanguage.googleapis.com/v1beta/models/${SS_GEMINI_MODEL}:generateContent`;
+
+// ⭐ Chrome の端末内翻訳 (Translator API, Gemini Nano) が使えるか
+const ssHasNative = (typeof self !== 'undefined') && ('Translator' in self);
 
 function ssLoadGeminiKey() { return localStorage.getItem(SS_STORAGE_GEMINI) || ''; }
 function ssSaveGeminiKey(k) {
@@ -2323,8 +2388,14 @@ function ssSaveGeminiKey(k) {
 }
 function ssLoadEngine() {
   const v = localStorage.getItem(SS_STORAGE_ENGINE);
-  if (!v && ssLoadGeminiKey()) return 'gemini';   // キーあれば Gemini default
-  return (v === 'gemini') ? 'gemini' : 'mymemory';
+  // 既定: Native > Gemini > MyMemory
+  if (!v) {
+    if (ssHasNative) return 'native';
+    if (ssLoadGeminiKey()) return 'gemini';
+    return 'mymemory';
+  }
+  if (v === 'native' && !ssHasNative) return ssLoadGeminiKey() ? 'gemini' : 'mymemory';
+  return (v === 'native' || v === 'gemini' || v === 'mymemory') ? v : 'mymemory';
 }
 function ssSaveEngine(e) { localStorage.setItem(SS_STORAGE_ENGINE, e); }
 function ssLoadTrCache() {
@@ -2353,8 +2424,12 @@ async function ssMyMemoryOne(text, sourceLang, targetLang) {
   if (ssMyMemoryLimitHit) return text;
   const pair = `${sourceLang}|${targetLang}`;
   const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${pair}`;
+  // ⭐ 5秒 タイムアウト (ハング防止)
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 5000);
   try {
-    const r = await fetch(url);
+    const r = await fetch(url, { signal: ctrl.signal });
+    clearTimeout(timer);
     const d = await r.json();
     if (d?.responseStatus === 200 && d?.responseData?.translatedText) {
       const t = String(d.responseData.translatedText);
@@ -2375,6 +2450,7 @@ async function ssMyMemoryOne(text, sourceLang, targetLang) {
       console.warn(`[MyMemory] "${text.slice(0,40)}" failed: status=${d?.responseStatus}, ${details.slice(0,80)}`);
     }
   } catch (e) {
+    clearTimeout(timer);
     console.warn(`[MyMemory] "${text.slice(0,40)}" exception:`, e.message || e);
   }
   return text;
@@ -2416,6 +2492,46 @@ async function ssGeminiCall(prompt, apiKey, { retries = 2, timeoutMs = 20000 } =
 }
 
 // ⭐ Gemini batch (1 request で 50 件まで、 プロンプト最小化)
+// ⭐ Chrome 端末内翻訳 (Translator API, Gemini Nano) ─────────
+// 言語ペアごとに translator インスタンスをキャッシュ。 初回はモデルダウンロードあり
+const ssNativeTranslators = {};  // "src|dst" → translator | false (失敗)
+async function ssGetNativeTranslator(srcLang, dstLang) {
+  if (!ssHasNative) return null;
+  const key = `${srcLang}|${dstLang}`;
+  if (ssNativeTranslators[key] === false) return null;
+  if (ssNativeTranslators[key]) return ssNativeTranslators[key];
+  try {
+    const av = await self.Translator.availability({ sourceLanguage: srcLang, targetLanguage: dstLang });
+    if (av === 'unavailable') {
+      console.warn(`[Native] ${key} unavailable`);
+      ssNativeTranslators[key] = false;
+      return null;
+    }
+    const status = document.getElementById('search-status');
+    if ((av === 'downloadable' || av === 'downloading') && status) {
+      status.textContent = `モデル DL中 (${key})...`;
+    }
+    const t = await self.Translator.create({
+      sourceLanguage: srcLang,
+      targetLanguage: dstLang,
+      monitor(m) {
+        m.addEventListener('downloadprogress', e => {
+          const pct = Math.round((e.loaded || 0) * 100);
+          if (status) status.textContent = `モデル DL ${key}: ${pct}%`;
+          console.log(`[Native] DL ${key}: ${pct}%`);
+        });
+      },
+    });
+    ssNativeTranslators[key] = t;
+    console.log(`[Native] ${key} ready`);
+    return t;
+  } catch (e) {
+    console.warn(`[Native] ${key} create failed:`, e.message || e);
+    ssNativeTranslators[key] = false;
+    return null;
+  }
+}
+
 async function ssGeminiBatch(texts, targetLang, apiKey) {
   const lang = (targetLang === 'ja') ? 'ja' : 'en';
   // プロンプト超圧縮: 命令 ~12 token
@@ -2433,6 +2549,7 @@ async function ssTranslateBatch(texts, targetLang, opts = {}) {
   const out = new Array(texts.length);
   const engine = opts.engine || ssLoadEngine();
   const apiKey = ssLoadGeminiKey();
+  const useNative = (engine === 'native') && ssHasNative;
   const useGemini = (engine === 'gemini') && apiKey;
 
   // ⭐ 圧縮 1: キャッシュヒット & 既に target lang を除外
@@ -2449,7 +2566,53 @@ async function ssTranslateBatch(texts, targetLang, opts = {}) {
   const toFetch = [...dedupMap.entries()].map(([text, info]) => ({ text, ...info }));
   if (toFetch.length === 0) return out;
 
-  if (useGemini) {
+  if (useNative) {
+    // ⭐ Chrome 端末内翻訳: 言語ペア毎に group 化、 ペア内は並列 (CONC=4)
+    const bySrc = new Map();
+    for (const c of toFetch) {
+      if (!bySrc.has(c.src)) bySrc.set(c.src, []);
+      bySrc.get(c.src).push(c);
+    }
+    for (const [src, group] of bySrc.entries()) {
+      const tr = await ssGetNativeTranslator(src, targetLang);
+      if (!tr) {
+        // この source は native 不可 → MyMemory に逃がす
+        for (const c of group) {
+          const trans = await ssMyMemoryOne(c.text, c.src, targetLang);
+          if (trans && trans !== c.text) {
+            for (const i of c.indices) out[i] = trans;
+            cache[c.k] = cache[c.k] || {};
+            cache[c.k][targetLang] = trans;
+          } else {
+            for (const i of c.indices) out[i] = c.text;
+          }
+        }
+        continue;
+      }
+      let nIdx = 0;
+      const NCONC = 4;
+      await Promise.all(Array.from({ length: NCONC }, async () => {
+        while (true) {
+          const j = nIdx++;
+          if (j >= group.length) return;
+          const c = group[j];
+          try {
+            const trans = await tr.translate(c.text);
+            if (trans && trans !== c.text) {
+              for (const i of c.indices) out[i] = trans;
+              cache[c.k] = cache[c.k] || {};
+              cache[c.k][targetLang] = trans;
+            } else {
+              for (const i of c.indices) out[i] = c.text;
+            }
+          } catch (e) {
+            console.warn(`[Native] translate failed "${c.text.slice(0,30)}":`, e.message || e);
+            for (const i of c.indices) out[i] = c.text;
+          }
+        }
+      }));
+    }
+  } else if (useGemini) {
     // ⭐ Gemini: 50 件 batch、 2 並列
     const BATCH_SIZE = 50;
     const CONCURRENT = 2;
@@ -2737,25 +2900,21 @@ async function ssAutoTranslateSphereKeywords(globe, targetLang = 'ja') {
     }
     return c;
   };
-  // ① MyMemory 先行
-  let translated = await ssTranslateBatch(texts, targetLang, { engine: 'mymemory' });
-  let changed = countChanged(translated);
-  let engineUsed = 'mymemory';
-  // ② MyMemory が 30% 未満しか訳せなかった場合、 Gemini key があれば自動フォールバック
-  //    (例: MyMemory 1日上限到達時、 仕方なく Gemini を使う)
   const apiKey = ssLoadGeminiKey();
-  // 「JA→JA」 既に該当言語のものは除外、 純粋な要翻訳 (元と異なる lang) だけで成功率を見たい
   const needCount = texts.filter(t => ssDetectStringLang(t) !== targetLang).length;
-  if (needCount > 0 && changed < needCount * 0.3 && apiKey) {
-    console.log(`[Translate] ${globe.label}: MyMemory ${changed}/${needCount} → Gemini fallback`);
-    const fb = await ssTranslateBatch(texts, targetLang, { engine: 'gemini' });
-    const fbChanged = countChanged(fb);
-    if (fbChanged > changed) {
-      translated = fb;
-      changed = fbChanged;
-      engineUsed = 'gemini-fallback';
-    }
+  let translated, engineUsed;
+  // ⭐ 優先順位: Chrome 端末内 (無料・無制限) > Gemini BYOK > MyMemory
+  if (ssHasNative) {
+    translated = await ssTranslateBatch(texts, targetLang, { engine: 'native' });
+    engineUsed = 'native';
+  } else if (apiKey) {
+    translated = await ssTranslateBatch(texts, targetLang, { engine: 'gemini' });
+    engineUsed = 'gemini';
+  } else {
+    translated = await ssTranslateBatch(texts, targetLang, { engine: 'mymemory' });
+    engineUsed = 'mymemory';
   }
+  let changed = countChanged(translated);
   topNodes.forEach((n, i) => {
     const t = translated[i];
     if (t && t !== n.text) {
@@ -2803,14 +2962,14 @@ async function ssAutoTranslateAllSearchGlobes() {
     if (totalNeed === 0) {
       status.textContent = `✓ ${globes.length} カテゴリ (翻訳対象なし、 既に日本語)`;
     } else if (totalChanged === 0) {
-      status.textContent = `⚠ 翻訳 0/${totalNeed} 語 (MyMemory 上限到達? console 参照)`;
+      status.textContent = `⚠ 翻訳 0/${totalNeed} 語 (engine 失敗、 console 参照)`;
     } else {
       status.textContent = `✓ 翻訳: ${totalChanged}/${totalNeed} 語 (${okGlobes}/${globes.length} カテゴリ)`;
     }
   }
 }
 
-// ⭐ AI 設定 UI のワイヤリング (Gemini option 削除済、 UI 非表示だが安全のため残置)
+// ⭐ AI 設定 UI のワイヤリング
 (function setupSsAiSettings() {
   const tog  = document.getElementById('search-ai-toggle');
   const pane = document.getElementById('search-ai-settings');
@@ -2818,10 +2977,18 @@ async function ssAutoTranslateAllSearchGlobes() {
   const inp  = document.getElementById('search-gemini-key');
   const save = document.getElementById('search-ai-save');
   const clr  = document.getElementById('search-ai-clear');
+  // Native 非対応ブラウザ では native option を無効化
+  const nativeOpt = sel.querySelector('option[value="native"]');
+  if (nativeOpt && !ssHasNative) {
+    nativeOpt.disabled = true;
+    nativeOpt.textContent = '端末内翻訳 (このブラウザでは未対応 ─ Chrome 138+ で利用可)';
+  } else if (nativeOpt && ssHasNative) {
+    nativeOpt.textContent = '端末内 (Chrome) ✓ 無料・無制限・オフライン';
+  }
   function refreshFields() {
     sel.value = ssLoadEngine();
     inp.value = ssLoadGeminiKey();
-    tog.classList.toggle('active', sel.value === 'gemini');
+    tog.classList.toggle('active', sel.value !== 'mymemory');
   }
   refreshFields();
   tog.addEventListener('click', () => {
@@ -2839,8 +3006,8 @@ async function ssAutoTranslateAllSearchGlobes() {
     ssSaveEngine(eng);
     refreshFields();
     pane.classList.remove('active');
-    document.getElementById('search-status').textContent =
-      `エンジン: ${eng === 'gemini' ? 'Gemini' : 'MyMemory'} 保存`;
+    const engLabel = eng === 'native' ? '端末内 (Chrome)' : eng === 'gemini' ? 'Gemini' : 'MyMemory';
+    document.getElementById('search-status').textContent = `エンジン: ${engLabel} 保存`;
     setTimeout(() => {
       const s = document.getElementById('search-status');
       if (s.textContent.startsWith('エンジン')) s.textContent = '';
@@ -2849,7 +3016,8 @@ async function ssAutoTranslateAllSearchGlobes() {
   clr.addEventListener('click', () => {
     if (!confirm('Gemini API キーを削除しますか？')) return;
     ssSaveGeminiKey('');
-    ssSaveEngine('mymemory');
+    // Native 使えるなら native、 だめなら mymemory
+    ssSaveEngine(ssHasNative ? 'native' : 'mymemory');
     refreshFields();
     document.getElementById('search-status').textContent = 'キー削除済';
     setTimeout(() => {
