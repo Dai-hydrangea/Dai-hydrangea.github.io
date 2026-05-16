@@ -2258,24 +2258,34 @@ async function ssExecuteSearch(query) {
 
     if (setsMatch && currentApp === 'search' && globesList.length === newGlobes.length) {
       // 既存 globe の中身だけ更新 (nodes/edges を mutate して同じ object 参照を保つ)
+      let anyNewUntranslated = false;
       newGlobes.forEach((ng, i) => {
         const og = searchGlobesData[i];
-        // 翻訳済みフラグはリセットしない (翻訳キャッシュ活用)
-        const wasTranslated = og.kwAutoTranslated;
+        // 既存翻訳をキャッシュ map に集約: orig → translated
         const oldTextMap = {};
-        (og.nodes || []).forEach(n => { if (n.textOrig) oldTextMap[n.textOrig] = n.text; });
+        (og.nodes || []).forEach(n => {
+          if (n.textOrig) oldTextMap[n.textOrig] = n.text;
+          else oldTextMap[n.text] = n.text;
+        });
         Object.assign(og, ng);
-        // 翻訳済みなら新しい nodes にも翻訳結果を適用
-        if (wasTranslated && og.nodes) {
+        // 新 nodes に既存翻訳を再適用 (元テキスト一致するもの)
+        if (og.nodes) {
           og.nodes.forEach(n => {
-            const translated = oldTextMap[n.text];
-            if (translated) { n.textOrig = n.text; n.text = translated; }
+            const trans = oldTextMap[n.text];
+            if (trans && trans !== n.text) { n.textOrig = n.text; n.text = trans; }
           });
-          og.kwAutoTranslated = wasTranslated;
         }
-        // sprite だけ再構築 (globe group / カメラ位置はそのまま)
+        // ⭐ 新キーワードに未翻訳が残ってたら kwAutoTranslated をクリアして再翻訳許可
+        const stillNeed = (og.nodes || []).slice(0, 25)
+          .some(n => ssDetectStringLang(n.text) !== 'ja');
+        if (stillNeed) {
+          og.kwAutoTranslated = null;
+          anyNewUntranslated = true;
+        }
         ssRefreshGlobeSprites(og);
       });
+      // ⭐ 未翻訳キーワードが残ってたら、 検索翻訳バッチを再キック (debounced)
+      if (anyNewUntranslated) scheduleReTranslate();
     } else {
       // ⭐ カテゴリ追加/削除あり: layoutRevolver 経由で再構築 + main 保持
       let prevMainId = null;
@@ -2590,14 +2600,18 @@ async function ssTranslateBatch(texts, targetLang, opts = {}) {
         continue;
       }
       let nIdx = 0;
-      const NCONC = 4;
+      const NCONC = 2;
       await Promise.all(Array.from({ length: NCONC }, async () => {
         while (true) {
           const j = nIdx++;
           if (j >= group.length) return;
           const c = group[j];
           try {
-            const trans = await tr.translate(c.text);
+            // 5秒タイムアウト (個別 translate がハングしてもループ全体は進む)
+            const trans = await Promise.race([
+              tr.translate(c.text),
+              new Promise(res => setTimeout(() => res(null), 5000)),
+            ]);
             if (trans && trans !== c.text) {
               for (const i of c.indices) out[i] = trans;
               cache[c.k] = cache[c.k] || {};
@@ -2889,19 +2903,16 @@ function ssRefreshGlobeSprites(globeData) {
 
 // ⭐ Sphere keyword 自動翻訳 (MyMemory 優先 → 失敗時 Gemini フォールバック)
 async function ssAutoTranslateSphereKeywords(globe, targetLang = 'ja') {
-  if (globe.kwAutoTranslated === targetLang) return { changed: 0, total: 0, engine: 'cached' };
   const TOP_N = 25;
   const topNodes = globe.nodes.slice(0, TOP_N);
   const texts = topNodes.map(n => n.text);
-  const countChanged = (translated) => {
-    let c = 0;
-    for (let i = 0; i < texts.length; i++) {
-      if (translated[i] && translated[i] !== texts[i]) c++;
-    }
-    return c;
-  };
-  const apiKey = ssLoadGeminiKey();
+  // ⭐ 既に target lang のテキストは除外、 needCount = 0 ならスキップ
   const needCount = texts.filter(t => ssDetectStringLang(t) !== targetLang).length;
+  if (needCount === 0) {
+    globe.kwAutoTranslated = targetLang;
+    return { changed: 0, total: 0, engine: 'all-target' };
+  }
+  const apiKey = ssLoadGeminiKey();
   let translated, engineUsed;
   // ⭐ 優先順位: Chrome 端末内 (無料・無制限) > Gemini BYOK > MyMemory
   if (ssHasNative) {
@@ -2914,14 +2925,20 @@ async function ssAutoTranslateSphereKeywords(globe, targetLang = 'ja') {
     translated = await ssTranslateBatch(texts, targetLang, { engine: 'mymemory' });
     engineUsed = 'mymemory';
   }
-  let changed = countChanged(translated);
-  topNodes.forEach((n, i) => {
-    const t = translated[i];
-    if (t && t !== n.text) {
-      n.textOrig = n.text;
-      n.text = t;
+  // ⭐ 翻訳結果は live な globe.nodes に書き込む (snapshot 時の node が swap されてても OK)
+  // 元テキストで globe.nodes の現在 node を検索 → そこに上書き
+  let changed = 0;
+  for (let i = 0; i < texts.length; i++) {
+    const origText = texts[i];
+    const newText = translated[i];
+    if (!newText || newText === origText) continue;
+    const liveNode = (globe.nodes || []).find(n => n.text === origText || n.textOrig === origText);
+    if (liveNode) {
+      liveNode.textOrig = liveNode.textOrig || origText;
+      liveNode.text = newText;
+      changed++;
     }
-  });
+  }
   globe.kwAutoTranslated = targetLang;
   console.log(`[Translate] ${globe.label}: ${changed}/${needCount} translated via ${engineUsed}`);
   if (currentApp === 'search') ssRefreshGlobeSprites(globe);
@@ -2929,7 +2946,31 @@ async function ssAutoTranslateSphereKeywords(globe, targetLang = 'ja') {
 }
 
 // 球儀リストを 主役 から順次翻訳 (status で進捗表示)
+// ⭐ 翻訳の同時実行を防ぐロック + debounced 再翻訳キック
+let ssTranslateRunning = false;
+let ssReTranslateTimer = null;
+function scheduleReTranslate() {
+  if (ssReTranslateTimer) clearTimeout(ssReTranslateTimer);
+  ssReTranslateTimer = setTimeout(() => {
+    ssReTranslateTimer = null;
+    if (currentApp === 'search' && !ssTranslateRunning) {
+      ssAutoTranslateAllSearchGlobes().catch(e => console.warn('re-translate failed', e));
+    }
+  }, 800);
+}
+
 async function ssAutoTranslateAllSearchGlobes() {
+  if (currentApp !== 'search') return;
+  if (ssTranslateRunning) { console.log('[Translate] already running, skip'); return; }
+  ssTranslateRunning = true;
+  try {
+    await ssAutoTranslateAllSearchGlobesInner();
+  } finally {
+    ssTranslateRunning = false;
+  }
+}
+
+async function ssAutoTranslateAllSearchGlobesInner() {
   if (currentApp !== 'search') return;
   const status = document.getElementById('search-status');
   const globes = searchGlobesData.slice();
