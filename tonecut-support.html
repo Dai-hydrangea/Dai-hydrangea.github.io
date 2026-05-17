@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ToneCut - サポート</title>
+    <style>
+        body { font-family: -apple-system, sans-serif; max-width: 760px; margin: 40px auto; padding: 0 20px; line-height: 1.8; color: #333; }
+        h1 { font-size: 28px; border-bottom: 2px solid #5fa8c4; padding-bottom: 8px; }
+        h2 { font-size: 20px; margin-top: 36px; color: #2c5f73; }
+        h3 { font-size: 16px; margin-top: 20px; color: #555; }
+        p { margin: 10px 0; }
+        .date { color: #888; font-size: 14px; }
+        .feature-list { background: #f0f5f8; padding: 14px 20px; border-radius: 8px; margin: 16px 0; }
+        .lang-switch { margin-bottom: 20px; font-size: 14px; }
+        .lang-switch a { margin-right: 10px; color: #5fa8c4; text-decoration: none; }
+        .note-box { background: #e8eff3; padding: 16px 20px; border-radius: 10px; margin: 20px 0; }
+        .tagline { color: #2c5f73; font-style: italic; font-size: 18px; margin: 4px 0 20px; }
+        hr { margin: 60px 0 30px; border: none; border-top: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+    <div class="lang-switch">
+        <a href="#ja">日本語</a> |
+        <a href="#en">English</a> |
+        <a href="#zh">中文</a>
+    </div>
+
+    <section id="ja">
+    <h1>ToneCut サポート</h1>
+    <p class="tagline">動画の包丁。 楽器の演奏だけを 録ったまま切り出す。</p>
+    <p class="date">アプリバージョン: 1.0</p>
+
+    <h2>ToneCut とは</h2>
+    <p>ToneCut は、 楽器演奏動画から <strong>演奏区間だけを切り出して保存する</strong> iOS アプリです。 楽器倍音で自動検出、 閾値スライダで好みに調整、 切り出した区間は <strong>録ったままの画質</strong> で書き出されます (再エンコードなし)。</p>
+    <p>包丁が食材の質を変えないのと同じで、 ToneCut は動画の画質を変えません。 一つの目的に絞った 「動画の包丁」 です。</p>
+
+    <div class="feature-list">
+    <h3>主な機能</h3>
+    <p>1. <strong>AGC オフ録画</strong>: 端末のマイクの自動音量補正をオフにし、 楽器の強弱を忠実に記録</p>
+    <p>2. <strong>楽器倍音による自動検出</strong>: 倍音帯域のローカットで 声・呼吸・無音をフィルタ、 演奏区間を抽出</p>
+    <p>3. <strong>閾値スライダ</strong>: 検出結果が気に入らなければ 自分で調整可能</p>
+    <p>4. <strong>passthrough 書き出し</strong>: AVAssetExportSession の passthrough preset で 再エンコードなし保存</p>
+    <p>5. <strong>動画品質 3 段階</strong>: 軽量 (HD 720p) / 標準 (Full HD 1080p) / 高画質 (4K 2160p)</p>
+    <p>6. <strong>楽器音域 3 段階</strong>: 高音楽器 (2 kHz) / 標準 (1 kHz) / 低音楽器 (500 Hz)</p>
+    <p>7. <strong>YouTube チャプター出力</strong>: 切出し区間を m:ss 形式でクリップボードへコピー、 概要欄に貼ると自動分割</p>
+    <p>8. <strong>削除確認 4 重 safety</strong>: 元動画を削除する際は、 4 段階の確認で 思い出データを守る</p>
+    <p>9. <strong>省電力モード</strong>: 録画中に画面を暗くしてプレビューを非表示、 消費電力を削減</p>
+    <p>10. <strong>3 言語対応</strong>: 日本語 / 英語 / 中国語</p>
+    </div>
+
+    <h2>使い方</h2>
+
+    <h3>1. 録画</h3>
+    <p>録画タブで赤いボタンをタップして録画開始。 楽器の演奏が終わったら 同じボタンで停止。 動画は自動的に写真ライブラリへ保存されます。</p>
+
+    <h3>2. 切り出し</h3>
+    <p>編集タブに切り替えると、 直前に録画した動画が自動で読み込まれます (= 写真アプリ経由不要)。 波形と閾値スライダが表示されるので、 緑色になっている演奏区間を確認して 「書き出し」 ボタン。</p>
+
+    <h3>3. 削除確認</h3>
+    <p>書き出し完了後、 元動画を削除するか残すかを確認画面で選びます。 4 重の safety チェックで動画以外のデータは絶対に消えません。</p>
+
+    <h2>よくある質問</h2>
+
+    <h3>Q. 録画時にカメラとマイクの許可が必要ですか?</h3>
+    <p>はい。 動画録画には カメラ + マイク 両方の権限が必要です。 マイクは録音のためにのみ使用し、 アプリの外には送信されません。</p>
+
+    <h3>Q. なぜ写真ライブラリへのアクセスを要求しますか?</h3>
+    <p>録画した動画を写真ライブラリへ保存するため、 および 編集時に元動画を読み込むためです。 ご自身の写真にアクセスして外部に送信することは一切ありません。</p>
+
+    <h3>Q. 至近距離で楽器を吹くと音が割れます</h3>
+    <p>マイクの物理的な限界によるものです。 設定 → 録画音質 → 「音割れ防止」 を選ぶと、 軽い自動補正で音割れを防げます (強弱は均一化されます)。 通常は 「強弱保持」 を推奨します。</p>
+
+    <h3>Q. チューバなどの低音楽器が検出されません</h3>
+    <p>設定 → 楽器音域 → 「低音楽器 (500 Hz)」 を選んでください。 標準は 1000 Hz のローカットなので、 チューバの倍音重心 (100 Hz〜1.5 kHz) を取りこぼします。</p>
+
+    <h3>Q. 4K で録画したいです</h3>
+    <p>設定 → 動画品質 → 「高画質 (4K 2160p)」 を選んでください。 録画中は品質変更できません、 必ず録画開始前に。</p>
+
+    <h3>Q. 切り出し後の動画にチャプターを付けたい</h3>
+    <p>書き出し完了画面で 「チャプターをコピー」 ボタンを押すと、 YouTube の概要欄に貼り付けるだけでチャプター分割される形式 (0:00 から始まる m:ss テキスト) がクリップボードにコピーされます。</p>
+
+    <h3>Q. 長時間動画 (2-4 時間) の解析が遅いです</h3>
+    <p>10 分を超える動画は自動的に 4 並列解析に切り替わります。 それでも長い動画は数十秒かかる場合があります。 録画中に編集タブ用の処理を先行起動しているので、 録画停止直後の編集タブ移動が最も高速です。</p>
+
+    <h3>Q. 省電力モードってなんですか?</h3>
+    <p>録画中に画面を暗くしてプレビューを非表示にする機能です。 iOS の制約でバックグラウンド録画はできないため、 画面を暗くする方式で消費電力を削減します。 デフォルトは OFF、 設定から ON に切り替え可能です。</p>
+
+    <h3>Q. データの初期化</h3>
+    <p>設定はすべて UserDefaults に保存されています。 完全に初期化したい場合は iOS の設定 → 一般 → iPhone ストレージ → ToneCut → 削除 でアンインストールしてください。</p>
+
+    <h2>お問い合わせ</h2>
+    <div class="note-box">
+    <p>App Store の ToneCut ページの 「開発者連絡先」 からお問い合わせください。 バグ報告・機能要望もお気軽にどうぞ。</p>
+    </div>
+    </section>
+
+    <hr>
+
+    <section id="en">
+    <h1>ToneCut Support</h1>
+    <p class="tagline">A kitchen knife for video. Cut just the performance, keep the quality.</p>
+    <p class="date">App version: 1.0</p>
+
+    <h2>About ToneCut</h2>
+    <p>ToneCut is an iOS app that <strong>extracts just the instrument performance</strong> from your videos. It auto-detects performance regions using instrument overtones, lets you fine-tune the threshold, and exports the segments <strong>in the original quality</strong> (no re-encoding).</p>
+    <p>Like a kitchen knife that doesn't change the food itself, ToneCut doesn't change the video quality. One narrow purpose, done well — a kitchen knife for video.</p>
+
+    <div class="feature-list">
+    <h3>Features</h3>
+    <p>1. <strong>AGC-off recording</strong>: Disables the device microphone's auto-gain to faithfully capture instrument dynamics</p>
+    <p>2. <strong>Overtone-based detection</strong>: Filters voice / breath / silence via high-pass cut-off, isolating the performance</p>
+    <p>3. <strong>Threshold slider</strong>: Adjust manually if auto-detection isn't quite right</p>
+    <p>4. <strong>Passthrough export</strong>: Uses AVAssetExportSession's passthrough preset — no re-encoding</p>
+    <p>5. <strong>3 video qualities</strong>: Light (HD 720p) / Standard (Full HD 1080p) / High (4K 2160p)</p>
+    <p>6. <strong>3 instrument ranges</strong>: High (2 kHz) / Standard (1 kHz) / Low (500 Hz)</p>
+    <p>7. <strong>YouTube chapters export</strong>: Copy segment timestamps in m:ss format — paste into YouTube description for auto-chaptering</p>
+    <p>8. <strong>4-layer delete safety</strong>: When deleting the source video, a 4-step check protects your memories</p>
+    <p>9. <strong>Power saving mode</strong>: Dims the screen during recording to reduce battery drain</p>
+    <p>10. <strong>3 languages</strong>: Japanese / English / Chinese</p>
+    </div>
+
+    <h2>How to Use</h2>
+
+    <h3>1. Record</h3>
+    <p>In the Record tab, tap the red button to start. Tap again to stop. Videos auto-save to your Photos library.</p>
+
+    <h3>2. Extract</h3>
+    <p>Switch to the Edit tab — the just-recorded video loads automatically (no Photos app round-trip). Check the green performance regions in the waveform, adjust the threshold if needed, and tap Export.</p>
+
+    <h3>3. Delete confirmation</h3>
+    <p>After export, you'll be asked whether to delete or keep the source video. A 4-step safety check ensures non-video data is never affected.</p>
+
+    <h2>FAQ</h2>
+
+    <h3>Q. Why do you need camera and microphone permissions?</h3>
+    <p>Both are required for video recording. Microphone is used only for recording — audio never leaves your device.</p>
+
+    <h3>Q. Why do you request Photos access?</h3>
+    <p>To save recorded videos to your Photos library and to load them for editing. We never access your other photos or send anything externally.</p>
+
+    <h3>Q. Sound clips when I play loud / close to the mic</h3>
+    <p>This is a microphone hardware limit. Go to Settings → Audio Mode → "Prevent clipping" to enable gentle auto-compensation (dynamics will be smoothed). "Preserve dynamics" is recommended for normal use.</p>
+
+    <h3>Q. Low instruments (tuba, contrabass) aren't detected</h3>
+    <p>Go to Settings → Instrument Range → "Low (500 Hz)". The default 1 kHz cut-off misses the overtone center of low instruments (100 Hz – 1.5 kHz).</p>
+
+    <h3>Q. I want to record in 4K</h3>
+    <p>Settings → Video Quality → "High (4K 2160p)". Quality cannot be changed during recording — set it before tapping the record button.</p>
+
+    <h3>Q. I want chapters in my exported video</h3>
+    <p>On the export-complete screen, tap "Copy Chapters". This copies a YouTube-compatible m:ss text (starting at 0:00) to your clipboard — paste into your YouTube description for auto-chaptering.</p>
+
+    <h3>Q. Long video (2-4 hours) analysis is slow</h3>
+    <p>Videos longer than 10 minutes are automatically processed with 4-way parallel analysis. Some lag is unavoidable for very long videos. Recording → moving to the Edit tab right after stop is the fastest path (the app preloads editor frameworks during recording).</p>
+
+    <h3>Q. What is Power Saving mode?</h3>
+    <p>It dims the screen and hides the preview during recording. iOS doesn't allow background video recording, so dimming is the alternative for reducing battery drain. Default is OFF; toggle in Settings.</p>
+
+    <h3>Q. How to reset all data</h3>
+    <p>All settings are stored in UserDefaults. To fully reset, uninstall via iOS Settings → General → iPhone Storage → ToneCut → Delete App.</p>
+
+    <h2>Contact</h2>
+    <div class="note-box">
+    <p>Please use the developer contact link on the ToneCut App Store page for bug reports and feature requests.</p>
+    </div>
+    </section>
+
+    <hr>
+
+    <section id="zh">
+    <h1>ToneCut 支持</h1>
+    <p class="tagline">视频的菜刀。 仅切出演奏,保留原画质。</p>
+    <p class="date">应用版本: 1.0</p>
+
+    <h2>关于 ToneCut</h2>
+    <p>ToneCut 是一款从乐器演奏视频中 <strong>仅切出演奏段落并保存</strong> 的 iOS 应用。 通过乐器泛音自动检测、 用阈值滑块微调、 切出的段落以 <strong>原画质</strong> 导出 (不重新编码)。</p>
+    <p>就像菜刀不改变食材本身, ToneCut 不改变视频画质。 专注于一个目的的 「视频的菜刀」。</p>
+
+    <div class="feature-list">
+    <h3>主要功能</h3>
+    <p>1. <strong>关闭 AGC 录制</strong>: 关闭设备麦克风的自动音量补正、 忠实记录乐器强弱</p>
+    <p>2. <strong>通过乐器泛音自动检测</strong>: 通过泛音切除滤掉人声、 呼吸、 静音、 提取演奏段落</p>
+    <p>3. <strong>阈值滑块</strong>: 检测结果不理想时可手动调整</p>
+    <p>4. <strong>Passthrough 导出</strong>: 使用 AVAssetExportSession 的 passthrough preset、 不重新编码保存</p>
+    <p>5. <strong>3 种视频质量</strong>: 轻量 (HD 720p) / 标准 (Full HD 1080p) / 高画质 (4K 2160p)</p>
+    <p>6. <strong>3 种乐器音域</strong>: 高音 (2 kHz) / 标准 (1 kHz) / 低音 (500 Hz)</p>
+    <p>7. <strong>YouTube 章节导出</strong>: 将切出段落以 m:ss 格式复制到剪贴板、 粘贴到 YouTube 简介即可自动分章</p>
+    <p>8. <strong>4 层删除安全</strong>: 删除源视频时、 4 阶段确认守护回忆数据</p>
+    <p>9. <strong>省电模式</strong>: 录制时变暗屏幕并隐藏预览、 节省电量</p>
+    <p>10. <strong>3 种语言</strong>: 日语 / 英语 / 中文</p>
+    </div>
+
+    <h2>使用方法</h2>
+
+    <h3>1. 录制</h3>
+    <p>在录制标签页中点击红色按钮开始录制。 演奏结束后再次点击同一按钮停止。 视频会自动保存到照片库。</p>
+
+    <h3>2. 切出</h3>
+    <p>切换到编辑标签页, 刚才录制的视频会自动加载 (无需经由照片应用)。 显示波形和阈值滑块, 确认绿色的演奏段落后点击 「导出」 按钮。</p>
+
+    <h3>3. 删除确认</h3>
+    <p>导出完成后, 选择是否删除源视频。 4 层安全检查确保不会误删非视频数据。</p>
+
+    <h2>常见问题</h2>
+
+    <h3>Q. 录制时需要相机和麦克风权限吗?</h3>
+    <p>是的。 视频录制需要相机 + 麦克风两项权限。 麦克风仅用于录音、 音频不会发送到设备外部。</p>
+
+    <h3>Q. 为什么需要访问照片库?</h3>
+    <p>用于将录制的视频保存到照片库、 以及在编辑时加载源视频。 我们不会访问您的其他照片, 也不会发送到外部。</p>
+
+    <h3>Q. 近距离演奏时声音破音</h3>
+    <p>这是麦克风的物理限制。 设置 → 录制音质 → 「防止破音」 可启用轻度自动补偿 (强弱会被平滑化)。 一般推荐 「保留强弱」。</p>
+
+    <h3>Q. 大号等低音乐器无法被检测</h3>
+    <p>请在 设置 → 乐器音域 → 选择 「低音 (500 Hz)」。 默认的 1000 Hz 切除会漏掉大号的泛音重心 (100 Hz – 1.5 kHz)。</p>
+
+    <h3>Q. 想用 4K 录制</h3>
+    <p>设置 → 视频质量 → 选择 「高画质 (4K 2160p)」。 录制中无法更改, 请在开始录制前设置。</p>
+
+    <h3>Q. 想给切出后的视频加章节</h3>
+    <p>在导出完成画面点击 「复制章节」, 即可将 YouTube 简介可用的 m:ss 文本 (从 0:00 开始) 复制到剪贴板, 粘贴到简介即可自动分章。</p>
+
+    <h3>Q. 长时间视频 (2-4 小时) 解析很慢</h3>
+    <p>超过 10 分钟的视频会自动切换为 4 路并行解析。 但很长的视频仍可能需要数十秒。 录制中预先启动了编辑标签的处理, 因此录制停止后立即切换到编辑标签是最快的路径。</p>
+
+    <h3>Q. 省电模式是什么?</h3>
+    <p>录制时变暗屏幕并隐藏预览的功能。 由于 iOS 限制不允许后台视频录制, 因此用变暗的方式节省电量。 默认为关闭, 可在设置中开启。</p>
+
+    <h3>Q. 数据重置</h3>
+    <p>所有设置保存在 UserDefaults 中。 如需完全初始化, 请通过 iOS 的设置 → 通用 → iPhone 储存空间 → ToneCut → 删除应用 进行卸载。</p>
+
+    <h2>联系方式</h2>
+    <div class="note-box">
+    <p>请通过 App Store 的 ToneCut 页面的 「开发者联系方式」 与我们联系。 欢迎报告 bug 或提出功能建议。</p>
+    </div>
+    </section>
+</body>
+</html>
