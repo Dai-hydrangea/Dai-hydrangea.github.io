@@ -394,7 +394,7 @@ body {
   font-family:'Share Tech Mono',monospace; font-size:13px;
   letter-spacing:1.5px; white-space:pre; line-height:1.6;
   animation:dataFall linear infinite;
-  text-shadow:0 0 6px rgba(0,229,255,0.5);
+  text-shadow:0 0 3px rgba(0,229,255,0.45); /* iPhone 発熱対策で blur 6→3px */
 }
 @keyframes dataFall {
   0%   { transform:translateY(-30px); opacity:0; }
@@ -597,10 +597,10 @@ import { LineMaterial   } from 'three/addons/lines/LineMaterial.js';
 // ── data-stream (最初 25 秒は賑やか → ゆっくり静かに / 同時表示数に上限) ──
 const DATA_CHARS = '電脳網闇情報攻殻機動局意識データ零壱拾百千万億∞解析観測流変論調';
 const DIGITS = '0123456789';
-const STREAM_MAX_ACTIVE = 18;      // 同時表示数の上限
+const STREAM_MAX_ACTIVE = 10;      // 同時表示数の上限 (iPhone 発熱対策で 18→10)
 const STREAM_INTRO_MS   = 25000;   // 最初の 25 秒間は賑やか
-const STREAM_INTERVAL_INTRO = 700; // intro 中の生成間隔 (ms)
-const STREAM_INTERVAL_CALM  = 2600; // intro 後の生成間隔 (ms)
+const STREAM_INTERVAL_INTRO = 1400; // intro 中の生成間隔 (ms、 700→1400)
+const STREAM_INTERVAL_CALM  = 5000; // intro 後の生成間隔 (ms、 2600→5000)
 const streamRoot = document.getElementById('data-stream');
 const streamStartedAt = performance.now();
 
@@ -635,14 +635,18 @@ function scheduleNextStream() {
   spawnDataChar();
   setTimeout(scheduleNextStream, interval + Math.random()*200);
 }
-// 立ち上がりだけ短い間隔で 8 個まとめて出す (上限あるので暴走しない)
-for (let i = 0; i < 8; i++) setTimeout(spawnDataChar, i * 220);
+// 立ち上がりだけ短い間隔で 4 個まとめて出す (発熱対策で 8→4)
+for (let i = 0; i < 4; i++) setTimeout(spawnDataChar, i * 320);
 setTimeout(scheduleNextStream, 500);
 
+// ── Mobile 検出 (iPhone/iPad で発熱抑制設定を有効化) ──
+const isMobile = /iPhone|iPad|iPod/.test(navigator.userAgent)
+  || (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform)); // iPadOS 13+ は Mac 偽装
+
 // ── Renderer ──
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+const renderer = new THREE.WebGLRenderer({ antialias: !isMobile }); // mobile では MSAA off
 renderer.setSize(innerWidth, innerHeight);
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setPixelRatio(Math.min(devicePixelRatio, isMobile ? 1.5 : 2)); // mobile は 1.5 で焼け軽減
 renderer.setClearColor(0x000812);
 document.body.appendChild(renderer.domElement);
 
@@ -1600,10 +1604,18 @@ renderer.domElement.addEventListener('pointerup', e => {
 
 // ── アニメーションループ ──
 let lastT = performance.now();
+let frameIdx = 0;
+let rafId = null;
+let animPaused = false;
+// 後ろの球は 1/6 frame に間引き (iPhone 発熱対策、 手前に来たら 60fps 復帰)
+// 回転を半減した分 skip を 3→6 に上げてもカクつかない
+const BACK_FRAME_SKIP = 6;
+const BACK_DEPTH_THRESHOLD = 0.55;
 function animate(now) {
-  requestAnimationFrame(animate);
+  rafId = requestAnimationFrame(animate);
   const dt = (now - lastT) / 1000;
   lastT = now;
+  frameIdx = (frameIdx + 1) | 0;
   controls.update();
   updateRevolverAnim(dt);
 
@@ -1640,18 +1652,25 @@ function animate(now) {
         const t = (s - FRONT_FRAC - END_FRAC - BACK_FRAC) / END_FRAC;
         x = -W_B + (W_B - W_F) * t; y = -Y * (1 - t); z = -D * (1 - t);
       }
-      g.position.set(x, y, z);
-      // スケール: 前 line 上は spotlight (中央が PEAK、 両端は小さく → 4 球並んでも重ならない)
+      // depthFrac / xN は brief alpha でも使うので外側で計算
       const depthFrac = Math.min(1, Math.max(0, (-z + Math.abs(y)) / (D + Y)));
       const xN = x / W_F;
-      const wx = Math.max(0.5, 1 - xN * xN * 0.5);  // 中央 1.0、 両端 0.5
-      const frontScale = FRONT_PEAK * wx;
-      const scale = BACK_S + (frontScale - BACK_S) * (1 - depthFrac);
-      g.scale.setScalar(scale);
+      const isBack = depthFrac > BACK_DEPTH_THRESHOLD;
+      // ⭐ 後ろ球は 1/3 frame に間引き、 手前は毎 frame
+      const shouldUpdateTransform = !isBack || (frameIdx % BACK_FRAME_SKIP === 0);
+      if (shouldUpdateTransform) {
+        g.position.set(x, y, z);
+        // スケール: 前 line 上は spotlight (中央が PEAK、 両端は小さく → 4 球並んでも重ならない)
+        const wx = Math.max(0.5, 1 - xN * xN * 0.5);  // 中央 1.0、 両端 0.5
+        const frontScale = FRONT_PEAK * wx;
+        const scale = BACK_S + (frontScale - BACK_S) * (1 - depthFrac);
+        g.scale.setScalar(scale);
 
-      // ⭐ 自転速度: 1/3 化して 流し見ペース (前 0.022 → 後 0.056)
-      const rotSpeed = 0.022 + (0.056 - 0.022) * depthFrac;
-      g.rotation.y += dt * rotSpeed;
+        // ⭐ 自転速度: 流し見ペース (前 0.011 → 後 0.028、 元値の半分で発熱抑制)
+        // back は frame skip 分だけ補償して見た目の回転速度を維持
+        const rotSpeed = 0.011 + (0.028 - 0.011) * depthFrac;
+        g.rotation.y += dt * rotSpeed * (isBack ? BACK_FRAME_SKIP : 1);
+      }
 
       // ⭐ 観 sprite の alpha も連続補間 (snap 防止)
       const brief = g.userData?.brief;
@@ -1680,10 +1699,16 @@ function animate(now) {
   }
 
   // 自転 (FLOW モードでは上記の loop が処理済、 ここは非 FLOW のみ)
+  // ⭐ revolver の非 main 球は 1/6 frame に間引き (iPhone 発熱対策)、 速度は元値の半分
   if (!autoFlow) {
+    const updateBack = (frameIdx % BACK_FRAME_SKIP === 0);
     globesList.forEach((g, i) => {
       const isMain = (slotAssignment[i] === 0);
-      g.rotation.y += dt * (isMain ? 0.067 : 0.167);
+      if (isMain) {
+        g.rotation.y += dt * 0.033;
+      } else if (updateBack) {
+        g.rotation.y += dt * 0.083 * BACK_FRAME_SKIP;
+      }
     });
   }
   // BRIEF core: 呼吸 (scale) + 浮遊 (y) + alpha 揺らぎ
@@ -1701,7 +1726,19 @@ function animate(now) {
   });
   renderer.render(scene, camera);
 }
-requestAnimationFrame(animate);
+rafId = requestAnimationFrame(animate);
+
+// ⭐ タブ非表示時は loop 停止 (iPhone 発熱対策、 復帰時は dt をリセット)
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+    animPaused = true;
+  } else if (animPaused) {
+    animPaused = false;
+    lastT = performance.now();
+    rafId = requestAnimationFrame(animate);
+  }
+});
 
 // ── リサイズ ──
 window.addEventListener('resize', () => {
