@@ -93,6 +93,10 @@
   最終更新日: 2026-05-08
 </p>
 
+<p style="text-align: center; font-size: 13px; margin-top: -8px;">
+  <a href="#english">→ English version below</a>
+</p>
+
 <h2>はじめに</h2>
 <p>
 Kailua (以下、 「本アプリ」) は、 ユーザーの自己分析・自己観察を支援する iOS アプリケーションです。
@@ -246,8 +250,166 @@ Pro 版の AI 深掘り対話機能は、 ユーザー自身が入力したテ�
 本ポリシーに関するご質問・お問い合わせは、 App Store の開発者ページよりお願いいたします。
 </p>
 
+<hr style="margin: 48px 0; border: 0; border-top: 1px solid rgba(26,58,82,0.15);">
+
+<h1 id="english">Kailua Privacy Policy</h1>
+
+<p style="text-align: center; color: #7a8a96; font-size: 12px; letter-spacing: 2px;">
+  Last updated: 2026-05-08
+</p>
+
+<h2>Introduction</h2>
+<p>
+Kailua (hereinafter, "the App") is an iOS application that supports users' self-analysis and self-observation.
+The developer of the App (hereinafter, "the Developer") respects users' privacy and manages information that is collected or transmitted in accordance with the policy described below.
+</p>
+
+<h2>1. Information collected by the basic (free) features</h2>
+<p>
+The <strong>free features of the App (scenario selection, self-observation results, 8-axis analysis, MBTI-style type estimation, bookshelf suggestions, etc.)</strong> run entirely on the device.
+These features <strong>do not transmit any of the following information externally</strong>:
+</p>
+<ul>
+  <li>Personal information such as name, email address, or phone number</li>
+  <li>Location information</li>
+  <li>On-device data such as contacts, photos, or calendar</li>
+  <li>Usage logs, analytics data, or advertising identifiers</li>
+</ul>
+
+<h2>2. Information stored on the device</h2>
+<p>
+The App stores users' choice history (which option was selected, how long the user thought about it, etc.) on the device only.
+These data are used solely for the user's own self-observation and are <strong>never transmitted to any external server</strong>.
+Deleting the App also deletes these data.
+</p>
+
+<h2>3. Pro version AI dialogue feature (paid feature)</h2>
+
+<p>
+If you are using the <strong>Pro / Super Pro plan (paid auto-renewable subscription)</strong>, when you use the "Deepen with AI" feature, the text you input together with relevant self-observation context is transmitted to an external AI service.
+This is a <strong>paid feature that operates only when the user explicitly chooses to use it</strong>.
+This feature is not available on the free plan.
+</p>
+
+<h3>3-1. Information transmitted</h3>
+<p>
+When the user uses the AI dialogue feature, the following information is transmitted externally:
+</p>
+<ul>
+  <li>Text the user has entered into the dialogue screen</li>
+  <li>Self-observation results generated within the App (estimated MBTI-style type, 8-axis scores, per-scenario choice history with selection times)</li>
+  <li>Device identifier (iOS identifierForVendor, used only for monthly usage-count management)</li>
+</ul>
+<p class="note">
+Personal information such as name, email address, phone number, location, or contacts is <strong>not transmitted</strong>.
+The transmitted self-observation information is limited to data generated within the App.
+</p>
+
+<h3>3-2. Transmission path (relay server)</h3>
+<p>
+User input is transmitted to Anthropic's Claude API via a <strong>Cloudflare Workers relay server operated by the Developer</strong>.
+The relay server is used solely for securely holding the API key and authenticating requests from the device.
+</p>
+<ul>
+  <li>The transmitted content is not persistently stored on the relay server</li>
+  <li>For monthly usage-count management, the device identifier and the month's usage count are stored in Cloudflare Workers KV for up to 32 days and then automatically deleted</li>
+  <li>The relay server runs on Cloudflare's Edge network (operated by the Developer)</li>
+</ul>
+
+<h3>3-3. Processing by Anthropic</h3>
+<p>
+Information forwarded from the relay server is processed by the Claude API (claude-opus-4-7 and similar models) provided by <strong>Anthropic, PBC</strong> to generate dialogue responses.
+For Anthropic's data handling, please refer to Anthropic's privacy policy:
+<br>
+<a href="https://www.anthropic.com/privacy">https://www.anthropic.com/privacy</a>
+</p>
+<p>
+The App uses the Prompt Caching feature when sending requests to the Anthropic API.
+Anthropic explicitly states that API request data is not used to train its models (see the privacy policy linked above).
+</p>
+
+<h3>3-4. User choices</h3>
+<ul>
+  <li>You may <strong>choose not to use this feature</strong> at any time (you can continue using only the on-device self-observation features on the free plan)</li>
+  <li>You can cancel your subscription at any time from the App Store subscription management page</li>
+  <li>Dialogue history stored on the device is deleted together with the App when you uninstall it</li>
+</ul>
+
+<h2>4. Relationship with third-party services</h2>
+
+<table>
+  <thead>
+    <tr><th>Service</th><th>Purpose</th><th>Operator</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Apple App Store</td>
+      <td>App distribution and subscription billing</td>
+      <td>Apple Inc.</td>
+    </tr>
+    <tr>
+      <td>Anthropic Claude API</td>
+      <td>Response generation for the Pro AI dialogue feature</td>
+      <td>Anthropic, PBC</td>
+    </tr>
+    <tr>
+      <td>Cloudflare Workers</td>
+      <td>Secure storage and relaying of the API key, monthly usage-count management</td>
+      <td>Cloudflare, Inc. (infrastructure operated by the Developer)</td>
+    </tr>
+    <tr>
+      <td>Amazon Associates</td>
+      <td>Affiliate links from bookshelf suggestions</td>
+      <td>Amazon Japan G.K.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>4-1. Apple App Store</h3>
+<p>
+The App is distributed through the Apple App Store. Downloads, subscription purchases, and usage statistics are processed by Apple in accordance with Apple's privacy policy.
+</p>
+
+<h3>4-2. Amazon Associates Program</h3>
+<p>
+The App includes a book-recommendation feature. Tapping a recommended book link opens the Amazon product page.
+These links are <strong>affiliate links provided through the Amazon Associates Program (Associate ID: daihydrangea-22)</strong>.
+If a user purchases an item via such a link, the Developer may receive a referral fee from Amazon.
+Once you tap the link, your information is handled by Amazon in accordance with Amazon's privacy policy.
+</p>
+<p>
+Amazon's privacy policy:
+<a href="https://www.amazon.co.jp/gp/help/customer/display.html?nodeId=GX7NJQ4ZB8MHFRNJ">https://www.amazon.co.jp/gp/help/customer/display.html?nodeId=GX7NJQ4ZB8MHFRNJ</a>
+</p>
+
+<h2>5. About the personality-type classification</h2>
+<p>
+The App is a <strong>general-purpose self-observation tool</strong> based on a 16-type personality classification (introversion/extraversion, intuition/sensing, thinking/feeling, judging/perceiving).
+It is not an official psychological test. Results from the App are not intended for professional diagnosis or medical use.
+</p>
+<p>
+MBTI® is a registered trademark of The Myers-Briggs Company. The App has no affiliation whatsoever with the official MBTI test.
+</p>
+
+<h2>6. Use by children</h2>
+<p>
+The App is intended for users aged 4 and above. If a child uses the App, please do so with the consent of a parent or guardian.
+The free features do not collect any personal information.
+Because the Pro AI dialogue feature transmits text entered by the user to an external service, parental judgment is required when a child uses this feature.
+</p>
+
+<h2>7. Changes to this privacy policy</h2>
+<p>
+This policy may be updated as needed. Any material changes will be announced on this page.
+</p>
+
+<h2>8. Contact</h2>
+<p>
+For questions or inquiries regarding this policy, please use the developer page on the App Store.
+</p>
+
 <p class="footer">
-  © 2026 Kailua — 自己観察のための小さな海岸線
+  © 2026 Kailua — A small coastline for self-observation
 </p>
 
 </div>
