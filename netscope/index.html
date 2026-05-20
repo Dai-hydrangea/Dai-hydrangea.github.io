@@ -390,11 +390,13 @@ body {
 }
 #data-stream { position:fixed; inset:0; pointer-events:none; z-index:3; overflow:hidden; }
 .data-char {
-  position:absolute; color:rgba(0,229,255,0.20);
+  position:absolute; color:rgba(0,229,255,0.14);
   font-family:'Share Tech Mono',monospace; font-size:13px;
   letter-spacing:1.5px; white-space:pre; line-height:1.6;
   animation:dataFall linear infinite;
-  text-shadow:0 0 3px rgba(0,229,255,0.45); /* iPhone 発熱対策で blur 6→3px */
+  /* 後ろの流れる文字は atmospheric にぼかす (主球の sharpness とコントラスト) */
+  text-shadow:0 0 8px rgba(0,229,255,0.55);
+  filter:blur(0.6px);
 }
 @keyframes dataFall {
   0%   { transform:translateY(-30px); opacity:0; }
