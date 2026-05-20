@@ -594,13 +594,23 @@ import { Line2          } from 'three/addons/lines/Line2.js';
 import { LineGeometry   } from 'three/addons/lines/LineGeometry.js';
 import { LineMaterial   } from 'three/addons/lines/LineMaterial.js';
 
+// ── Mobile 検出 (iPhone/iPad で発熱抑制設定を有効化) ──
+const isMobile = /iPhone|iPad|iPod/.test(navigator.userAgent)
+  || (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform)); // iPadOS 13+ は Mac 偽装
+
+// mobile では scanlines (CSS overlay) を非表示にして GPU 合成コスト削減
+if (isMobile) {
+  const sl = document.getElementById('scanlines');
+  if (sl) sl.style.display = 'none';
+}
+
 // ── data-stream (最初 25 秒は賑やか → ゆっくり静かに / 同時表示数に上限) ──
 const DATA_CHARS = '電脳網闇情報攻殻機動局意識データ零壱拾百千万億∞解析観測流変論調';
 const DIGITS = '0123456789';
-const STREAM_MAX_ACTIVE = 10;      // 同時表示数の上限 (iPhone 発熱対策で 18→10)
+const STREAM_MAX_ACTIVE = isMobile ? 4 : 10;      // 同時表示数の上限 (mobile は更に削減)
 const STREAM_INTRO_MS   = 25000;   // 最初の 25 秒間は賑やか
-const STREAM_INTERVAL_INTRO = 1400; // intro 中の生成間隔 (ms、 700→1400)
-const STREAM_INTERVAL_CALM  = 5000; // intro 後の生成間隔 (ms、 2600→5000)
+const STREAM_INTERVAL_INTRO = isMobile ? 2400 : 1400; // intro 中の生成間隔 (ms)
+const STREAM_INTERVAL_CALM  = isMobile ? 9000 : 5000; // intro 後の生成間隔 (ms)
 const streamRoot = document.getElementById('data-stream');
 const streamStartedAt = performance.now();
 
@@ -635,18 +645,17 @@ function scheduleNextStream() {
   spawnDataChar();
   setTimeout(scheduleNextStream, interval + Math.random()*200);
 }
-// 立ち上がりだけ短い間隔で 4 個まとめて出す (発熱対策で 8→4)
-for (let i = 0; i < 4; i++) setTimeout(spawnDataChar, i * 320);
+// 立ち上がりだけ短い間隔で出す (mobile は 2 個、 desktop は 4 個)
+{
+  const burst = isMobile ? 2 : 4;
+  for (let i = 0; i < burst; i++) setTimeout(spawnDataChar, i * 320);
+}
 setTimeout(scheduleNextStream, 500);
 
-// ── Mobile 検出 (iPhone/iPad で発熱抑制設定を有効化) ──
-const isMobile = /iPhone|iPad|iPod/.test(navigator.userAgent)
-  || (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform)); // iPadOS 13+ は Mac 偽装
-
 // ── Renderer ──
-const renderer = new THREE.WebGLRenderer({ antialias: !isMobile }); // mobile では MSAA off
+const renderer = new THREE.WebGLRenderer({ antialias: !isMobile, powerPreference: 'low-power' }); // mobile では MSAA off + low-power GPU
 renderer.setSize(innerWidth, innerHeight);
-renderer.setPixelRatio(Math.min(devicePixelRatio, isMobile ? 1.5 : 2)); // mobile は 1.5 で焼け軽減
+renderer.setPixelRatio(Math.min(devicePixelRatio, isMobile ? 1.0 : 2)); // mobile は 1.0 で発熱大幅減
 renderer.setClearColor(0x000812);
 document.body.appendChild(renderer.domElement);
 
@@ -657,7 +666,7 @@ const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.1, 80
 camera.position.set(0, 80, 850);
 
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true;
+controls.enableDamping = !isMobile; // mobile では damping off (毎フレームの dirty 化を防ぐ)
 controls.dampingFactor = 0.06;
 controls.minDistance   = 550;
 controls.maxDistance   = 2600;
@@ -678,9 +687,10 @@ controls.target.set(0, 0, 0);
   scene.add(grid2);
 }
 
-// ── 背景パーティクル ──
+// ── 背景パーティクル ── (mobile は 1/5 に削減)
 {
-  const n = 1000, pos = new Float32Array(n * 3);
+  const n = isMobile ? 200 : 1000;
+  const pos = new Float32Array(n * 3);
   for (let i = 0; i < n; i++) {
     const ph = Math.random()*Math.PI*2, th = Math.random()*Math.PI;
     const r  = 1100 + Math.random()*1800;
@@ -907,7 +917,9 @@ function makeCategoryLabel(text, colorHex) {
 // ── Globe builder ──
 function buildGlobe(globeData) {
   const group = new THREE.Group();
-  group.userData = { globeData };
+  // detailObjects = back 球で非表示にする children (keyword sprite + edge + label)
+  // 残るのは sphere wireframe + eq/mer torus + brief sprite (= ぼかしたシェルだけ)
+  group.userData = { globeData, detailObjects: [], detailVisible: true };
 
   const radius = GLOBE_RADIUS;   // ⭐ export.py と一致
   const colorHex = parseInt(globeData.color.replace('#', ''), 16);
@@ -945,6 +957,7 @@ function buildGlobe(globeData) {
     sprite.position.set(pos[0], pos[1], pos[2]);
     sprite.userData = { keyword: node, globeId: globeData.id };
     group.add(sprite);
+    group.userData.detailObjects.push(sprite);
     posMap[node.text] = pos;
   });
 
@@ -972,7 +985,9 @@ function buildGlobe(globeData) {
         color, linewidth, transparent: true, opacity,
         depthWrite: false, resolution: resVec,
       });
-      group.add(new Line2(geo, mat));
+      const line = new Line2(geo, mat);
+      group.add(line);
+      group.userData.detailObjects.push(line);
     });
   }
 
@@ -981,6 +996,7 @@ function buildGlobe(globeData) {
   label.position.set(0, radius + 60, 0);
   group.add(label);
   group.userData.label = label;
+  group.userData.detailObjects.push(label);
 
   // BRIEF core sprite (球の中央内側に浮かぶ)
   const brief = makeBriefSprite(colorHex);
@@ -1604,15 +1620,30 @@ renderer.domElement.addEventListener('pointerup', e => {
 
 // ── アニメーションループ ──
 let lastT = performance.now();
+let lastRenderT = 0;
 let frameIdx = 0;
 let rafId = null;
 let animPaused = false;
-// 後ろの球は 1/6 frame に間引き (iPhone 発熱対策、 手前に来たら 60fps 復帰)
+// mobile では 30fps clamp (流し見用途なら違和感ゼロ、 GPU 仕事量を半減)
+const FRAME_INTERVAL_MS = isMobile ? (1000 / 30) : 0;
+// 後ろの球は 1/6 frame に間引き (iPhone 発熱対策、 手前に来たら復帰)
 // 回転を半減した分 skip を 3→6 に上げてもカクつかない
 const BACK_FRAME_SKIP = 6;
 const BACK_DEPTH_THRESHOLD = 0.55;
+
+// 後ろ球の detail (keyword/edge/label) を一括 visible 切替
+// 状態が変わったときだけ書き換えてリペイント無駄打ち防止
+function setGlobeDetailVisible(g, want) {
+  if (g.userData.detailVisible === want) return;
+  const arr = g.userData.detailObjects || [];
+  for (let k = 0; k < arr.length; k++) arr[k].visible = want;
+  g.userData.detailVisible = want;
+}
 function animate(now) {
   rafId = requestAnimationFrame(animate);
+  // ⭐ mobile 30fps clamp: 前回 render から FRAME_INTERVAL_MS 経ってなければ skip
+  if (FRAME_INTERVAL_MS && (now - lastRenderT) < FRAME_INTERVAL_MS) return;
+  lastRenderT = now;
   const dt = (now - lastT) / 1000;
   lastT = now;
   frameIdx = (frameIdx + 1) | 0;
@@ -1656,7 +1687,9 @@ function animate(now) {
       const depthFrac = Math.min(1, Math.max(0, (-z + Math.abs(y)) / (D + Y)));
       const xN = x / W_F;
       const isBack = depthFrac > BACK_DEPTH_THRESHOLD;
-      // ⭐ 後ろ球は 1/3 frame に間引き、 手前は毎 frame
+      // ⭐ back 球は detail (keyword/edge/label) を非表示にして wireframe シェルだけ回す
+      setGlobeDetailVisible(g, !isBack);
+      // ⭐ 後ろ球は 1/6 frame に間引き、 手前は毎 frame
       const shouldUpdateTransform = !isBack || (frameIdx % BACK_FRAME_SKIP === 0);
       if (shouldUpdateTransform) {
         g.position.set(x, y, z);
@@ -1699,11 +1732,12 @@ function animate(now) {
   }
 
   // 自転 (FLOW モードでは上記の loop が処理済、 ここは非 FLOW のみ)
-  // ⭐ revolver の非 main 球は 1/6 frame に間引き (iPhone 発熱対策)、 速度は元値の半分
+  // ⭐ revolver の非 main 球は 1/6 frame に間引き + detail 非表示 (= シェルだけ)
   if (!autoFlow) {
     const updateBack = (frameIdx % BACK_FRAME_SKIP === 0);
     globesList.forEach((g, i) => {
       const isMain = (slotAssignment[i] === 0);
+      setGlobeDetailVisible(g, isMain); // 非 main は wireframe だけにする
       if (isMain) {
         g.rotation.y += dt * 0.033;
       } else if (updateBack) {
@@ -1712,16 +1746,18 @@ function animate(now) {
     });
   }
   // BRIEF core: 呼吸 (scale) + 浮遊 (y) + alpha 揺らぎ
+  // ⭐ flowAlpha < 0.3 (= ほぼ見えない back 球) は 1/6 frame だけ更新で発熱抑制
   const tsec = now * 0.001;
+  const backTick = (frameIdx % BACK_FRAME_SKIP === 0);
   globesList.forEach(g => {
     const b = g.userData?.brief;
     if (!b || !b.visible) return;
+    const flowA = autoFlow ? (b.userData.flowAlpha ?? 1) : 1;
+    if (flowA < 0.3 && !backTick) return; // back brief は frame skip
     const pulse = 1.0 + Math.sin(tsec * 1.6) * 0.06;
     b.scale.set(58 * pulse, 47 * pulse, 1);
     b.position.y = Math.sin(tsec * 0.7) * 10;
     const baseAlpha = 0.78 + 0.20 * (0.5 + 0.5 * Math.sin(tsec * 1.2));
-    // FLOW 時は proximity に基づく flowAlpha を乗じて滑らかに fade
-    const flowA = autoFlow ? (b.userData.flowAlpha ?? 1) : 1;
     b.material.opacity = baseAlpha * flowA;
   });
   renderer.render(scene, camera);
