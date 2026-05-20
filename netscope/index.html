@@ -655,7 +655,7 @@ setTimeout(scheduleNextStream, 500);
 // ── Renderer ──
 const renderer = new THREE.WebGLRenderer({ antialias: !isMobile, powerPreference: 'low-power' }); // mobile では MSAA off + low-power GPU
 renderer.setSize(innerWidth, innerHeight);
-renderer.setPixelRatio(Math.min(devicePixelRatio, isMobile ? 1.0 : 2)); // mobile は 1.0 で発熱大幅減
+renderer.setPixelRatio(Math.min(devicePixelRatio, isMobile ? 1.5 : 2)); // mobile は 1.5 (1.0 だと text がぼやける)
 renderer.setClearColor(0x000812);
 document.body.appendChild(renderer.domElement);
 
