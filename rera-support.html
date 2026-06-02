@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rera - サポート</title>
+    <style>
+        body { font-family: -apple-system, sans-serif; max-width: 700px; margin: 40px auto; padding: 0 20px; line-height: 1.8; color: #333; }
+        h1 { font-size: 24px; border-bottom: 2px solid #8a9a5b; padding-bottom: 8px; }
+        h2 { font-size: 18px; margin-top: 30px; color: #5f6b3a; }
+        h3 { font-size: 15px; margin-top: 22px; color: #444; }
+        p { margin: 10px 0; }
+        .lang-switch { margin-bottom: 20px; font-size: 14px; }
+        .lang-switch a { margin-right: 10px; color: #8a9a5b; text-decoration: none; }
+        hr { margin: 60px 0 30px; border: none; border-top: 1px solid #ddd; }
+        .q { font-weight: 600; color: #5f6b3a; }
+    </style>
+</head>
+<body>
+    <div class="lang-switch">
+        <a href="#ja">日本語</a> |
+        <a href="#en">English</a> |
+        <a href="#zh">中文</a>
+    </div>
+
+    <section id="ja">
+    <h1>Rera サポート</h1>
+    <p>アプリバージョン: 1.0</p>
+
+    <h2>Rera とは</h2>
+    <p>Rera (レラ) は、読んだ本に <strong>あなたの痕跡を綴じる</strong> 個人用の本棚アプリです。Rera はアイヌ語で「風」。きれいな読書記録を作るためではなく、その時の自分 — 線を引いた一文、撮ったページ、走り書きのメモ — を一冊に残しておくための道具です。</p>
+
+    <h2>主な機能</h2>
+    <p>1. <strong>木目の本棚</strong> ── 表紙で並べる本棚表示と、一覧のリスト表示を切替。並べ替え・削除も自由。<br>
+    2. <strong>本の登録 3 通り</strong> ── タイトル手入力 / 表紙・バーコードのカメラ撮影 / バーコードスキャンで自動取得。<br>
+    3. <strong>バーコード自動取得</strong> ── ISBN をスキャンすると openBD からタイトル・著者・表紙を自動取り込み (任意・通信あり)。<br>
+    4. <strong>痕跡を綴じる</strong> ── 1 冊ごとに写真・スクリーンショット・メモを何枚でもひもづけ。<br>
+    5. <strong>ハイライト / 太字</strong> ── メモの一文にマーカーや太字を引いて強調。<br>
+    6. <strong>読書回タブ</strong> ── 「1 回目」「2 回目」と読み返すたびにタブを増やせる。<br>
+    7. <strong>背面タップでクイックメモ</strong> ── 端末背面を叩くと即メモ。あとで「メモ箱」から本にひもづけ。<br>
+    8. <strong>読書の記録ダッシュボード</strong> ── 冊数や痕跡の統計を一覧。<br>
+    9. <strong>PDF 書き出し</strong> ── 本棚を 1 つの PDF に。縦書き / 横書き、和紙の風合い。<br>
+    10. <strong>ZIP バックアップ</strong> ── 本・写真・メモをまるごと書き出し。<br>
+    11. <strong>3 言語対応</strong> ── 日本語 / 英語 / 中国語 (簡体)。<br>
+    12. <strong>和紙基調のライトテーマ</strong>。</p>
+
+    <h2>よくある質問</h2>
+    <p class="q">Q. カメラの許可は必要ですか?</p>
+    <p>表紙やバーコードを撮影するときだけ使います。カメラを使わずに、手入力や写真ライブラリからの選択でも本を登録できます。</p>
+
+    <p class="q">Q. インターネット通信はしますか?</p>
+    <p>バーコードをスキャンして書誌を自動取得するときだけ、ISBN コードを openBD (公開の書誌データベース) に送って情報を受け取ります。送るのは ISBN だけで、あなたの個人情報は一切送りません。バーコード機能を使わなければ通信は発生しません。</p>
+
+    <p class="q">Q. 登録した本やメモはどこに保存されますか?</p>
+    <p>すべて端末内にのみ保存されます。開発者のサーバーや外部に送信されることはありません。</p>
+
+    <p class="q">Q. バーコードを読んでも本が見つかりません</p>
+    <p>openBD に登録のない本 (洋書・古い本・自費出版など) はヒットしないことがあります。その場合は ISBN 名で仮登録されるので、あとからタイトル・著者・表紙を手で編集してください。</p>
+
+    <p class="q">Q. PDF を縦書きと横書きで選べるのはなぜですか?</p>
+    <p>詩集や和書は縦書き、技術書や写真主体の本は横書き、と本の性格に合わせて読みやすい向きを選べるようにしています。書き出し時に本棚全体の向きを統一できます。</p>
+
+    <p class="q">Q. 機種変更したらデータは引き継げますか?</p>
+    <p>「書き出し」から ZIP バックアップを作り、新しい端末で読み込んでください。本・写真・メモがまとめて移せます。</p>
+
+    <p class="q">Q. 背面タップのクイックメモが反応しません</p>
+    <p>背面タップは iOS の設定 (設定 → アクセシビリティ → タッチ → 背面タップ) に依存します。お使いの機種や iOS バージョンによっては利用できない場合があります。その場合はアプリ内のメモ箱から直接メモを追加できます。</p>
+
+    <p class="q">Q. データのリセット</p>
+    <p>本やメモは、本棚・各画面の削除操作で個別に消せます。アプリ全体を初期化したい場合は、iOS の設定 → 一般 → iPhone ストレージ → Rera → App を削除 でアンインストールしてください。</p>
+
+    <h2>お問い合わせ</h2>
+    <p>App Store の Rera ページの「開発者連絡先」からお問い合わせください。バグ報告・機能要望もお気軽にどうぞ。</p>
+    </section>
+
+    <hr>
+
+    <section id="en">
+    <h1>Rera Support</h1>
+    <p>App version: 1.0</p>
+
+    <h2>About Rera</h2>
+    <p>Rera is a personal bookshelf app for <strong>binding your own traces</strong> to the books you read. "Rera" means "wind" in the Ainu language. It is not a tool for producing a tidy reading log, but for keeping a record of who you were at the time — the sentence you underlined, the page you photographed, the note you scribbled.</p>
+
+    <h2>Features</h2>
+    <p>1. <strong>Wood-grain bookshelf</strong> ── Switch between a cover shelf view and a list view. Reorder and delete freely.<br>
+    2. <strong>Three ways to add a book</strong> ── Type a title / photograph a cover or barcode / scan a barcode to auto-fill.<br>
+    3. <strong>Barcode auto-fill</strong> ── Scan an ISBN and the title, author, and cover are pulled in from openBD (optional, requires network).<br>
+    4. <strong>Bind your traces</strong> ── Attach any number of photos, screenshots, and notes to each book.<br>
+    5. <strong>Highlight / Bold</strong> ── Mark a sentence inside a note to emphasize it.<br>
+    6. <strong>Reading-pass tabs</strong> ── Add a tab each time you reread: "1st," "2nd," and so on.<br>
+    7. <strong>Back-tap quick note</strong> ── Tap the back of your device to jot a note; attach it to a book later from the inbox.<br>
+    8. <strong>Reading dashboard</strong> ── Browse statistics on books and traces.<br>
+    9. <strong>PDF export</strong> ── Compile your shelf into one PDF. Vertical / horizontal layout, washi-paper feel.<br>
+    10. <strong>ZIP backup</strong> ── Export books, photos, and notes as one ZIP.<br>
+    11. <strong>Three languages</strong> ── Japanese / English / Simplified Chinese.<br>
+    12. <strong>Washi-toned light theme</strong>.</p>
+
+    <h2>FAQ</h2>
+    <p class="q">Q. Do I need camera permission?</p>
+    <p>Only when you photograph a cover or scan a barcode. You can also register a book entirely with manual input or by picking from your photo library, without the camera.</p>
+
+    <p class="q">Q. Does the app use the internet?</p>
+    <p>Only when you scan a barcode to auto-fill the bibliography. It sends the ISBN code to openBD (a public bibliographic database) and receives the book info. Only the ISBN is sent — none of your personal information. If you do not use the barcode feature, no network communication occurs.</p>
+
+    <p class="q">Q. Where are my books and notes stored?</p>
+    <p>Everything is stored only on your device. Nothing is sent to a developer server or anywhere external.</p>
+
+    <p class="q">Q. The barcode scan does not find my book</p>
+    <p>Books not registered in openBD (foreign titles, older books, self-published works, etc.) may not be found. In that case the book is added under its ISBN, and you can edit the title, author, and cover by hand afterward.</p>
+
+    <p class="q">Q. Why can I choose vertical or horizontal for the PDF?</p>
+    <p>So you can pick the most readable orientation for each book — vertical for poetry and Japanese books, horizontal for technical or photo-heavy ones. At export time you can unify the orientation across the whole shelf.</p>
+
+    <p class="q">Q. Can I move my data to a new device?</p>
+    <p>Create a ZIP backup from "Export," then load it on the new device. Your books, photos, and notes all transfer together.</p>
+
+    <p class="q">Q. The back-tap quick note is not responding</p>
+    <p>Back Tap depends on the iOS setting (Settings → Accessibility → Touch → Back Tap). It may be unavailable on some devices or iOS versions. In that case you can add notes directly from the in-app inbox.</p>
+
+    <p class="q">Q. Resetting data</p>
+    <p>Books and notes can be deleted individually from the shelf and from each screen. To wipe everything, uninstall via iOS Settings → General → iPhone Storage → Rera → Delete App.</p>
+
+    <h2>Contact</h2>
+    <p>Please use the developer contact link on the Rera App Store page for bug reports and feature requests.</p>
+    </section>
+
+    <hr>
+
+    <section id="zh">
+    <h1>Rera 支持</h1>
+    <p>应用版本: 1.0</p>
+
+    <h2>关于 Rera</h2>
+    <p>Rera 是一款将 <strong>你自己的痕迹绑定</strong> 到所读书籍上的个人书架应用。 「Rera」 在阿伊努语中意为 「风」。 它不是为了做出一份整洁的读书记录, 而是为了留下当时的自己 —— 你划线的那句话、 拍下的那一页、 随手写下的备注。</p>
+
+    <h2>主要功能</h2>
+    <p>1. <strong>木纹书架</strong> ── 在以封面排列的书架视图与列表视图之间切换。 可自由排序与删除。<br>
+    2. <strong>三种添加方式</strong> ── 手动输入标题 / 拍摄封面或条形码 / 扫描条形码自动获取。<br>
+    3. <strong>条形码自动获取</strong> ── 扫描 ISBN 即从 openBD 自动导入标题、 作者、 封面 (可选, 需联网)。<br>
+    4. <strong>绑定痕迹</strong> ── 每本书都可绑定任意数量的照片、 截图、 笔记。<br>
+    5. <strong>标注 / 加粗</strong> ── 在笔记中为某句话加上标注或加粗以突出。<br>
+    6. <strong>阅读次数标签</strong> ── 每次重读都可新增 「第 1 次」 「第 2 次」 等标签。<br>
+    7. <strong>背面轻点快速笔记</strong> ── 轻点设备背面即可记笔记; 稍后从 「备忘箱」 绑定到书籍。<br>
+    8. <strong>阅读记录面板</strong> ── 浏览册数与痕迹统计。<br>
+    9. <strong>PDF 导出</strong> ── 将书架汇总为一份 PDF。 竖排 / 横排, 和纸质感。<br>
+    10. <strong>ZIP 备份</strong> ── 将书籍、 照片、 笔记整体导出为一个 ZIP。<br>
+    11. <strong>三种语言</strong> ── 日语 / 英语 / 简体中文。<br>
+    12. <strong>和纸色调的浅色主题</strong>。</p>
+
+    <h2>常见问题</h2>
+    <p class="q">Q. 需要摄像头权限吗?</p>
+    <p>仅在拍摄封面或扫描条形码时使用。 你也可以完全通过手动输入或从相册选择来登记书籍, 不使用摄像头。</p>
+
+    <p class="q">Q. 应用会联网吗?</p>
+    <p>仅当你扫描条形码自动获取书目时, 会把 ISBN 码发送给 openBD (公开书目数据库) 并接收书籍信息。 仅发送 ISBN, 不发送你的任何个人信息。 若不使用条形码功能, 则不产生任何网络通信。</p>
+
+    <p class="q">Q. 登记的书与笔记保存在哪里?</p>
+    <p>全部仅保存在设备本地。 不会发送到开发者服务器或任何外部。</p>
+
+    <p class="q">Q. 扫描条形码找不到书</p>
+    <p>openBD 中未收录的书 (外文书、 较旧的书、 自费出版等) 可能找不到。 此时会以 ISBN 暂时登记, 你可以之后手动编辑标题、 作者与封面。</p>
+
+    <p class="q">Q. 为什么 PDF 可以选竖排或横排?</p>
+    <p>为了给每本书选择最易读的方向 —— 诗集与日文书用竖排, 技术书或以照片为主的书用横排。 导出时可统一整个书架的方向。</p>
+
+    <p class="q">Q. 换设备后数据能迁移吗?</p>
+    <p>在 「导出」 中创建 ZIP 备份, 然后在新设备上导入即可。 书籍、 照片、 笔记会一并迁移。</p>
+
+    <p class="q">Q. 背面轻点快速笔记没有反应</p>
+    <p>背面轻点依赖 iOS 的设置 (设置 → 辅助功能 → 触控 → 轻点背面)。 部分机型或 iOS 版本可能无法使用。 此时可从应用内的备忘箱直接添加笔记。</p>
+
+    <p class="q">Q. 数据重置</p>
+    <p>书籍与笔记可在书架及各页面分别删除。 如需完全初始化, 请通过 iOS 的设置 → 通用 → iPhone 储存空间 → Rera → 删除 App 进行卸载。</p>
+
+    <h2>联系方式</h2>
+    <p>请通过 App Store 的 Rera 页面的 「开发者联系方式」 与我们联系。 欢迎报告 bug 或提出功能建议。</p>
+    </section>
+</body>
+</html>
