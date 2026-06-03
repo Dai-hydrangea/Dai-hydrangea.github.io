@@ -1,0 +1,201 @@
+# NetScope RSS フィード設定
+# カテゴリ別に整理。 追加・削除はここで自由に。
+
+feeds:
+  # ─── 一般総合 ───
+  - name: NHK 総合
+    url: https://www.nhk.or.jp/rss/news/cat0.xml
+    category: general
+  - name: NHK 政治
+    url: https://www.nhk.or.jp/rss/news/cat4.xml
+    category: politics
+  - name: NHK 経済
+    url: https://www.nhk.or.jp/rss/news/cat5.xml
+    category: economy
+  - name: NHK 社会
+    url: https://www.nhk.or.jp/rss/news/cat2.xml
+    category: society
+  - name: NHK 国際
+    url: https://www.nhk.or.jp/rss/news/cat6.xml
+    category: international
+  - name: NHK 科学・文化
+    url: https://www.nhk.or.jp/rss/news/cat3.xml
+    category: culture
+  - name: NHK スポーツ
+    url: https://www.nhk.or.jp/rss/news/cat7.xml
+    category: sports
+  - name: Yahoo トピックス
+    url: https://news.yahoo.co.jp/rss/topics/top-picks.xml
+    category: general
+  - name: Yahoo 国内
+    url: https://news.yahoo.co.jp/rss/topics/domestic.xml
+    category: society
+  - name: Yahoo 経済
+    url: https://news.yahoo.co.jp/rss/topics/business.xml
+    category: economy
+  - name: Yahoo 国際
+    url: https://news.yahoo.co.jp/rss/topics/world.xml
+    category: international
+  - name: Yahoo IT
+    url: https://news.yahoo.co.jp/rss/topics/it.xml
+    category: tech
+  - name: Yahoo 科学
+    url: https://news.yahoo.co.jp/rss/topics/science.xml
+    category: culture
+  - name: 朝日新聞デジタル
+    url: https://www.asahi.com/rss/asahi/newsheadlines.rdf
+    category: general
+  - name: 時事ドットコム
+    url: https://www.jiji.com/rss/ranking.rdf
+    category: general
+  - name: 毎日新聞
+    url: https://mainichi.jp/rss/etc/mainichi-flash.rss
+    category: general
+  - name: 東洋経済オンライン
+    url: https://toyokeizai.net/list/feed/rss
+    category: economy
+  - name: ダイヤモンドオンライン
+    url: https://diamond.jp/list/feed/rss/dol
+    category: economy
+
+  # ─── IT 技術 ───
+  - name: ITmedia
+    url: https://rss.itmedia.co.jp/rss/2.0/itmedia_all.xml
+    category: tech
+  - name: Publickey
+    url: https://www.publickey1.jp/atom.xml
+    category: tech
+  - name: GIGAZINE
+    url: https://gigazine.net/news/rss_2.0/
+    category: tech
+  - name: ASCII.jp
+    url: https://ascii.jp/rss.xml
+    category: tech
+  - name: CNET Japan
+    url: https://japan.cnet.com/rss/index.rdf
+    category: tech
+  - name: PetaPixel
+    url: https://petapixel.com/feed/
+    category: tech
+
+  # ─── エンタメ (映画 / 本 / マンガ / ゲーム / 音楽) ───
+  - name: THE RIVER
+    url: https://theriver.jp/feed/
+    category: culture
+  - name: ナタリー 映画
+    url: https://natalie.mu/eiga/feed/news
+    category: culture
+  - name: ナタリー コミック
+    url: https://natalie.mu/comic/feed/news
+    category: culture
+  - name: ナタリー 音楽
+    url: https://natalie.mu/music/feed/news
+    category: culture
+  - name: HONZ (書評)
+    url: https://honz.jp/feed
+    category: culture
+  - name: Pitchfork
+    url: https://pitchfork.com/rss/news/
+    category: culture
+  - name: Variety
+    url: https://variety.com/feed/
+    category: culture
+
+  # ─── デザイン / カルチャー ───
+  - name: AXIS
+    url: https://www.axismag.jp/feed/
+    category: culture
+  - name: Casa BRUTUS
+    url: https://casabrutus.com/feed
+    category: culture
+
+  # ─── 海外総合 (英語/仏語、 Gemini 翻訳) ───
+  - name: Le Monde
+    url: https://www.lemonde.fr/rss/une.xml
+    category: international
+  - name: The Guardian World
+    url: https://www.theguardian.com/world/rss
+    category: international
+
+  # ─── 海外 IT (英語、 Gemini で翻訳されて球儀に乗る) ───
+  - name: Hacker News
+    url: https://hnrss.org/frontpage
+    category: tech
+  - name: Ars Technica
+    url: https://feeds.arstechnica.com/arstechnica/index
+    category: tech
+  - name: The Verge
+    url: https://www.theverge.com/rss/index.xml
+    category: tech
+  - name: WIRED
+    url: https://www.wired.com/feed/rss
+    category: tech
+  - name: TechCrunch
+    url: https://techcrunch.com/feed/
+    category: tech
+
+  # ─── 海外 一般 (英語、 同上) ───
+  - name: BBC World
+    url: http://feeds.bbci.co.uk/news/world/rss.xml
+    category: international
+
+  # ─── 学術・技術 ───
+  - name: arXiv cs.AI
+    url: http://export.arxiv.org/rss/cs.AI
+    category: academic
+  - name: arXiv cs.CL
+    url: http://export.arxiv.org/rss/cs.CL
+    category: academic
+  - name: arXiv cs.LG
+    url: http://export.arxiv.org/rss/cs.LG
+    category: academic
+  - name: arXiv cs.CV
+    url: http://export.arxiv.org/rss/cs.CV
+    category: academic
+  - name: arXiv stat.ML
+    url: http://export.arxiv.org/rss/stat.ML
+    category: academic
+  - name: Nature
+    url: https://www.nature.com/nature.rss
+    category: academic
+
+  # ─── 自然科学 / 宇宙 / 数学 / 哲学 ───
+  - name: arXiv astro-ph
+    url: http://export.arxiv.org/rss/astro-ph
+    category: academic
+  - name: arXiv physics
+    url: http://export.arxiv.org/rss/physics
+    category: academic
+  - name: arXiv math
+    url: http://export.arxiv.org/rss/math
+    category: academic
+  - name: arXiv q-bio
+    url: http://export.arxiv.org/rss/q-bio
+    category: academic
+  - name: NASA
+    url: https://www.nasa.gov/feed/
+    category: academic
+  - name: ESA
+    url: https://www.esa.int/rssfeed/Our_Activities
+    category: academic
+  - name: Quanta Magazine
+    url: https://api.quantamagazine.org/feed/
+    category: academic
+  - name: Plus Magazine (数学)
+    url: https://plus.maths.org/content/rss.xml
+    category: academic
+  - name: Daily Nous (哲学)
+    url: https://dailynous.com/feed/
+    category: academic
+  - name: 1000-Word Philosophy
+    url: https://1000wordphilosophy.com/feed/
+    category: academic
+  - name: AstroArts
+    url: https://www.astroarts.co.jp/article/list?count=50&format=rss
+    category: culture
+
+# 取得設定
+settings:
+  timeout_sec: 10
+  max_items_per_feed: 50
+  retain_days: 30  # SQLite 内に保持する日数 (古いデータは export 時に除外)

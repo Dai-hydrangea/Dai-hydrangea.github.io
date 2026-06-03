@@ -1,0 +1,61 @@
+name: NetScope daily refresh
+
+on:
+  schedule:
+    # 22:00 UTC = 07:00 JST に毎日 1 回
+    - cron: "0 22 * * *"
+  workflow_dispatch:        # 手動実行ボタンも有効化
+
+permissions:
+  contents: write
+
+concurrency:
+  group: netscope-daily
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install deps
+        run: pip install --quiet pyyaml
+
+      # DB と要約キャッシュを run 間で持ち越す (= 新規記事ぶんしか翻訳/要約しない = 低コスト)
+      - name: Restore state cache
+        uses: actions/cache@v4
+        with:
+          path: netscope-build/data
+          key: netscope-state-${{ github.run_id }}
+          restore-keys: |
+            netscope-state-
+
+      - name: Refresh feeds
+        working-directory: netscope-build
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python netscope.py refresh --no-icloud
+
+      - name: Publish orrery.json
+        run: |
+          mkdir -p netscope/data
+          cp netscope-build/web/data/orrery.json netscope/data/orrery.json
+
+      - name: Commit if changed
+        run: |
+          git config user.name  "netscope-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add netscope/data/orrery.json
+          if git diff --cached --quiet; then
+            echo "no changes"
+          else
+            git commit -m "NetScope auto-refresh $(date -u +'%Y-%m-%d %H:%M UTC')"
+            git push
+          fi

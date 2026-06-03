@@ -1,0 +1,12 @@
+# NetScope 依存パッケージ
+# Phase 1A はほぼ標準ライブラリで動く。 PyYAML だけ任意 (なければ自前パーサーで動く)
+
+PyYAML>=6.0          # feeds.yaml 読み込み (任意)
+
+# ─── Phase 1B 以降で追加 ───
+# google-generativeai  # Gemini API
+# numpy                # embedding 計算
+# hdbscan              # クラスタリング
+# scikit-learn         # 補助
+# coremltools          # multilingual-e5-large の Core ML 化
+# anthropic            # 任意 (観測者比較機能)
