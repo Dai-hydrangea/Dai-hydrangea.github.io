@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>帯暦 (Obikoyomi) - サポート</title>
+    <style>
+        body { font-family: -apple-system, sans-serif; max-width: 700px; margin: 40px auto; padding: 0 20px; line-height: 1.8; color: #333; }
+        h1 { font-size: 24px; border-bottom: 2px solid #4f6d8f; padding-bottom: 8px; }
+        h2 { font-size: 18px; margin-top: 30px; color: #3d566f; }
+        h3 { font-size: 15px; margin-top: 22px; color: #444; }
+        p { margin: 10px 0; }
+        .lang-switch { margin-bottom: 20px; font-size: 14px; }
+        .lang-switch a { margin-right: 10px; color: #4f6d8f; text-decoration: none; }
+        hr { margin: 60px 0 30px; border: none; border-top: 1px solid #ddd; }
+        .q { font-weight: 600; color: #3d566f; }
+    </style>
+</head>
+<body>
+    <div class="lang-switch">
+        <a href="#ja">日本語</a> |
+        <a href="#en">English</a> |
+        <a href="#zh">中文</a>
+    </div>
+
+    <section id="ja">
+    <h1>帯暦 (Obikoyomi) サポート</h1>
+    <p>アプリバージョン: 1.0</p>
+
+    <h2>帯暦 とは</h2>
+    <p>帯暦 (おびこよみ) は、家族や自分の予定を <strong>「一枚の帯」</strong> のように横並びで眺めるための、軽くて静かなカレンダーです。予定を管理し人を動かす重いツールではなく、すでに各自のカレンダーにある予定を <strong>持ち寄って・並べて・眺める</strong> ための道具です。他人の予定は読み取り専用で、書き換えません。</p>
+
+    <h2>主な機能</h2>
+    <p>1. <strong>横帯タイムライン</strong> ── 担当やタスクで並べ替えられる帯状の予定表 (2 週間〜2 年)。<br>
+    2. <strong>月カレンダー</strong> ── 拡大すると 1 週間の時間割、縮小すると 2 か月。<br>
+    3. <strong>1 日ビュー</strong> ── 時間帯ごとに、重なる予定も横に分けて表示。<br>
+    4. <strong>.ics の取り込み</strong> ── Apple／Google カレンダーの公開アドレスを貼るだけで、その人の予定が並ぶ (読み取り専用)。<br>
+    5. <strong>手書き・写真・テキストから取り込み</strong> ── 対応端末ではオンデバイス AI が予定の下書きを作成。<br>
+    6. <strong>家族で共有</strong> ── コードとパスワードで同じ予定表を共有 (アカウント不要)。<br>
+    7. <strong>日程調整モード</strong> ── 実際の予定の上で空きを出し合い、全員空きの日は金色に。<br>
+    8. <strong>検索・書き出し</strong> ── 全スペース横断の検索、PDF／画像／HTML への書き出し。<br>
+    9. <strong>3 言語対応</strong> ── 日本語／英語／中国語 (簡体)。<br>
+    10. <strong>和紙・印象派などのテーマ</strong>。</p>
+
+    <h2>よくある質問</h2>
+    <p class="q">Q. 取り込み用の .ics URL はどう出しますか?</p>
+    <p>Google: カレンダー設定 →「カレンダーの統合」→「限定公開 URL (iCal 形式)」の .ics をコピー。<br>
+    Apple: 共有カレンダーを「公開カレンダー」にして webcal:// URL をコピー。<br>
+    これを「設定 → カレンダー取り込み」でメンバーを選んで貼り付けます。</p>
+
+    <p class="q">Q. 取り込んだ予定が反映されるまで時間がかかります</p>
+    <p>.ics の仕様上、配信側のキャッシュにより反映が数分〜数時間遅れることがあります。帯暦は家族の予定を「俯瞰する」用途としてお使いください。</p>
+
+    <p class="q">Q. 家族と共有するには?</p>
+    <p>「設定 → 共有を追加」で共有スペースを作り、表示されるコードとパスワードを相手に伝えます。相手は「共有に参加」でそれを入力します。共有を見ている間は約 1 分ごとに自動更新され、アプリに戻ったときにも最新を取得します。共有は任意機能で、使わなくても全機能を利用できます。</p>
+
+    <p class="q">Q. 共有すると何がサーバーに保存されますか?</p>
+    <p>共有スペースの「台割」(予定の一覧・ラベル名・取り込み元 URL・手入力予定・日程調整マーク) が同期サーバーに保存され、同じコードとパスワードを持つ相手に配信されます。<strong>取り込み元の .ics 秘密 URL も含まれます</strong>ので、信頼できる相手とだけ共有してください。詳しくはプライバシーポリシーをご覧ください。</p>
+
+    <p class="q">Q. 手書き・写真・テキストの読み取りが自動になりません</p>
+    <p>予定の自動読み取り (オンデバイス AI) は、対応端末 (iOS 26 以降・Apple Intelligence 対応) でのみ自動で動きます。非対応の端末では、読み取った文字を見ながら手で整えて追加できます。複数日の予定は日付ごとに分けて読み取ります。</p>
+
+    <p class="q">Q. カメラの許可は必要ですか?</p>
+    <p>予定表やお便りを撮影して読み取るときだけ使います。写真ライブラリから選ぶ・手入力する方法でも予定を追加できます。</p>
+
+    <p class="q">Q. 取り込んだ (.ics の) 予定を消したい</p>
+    <p>取り込み予定をタップ →「この取り込み予定を消す」で、この板からだけ消せます。元のカレンダー (.ics) には影響しません。</p>
+
+    <p class="q">Q. 言語を変えたい</p>
+    <p>「設定 → 表示言語」で、日本語／英語／中国語、または端末の設定に合わせる、を選べます。</p>
+
+    <p class="q">Q. データのリセット</p>
+    <p>予定・ラベル・取り込み元はアプリ内で個別に削除できます。全体を初期化したい場合は iOS の設定 → 一般 → iPhone ストレージ → 帯暦 → App を削除 でアンインストールしてください。</p>
+
+    <h2>お問い合わせ</h2>
+    <p>App Store の帯暦ページの「開発者連絡先」からお問い合わせください。バグ報告・機能要望もお気軽にどうぞ。</p>
+    </section>
+
+    <hr>
+
+    <section id="en">
+    <h1>Obikoyomi Support</h1>
+    <p>App version: 1.0</p>
+
+    <h2>About Obikoyomi</h2>
+    <p>Obikoyomi is a quiet, lightweight calendar for <strong>glancing</strong> at your family's and your own plans laid out side by side, like a single woven band of time. It is not a heavy tool for managing schedules and directing people, but a tool to <strong>gather, lay out, and look at</strong> the plans that already live in everyone's own calendars. Other people's events are read-only and are never changed.</p>
+
+    <h2>Features</h2>
+    <p>1. <strong>Horizontal timeline</strong> ── A band-style schedule sortable by person or task (2 weeks to 2 years).<br>
+    2. <strong>Month calendar</strong> ── Zoom in for a weekly timetable, out for two months.<br>
+    3. <strong>Day view</strong> ── Overlapping events split into side-by-side columns by time.<br>
+    4. <strong>.ics import</strong> ── Paste an Apple/Google Calendar shareable address and that person's plans appear (read-only).<br>
+    5. <strong>Import from handwriting, photos, and text</strong> ── On-device AI drafts events on supported devices.<br>
+    6. <strong>Share with family</strong> ── Share the same board with a code and password (no account).<br>
+    7. <strong>Availability mode</strong> ── Offer free days on top of real plans; days everyone is free turn gold.<br>
+    8. <strong>Search and export</strong> ── Search across all spaces; export to PDF / image / HTML.<br>
+    9. <strong>Three languages</strong> ── Japanese / English / Simplified Chinese.<br>
+    10. <strong>Washi and Impressionist themes</strong>.</p>
+
+    <h2>FAQ</h2>
+    <p class="q">Q. How do I get the .ics URL to import?</p>
+    <p>Google: Calendar settings → "Integrate calendar" → copy the "Secret address in iCal format" (.ics).<br>
+    Apple: Make a shared calendar Public and copy its webcal:// URL.<br>
+    Then paste it under "Settings → Import calendar," choosing a member.</p>
+
+    <p class="q">Q. Imported events take a while to appear</p>
+    <p>Due to how .ics works, the publisher's caching can delay updates by minutes to hours. Use Obikoyomi as a way to get an overview of the family's plans.</p>
+
+    <p class="q">Q. How do I share with family?</p>
+    <p>Create a shared space under "Settings → Add shared space," then give the displayed code and password to the other person. They enter it under "Join a shared space." While you are viewing a shared space it auto-refreshes about every minute and also fetches the latest when you return to the app. Sharing is optional; all features work without it.</p>
+
+    <p class="q">Q. What is stored on the server when I share?</p>
+    <p>The shared space's "arrangement" (the list of events, label names, source URLs, manual events, and availability marks) is stored on the sync server and delivered to anyone with the same code and password. <strong>The secret .ics source URLs are included</strong>, so share only with people you trust. See the Privacy Policy for details.</p>
+
+    <p class="q">Q. Reading from handwriting/photos/text is not automatic</p>
+    <p>Automatic event reading (on-device AI) runs only on supported devices (iOS 26+ with Apple Intelligence). On other devices you can add events by tidying up the recognized text by hand. Multi-day text is read one day at a time.</p>
+
+    <p class="q">Q. Do I need camera permission?</p>
+    <p>Only when you photograph a schedule or handout to read it. You can also add events by picking from your photo library or by manual input.</p>
+
+    <p class="q">Q. I want to remove an imported (.ics) event</p>
+    <p>Tap the imported event → "Remove this imported event" to remove it from this board only. Your original calendar (.ics) is unaffected.</p>
+
+    <p class="q">Q. I want to change the language</p>
+    <p>Under "Settings → Display language," choose Japanese / English / Chinese, or match the device setting.</p>
+
+    <p class="q">Q. Resetting data</p>
+    <p>Events, labels, and sources can be deleted individually within the App. To wipe everything, uninstall via iOS Settings → General → iPhone Storage → Obikoyomi → Delete App.</p>
+
+    <h2>Contact</h2>
+    <p>Please use the developer contact link on the Obikoyomi App Store page for bug reports and feature requests.</p>
+    </section>
+
+    <hr>
+
+    <section id="zh">
+    <h1>帯暦 (Obikoyomi) 支持</h1>
+    <p>应用版本: 1.0</p>
+
+    <h2>关于 帯暦</h2>
+    <p>帯暦 (Obikoyomi) 是一款安静、 轻量的日历, 用来把家人及自己的日程像 <strong>「一条时间带」</strong> 一样并排地查看。 它不是用来管理和指挥别人的重型工具, 而是把本来就在各自日历里的日程 <strong>汇集、 排列、 查看</strong> 的工具。 他人的日程为只读, 不会被修改。</p>
+
+    <h2>主要功能</h2>
+    <p>1. <strong>横向时间带</strong> ── 可按负责人或任务排序的带状日程表 (两周至两年)。<br>
+    2. <strong>月历</strong> ── 放大为一周时间表, 缩小为两个月。<br>
+    3. <strong>单日视图</strong> ── 按时间将重叠的日程并排分列显示。<br>
+    4. <strong>.ics 导入</strong> ── 粘贴 Apple／Google 日历的共享地址, 该人的日程即并排显示 (只读)。<br>
+    5. <strong>从手写、 照片、 文字导入</strong> ── 在支持的设备上由端侧 AI 生成日程草稿。<br>
+    6. <strong>与家人共享</strong> ── 用代码和密码共享同一份日程表 (无需账号)。<br>
+    7. <strong>日程协调模式</strong> ── 在真实日程之上提出空闲日, 所有人都有空的日子变金色。<br>
+    8. <strong>搜索与导出</strong> ── 跨全部空间搜索; 导出为 PDF／图片／HTML。<br>
+    9. <strong>三种语言</strong> ── 日语／英语／简体中文。<br>
+    10. <strong>和纸与印象派等主题</strong>。</p>
+
+    <h2>常见问题</h2>
+    <p class="q">Q. 如何获取用于导入的 .ics 网址?</p>
+    <p>Google: 日历设置 →「集成日历」→ 复制「私密网址 (iCal 格式)」的 .ics。<br>
+    Apple: 把共享日历设为「公开日历」, 复制其 webcal:// 网址。<br>
+    然后在「设置 → 导入日历」中选择成员并粘贴。</p>
+
+    <p class="q">Q. 导入的日程要过一会儿才显示</p>
+    <p>受 .ics 机制影响, 发布方的缓存可能使更新延迟数分钟至数小时。 请把帯暦作为总览家庭日程的工具来使用。</p>
+
+    <p class="q">Q. 如何与家人共享?</p>
+    <p>在「设置 → 添加共享」创建共享空间, 把显示的代码和密码告诉对方。 对方在「加入共享」中输入即可。 查看共享空间时约每分钟自动刷新一次, 返回应用时也会获取最新。 共享为可选功能, 不使用也能用全部功能。</p>
+
+    <p class="q">Q. 共享时服务器上会保存什么?</p>
+    <p>共享空间的「版面」(日程列表、 标签名称、 导入来源网址、 手动日程、 日程协调标记) 会保存在同步服务器上, 并分发给持有相同代码和密码的对方。 <strong>其中包含导入来源的私密 .ics 网址</strong>, 请仅与信任的人共享。 详见隐私政策。</p>
+
+    <p class="q">Q. 手写／照片／文字识别不是自动的</p>
+    <p>自动识别日程 (端侧 AI) 仅在支持的设备 (iOS 26 以上、 支持 Apple Intelligence) 上自动运行。 其他设备可对照识别出的文字手动整理后添加。 跨多日的文字会按日期分别识别。</p>
+
+    <p class="q">Q. 需要摄像头权限吗?</p>
+    <p>仅在拍摄日程表或通知以识别时使用。 你也可以从相册选择或手动输入来添加日程。</p>
+
+    <p class="q">Q. 想删除导入的 (.ics) 日程</p>
+    <p>点该导入日程 →「移除此导入日程」, 仅从此面板移除。 不影响原日历 (.ics)。</p>
+
+    <p class="q">Q. 想更改语言</p>
+    <p>在「设置 → 显示语言」中选择 日语／英语／中文, 或跟随设备设置。</p>
+
+    <p class="q">Q. 数据重置</p>
+    <p>日程、 标签、 导入来源可在应用内分别删除。 如需完全初始化, 请通过 iOS 的设置 → 通用 → iPhone 储存空间 → 帯暦 → 删除 App 卸载。</p>
+
+    <h2>联系方式</h2>
+    <p>请通过 App Store 的帯暦页面的「开发者联系方式」与我们联系。 欢迎报告 bug 或提出功能建议。</p>
+    </section>
+</body>
+</html>

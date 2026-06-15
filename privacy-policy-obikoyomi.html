@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>帯暦 (Obikoyomi) - プライバシーポリシー</title>
+    <style>
+        body { font-family: -apple-system, sans-serif; max-width: 700px; margin: 40px auto; padding: 0 20px; line-height: 1.8; color: #333; }
+        h1 { font-size: 24px; border-bottom: 2px solid #4f6d8f; padding-bottom: 8px; }
+        h2 { font-size: 18px; margin-top: 30px; color: #3d566f; }
+        p { margin: 10px 0; }
+        .date { color: #888; font-size: 14px; }
+        .lang-switch { margin-bottom: 20px; font-size: 14px; }
+        .lang-switch a { margin-right: 10px; color: #4f6d8f; text-decoration: none; }
+        hr { margin: 60px 0 30px; border: none; border-top: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+    <div class="lang-switch">
+        <a href="#ja">日本語</a> |
+        <a href="#en">English</a> |
+        <a href="#zh">中文</a>
+    </div>
+
+    <section id="ja">
+    <h1>帯暦 (Obikoyomi) プライバシーポリシー</h1>
+    <p class="date">最終更新日: 2026 年 6 月 14 日</p>
+
+    <h2>1. はじめに</h2>
+    <p>帯暦 (おびこよみ、以下 「本アプリ」) は、家族や自分の予定を横帯のタイムラインで眺めるためのカレンダービューアです。各自のカレンダーを読み取り専用で並べて表示します。本ポリシーは、本アプリにおけるユーザー情報の取り扱いについて説明します。</p>
+
+    <h2>2. 収集しない情報</h2>
+    <p>本アプリは、氏名・メールアドレス・電話番号・住所・位置情報などの個人を特定する情報を <strong>一切収集しません</strong>。アカウント登録も不要です。広告・アクセス解析・トラッキング・クラッシュレポート等の第三者サービスは <strong>一切使用しません</strong>。</p>
+
+    <h2>3. 端末内に保存するデータ</h2>
+    <p>本アプリは以下を端末内のローカルストレージにのみ保存します。共有機能 (第 5 項) を使わない限り、これらが端末の外に出ることはありません。</p>
+    <p>・ 登録した取り込み元 (.ics の URL)<br>
+       ・ 手入力した予定、ラベル (担当・分類) とその色<br>
+       ・ 写真・テキスト・手書きから取り込んだ予定と、その元データ (取り込みメモ、最長 30 日)<br>
+       ・ 日程調整の○△マーク<br>
+       ・ 表示設定 (言語・テーマ・表示するラベル等)</p>
+
+    <h2>4. カレンダーの取り込み (.ics 通信)</h2>
+    <p>あなたが取り込み元として URL を登録すると、本アプリはその URL (Apple カレンダーや Google カレンダーが発行する公開／限定公開のアドレス) に通信して、予定データを取得し端末内に表示します。通信は HTTPS で行われ、送信されるのはその URL へのアクセス要求のみで、あなたの氏名・端末識別子・位置情報などは含まれません。取り込み元を登録しなければ、この通信は発生しません。</p>
+
+    <h2>5. 共有機能を使った場合の通信 (重要)</h2>
+    <p>本アプリには、家族など他の人と「同じ予定表」を共有する任意機能があります。共有を作成または参加すると、その共有スペースの内容 ——<strong>予定の一覧、ラベル (メンバー) 名、取り込み元の .ics URL、手入力予定、日程調整マーク</strong>—— が、開発者が運用する同期サーバー (Cloudflare Workers / KV) に保存され、同じコードとパスワードを持つ相手に配信されます。</p>
+    <p>・ 共有は <strong>コードとパスワード</strong> で保護されます (パスワードはハッシュ化して照合します)。<br>
+       ・ ⚠️ 共有スペースに含まれる場合、<strong>取り込み元の .ics の秘密 URL もサーバーに保存されます</strong>。信頼できる相手とだけ共有してください。<br>
+       ・ 共有機能を使わなければ、データがサーバーに送られることはありません。<br>
+       ・ 共有を解除すると、その端末からは共有スペースが切り離されます。</p>
+
+    <h2>6. カメラ・写真の使用</h2>
+    <p>本アプリは、予定表やお便りを撮影して予定を読み取るために <strong>カメラを使用することがあります</strong> (任意)。また、写真から読み取る際に iOS の写真選択機能 (PhotosPicker) を使用することがあります。これはシステム標準の仕組みで、選んだ画像のみがアプリに渡され、写真ライブラリ全体へのアクセス権限は要求しません。</p>
+
+    <h2>7. オンデバイス AI による読み取り</h2>
+    <p>写真・テキスト・手書きからの予定の読み取りは、対応端末では <strong>端末内のオンデバイス AI</strong> で処理されます。入力した画像・テキスト・手書きが AI のために外部サーバーへ送信されることはありません。</p>
+
+    <h2>8. アプリ内課金</h2>
+    <p>本アプリは v1.0 時点で <strong>アプリ内課金を提供していません</strong>。完全無料です。将来 Pro 機能を導入する場合は本ポリシーを更新します。</p>
+
+    <h2>9. データの書き出しと削除</h2>
+    <p>予定表は PDF・画像・HTML として書き出せます。保存先や共有先は iOS の共有メニューであなた自身が選びます。予定・ラベル・取り込み元はアプリ内でいつでも削除でき、アプリをアンインストールすればローカルデータは端末から削除されます。共有スペースは「共有を解除」で切り離せます。</p>
+
+    <h2>10. お子様の利用について</h2>
+    <p>本アプリはすべての年齢層が安全に使用できる設計です。お子様の使用にあたっても、個人を特定する情報の収集は行いません。</p>
+
+    <h2>11. お問い合わせ</h2>
+    <p>本ポリシーに関するご質問は、App Store の本アプリページの開発者連絡先からお問い合わせください。</p>
+
+    <h2>12. ポリシーの変更</h2>
+    <p>本ポリシーは予告なく更新されることがあります。重要な変更がある場合は本ページにて告知します。</p>
+    </section>
+
+    <hr>
+
+    <section id="en">
+    <h1>Obikoyomi Privacy Policy</h1>
+    <p class="date">Last updated: June 14, 2026</p>
+
+    <h2>1. Introduction</h2>
+    <p>Obikoyomi ("the App") is a calendar viewer for glancing at your family's and your own plans on a horizontal timeline. It lays out each person's calendar in a read-only way. This policy describes how user information is handled in the App.</p>
+
+    <h2>2. Information Not Collected</h2>
+    <p>The App does <strong>not collect</strong> any personally identifiable information (name, email, phone, address, location, etc.). No account is required. The App uses <strong>no third-party</strong> advertising, analytics, tracking, or crash-reporting services.</p>
+
+    <h2>3. Data Stored on Your Device</h2>
+    <p>The App stores the following only in local storage on your device. Unless you use the sharing feature (Section 5), none of it leaves your device.</p>
+    <p>・ Registered sources (.ics URLs)<br>
+       ・ Manually entered events, labels (who / category) and their colors<br>
+       ・ Events imported from photos, text, or handwriting, and their originals (import notes, up to 30 days)<br>
+       ・ Availability marks (○ / △) used in availability mode<br>
+       ・ Display settings (language, theme, which labels to show, etc.)</p>
+
+    <h2>4. Calendar Import (.ics Communication)</h2>
+    <p>When you register a source URL, the App connects to that URL (a public or secret address issued by Apple Calendar or Google Calendar) to fetch the event data and display it on your device. Communication uses HTTPS; the only thing sent is the request to that URL, which contains no name, device identifier, or location. If you register no sources, this communication does not occur.</p>
+
+    <h2>5. Communication When You Use Sharing (Important)</h2>
+    <p>The App has an optional feature to share "the same board" with others such as family. When you create or join a shared space, the contents of that space —— <strong>the list of events, label (member) names, source .ics URLs, manual events, and availability marks</strong> —— are stored on a sync server operated by the developer (Cloudflare Workers / KV) and delivered to anyone holding the same code and password.</p>
+    <p>・ Sharing is protected by a <strong>code and password</strong> (the password is hashed for verification).<br>
+       ・ ⚠️ If included in a shared space, <strong>the secret .ics source URLs are also stored on the server</strong>. Share only with people you trust.<br>
+       ・ If you do not use sharing, no data is sent to the server.<br>
+       ・ Stopping sharing detaches the shared space from that device.</p>
+
+    <h2>6. Camera and Photos</h2>
+    <p>The App may <strong>use the camera</strong> to photograph a schedule or handout and read its events (optional). It may also use the iOS photo selection feature (PhotosPicker) when reading from a photo. This is a standard system mechanism: only the image you pick is passed to the App, and it never requests access to your entire photo library.</p>
+
+    <h2>7. On-Device AI Reading</h2>
+    <p>Reading events from photos, text, or handwriting is processed by <strong>on-device AI</strong> on supported devices. The images, text, or handwriting you enter are never sent to an external server for AI processing.</p>
+
+    <h2>8. In-App Purchases</h2>
+    <p>As of v1.0, the App offers <strong>no in-app purchases</strong>. It is entirely free. If Pro features are introduced in the future, this policy will be updated.</p>
+
+    <h2>9. Exporting and Deleting Data</h2>
+    <p>Your schedule can be exported as PDF, image, or HTML. Where it is saved or shared is chosen by you through the iOS share sheet. Events, labels, and sources can be deleted at any time within the App, and uninstalling the App removes local data from your device. A shared space can be detached with "Stop sharing."</p>
+
+    <h2>10. Children's Use</h2>
+    <p>The App is designed to be safe for users of all ages. No personally identifiable information is collected from children either.</p>
+
+    <h2>11. Contact</h2>
+    <p>For questions about this policy, please use the developer contact link on the App Store page of this app.</p>
+
+    <h2>12. Changes to This Policy</h2>
+    <p>This policy may be updated without prior notice. Significant changes will be announced on this page.</p>
+    </section>
+
+    <hr>
+
+    <section id="zh">
+    <h1>帯暦 (Obikoyomi) 隐私政策</h1>
+    <p class="date">最后更新: 2026 年 6 月 14 日</p>
+
+    <h2>1. 简介</h2>
+    <p>帯暦 (Obikoyomi, 以下称 「本应用」) 是一款在横向时间带上查看家人及自己日程的日历查看器。 它以只读方式并排显示各自的日历。 本政策说明本应用对用户信息的处理方式。</p>
+
+    <h2>2. 不收集的信息</h2>
+    <p>本应用 <strong>不收集</strong> 任何可识别个人身份的信息 (姓名、 邮箱、 电话、 地址、 位置信息等)。 无需注册账号。 本应用 <strong>不使用任何第三方</strong> 广告、 分析、 跟踪或崩溃报告服务。</p>
+
+    <h2>3. 保存在设备内的数据</h2>
+    <p>本应用仅将以下内容保存于设备本地。 除非你使用共享功能 (第 5 条), 否则这些数据不会离开设备。</p>
+    <p>・ 已登记的导入来源 (.ics 网址)<br>
+       ・ 手动输入的日程、 标签 (负责／分类) 及其颜色<br>
+       ・ 从照片、 文字、 手写导入的日程及其原始数据 (导入备注, 最长 30 天)<br>
+       ・ 日程协调中的 ○／△ 标记<br>
+       ・ 显示设置 (语言、 主题、 显示哪些标签等)</p>
+
+    <h2>4. 日历导入 (.ics 通信)</h2>
+    <p>当你登记导入来源网址时, 本应用会连接该网址 (Apple 日历或 Google 日历签发的公开／私密地址), 获取日程数据并在设备上显示。 通信通过 HTTPS 进行; 仅发送对该网址的访问请求, 不包含你的姓名、 设备标识符或位置信息。 若不登记任何来源, 则不会发生此通信。</p>
+
+    <h2>5. 使用共享功能时的通信 (重要)</h2>
+    <p>本应用提供与家人等他人共享 「同一份日程表」 的可选功能。 当你创建或加入共享空间时, 该空间的内容 —— <strong>日程列表、 标签 (成员) 名称、 导入来源 .ics 网址、 手动日程、 日程协调标记</strong> —— 会保存在开发者运营的同步服务器 (Cloudflare Workers / KV) 上, 并分发给持有相同代码和密码的对方。</p>
+    <p>・ 共享由 <strong>代码与密码</strong> 保护 (密码经哈希处理用于校验)。<br>
+       ・ ⚠️ 若包含在共享空间中, <strong>导入来源的私密 .ics 网址也会保存在服务器上</strong>。 请仅与信任的人共享。<br>
+       ・ 若不使用共享功能, 不会有任何数据发送至服务器。<br>
+       ・ 取消共享后, 该共享空间将从此设备分离。</p>
+
+    <h2>6. 摄像头与相册的使用</h2>
+    <p>本应用可能会 <strong>使用摄像头</strong> 拍摄日程表或通知以识别日程 (可选)。 从照片识别时也可能使用 iOS 的照片选择功能 (PhotosPicker)。 这是系统标准机制: 仅你所选择的图片会传递给应用, 不会请求访问整个相册。</p>
+
+    <h2>7. 端侧 AI 识别</h2>
+    <p>从照片、 文字、 手写识别日程, 在支持的设备上由 <strong>端侧 AI</strong> 处理。 你输入的图片、 文字或手写不会为了 AI 处理而发送至外部服务器。</p>
+
+    <h2>8. 应用内购买</h2>
+    <p>截至 v1.0, 本应用 <strong>不提供任何应用内购买</strong>。 完全免费。 若未来引入 Pro 功能, 本政策将相应更新。</p>
+
+    <h2>9. 数据的导出与删除</h2>
+    <p>日程表可导出为 PDF、 图片或 HTML。 保存或分享位置由你通过 iOS 分享菜单自行选择。 日程、 标签、 导入来源可随时在应用内删除, 卸载应用即可从设备删除本地数据。 共享空间可通过 「取消共享」 分离。</p>
+
+    <h2>10. 儿童使用</h2>
+    <p>本应用的设计可让所有年龄层用户安全使用。 即使是儿童使用, 也不会收集可识别个人身份的信息。</p>
+
+    <h2>11. 联系方式</h2>
+    <p>关于本政策的问题, 请通过 App Store 本应用页面的开发者联系方式咨询。</p>
+
+    <h2>12. 政策变更</h2>
+    <p>本政策可能在不另行通知的情况下更新。 重大变更将在本页面公告。</p>
+    </section>
+</body>
+</html>
