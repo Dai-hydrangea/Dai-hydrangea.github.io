@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Claude 3モデル比較｜猛暑分析</title>
+  <title>Claude 3モデル比較｜2026-07-25</title>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -11,202 +11,300 @@
     body {
       font-family: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Yu Gothic', sans-serif;
       background: #f0ede8;
-      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
     }
 
-    /* ── ヘッダー ── */
+    /* ── ページヘッダー ── */
     header {
       background: #fff;
       border-bottom: 1px solid #ddd;
-      padding: 14px 24px;
+      padding: 11px 20px;
       display: flex;
       align-items: baseline;
-      gap: 16px;
+      gap: 14px;
+      flex-shrink: 0;
     }
-    header h1 { font-size: 15px; color: #222; font-weight: 700; }
-    header p  { font-size: 12px; color: #999; }
+    header h1 { font-size: 14px; font-weight: 700; color: #1a1a1a; }
+    header p  { font-size: 11.5px; color: #aaa; }
 
     /* ── タブバー ── */
     .tab-bar {
       display: flex;
       background: #f5f5f3;
       border-bottom: 1px solid #ddd;
+      flex-shrink: 0;
     }
     .tab {
       flex: 1;
-      padding: 10px 18px;
+      padding: 9px 16px;
       display: flex;
       align-items: center;
       gap: 8px;
       border-right: 1px solid #ddd;
     }
     .tab:last-child { border-right: none; }
-    .dot {
-      width: 10px; height: 10px;
-      border-radius: 50%; flex-shrink: 0;
-    }
+    .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
     .sonnet .dot { background: #2563eb; }
     .fable  .dot { background: #7c3aed; }
     .opus   .dot { background: #16a34a; }
-    .tab-model { font-size: 13px; font-weight: 700; color: #222; }
-    .tab-desc  { font-size: 11px; color: #999; }
+    .tab-model { font-size: 13px; font-weight: 700; color: #1a1a1a; }
+    .tab-desc  { font-size: 11px; color: #aaa; }
 
     /* ── 3列 ── */
-    .cols {
-      display: flex;
-      height: calc(100vh - 90px);
-    }
+    .cols { display: flex; flex: 1; overflow: hidden; }
     .col {
       flex: 1;
-      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
       border-right: 1px solid #ddd;
       background: #fff;
-      padding: 28px 26px 48px;
     }
     .col:last-child { border-right: none; }
 
-    /* ── Markdownスタイル ── */
-    .col h1 {
-      font-size: 17px;
+    /* ── TOC ── */
+    .toc {
+      flex-shrink: 0;
+      background: #fafaf9;
+      border-bottom: 2px solid #ebebeb;
+      padding: 10px 14px 12px;
+      max-height: 36vh;
+      overflow-y: auto;
+    }
+    .toc-title {
+      font-size: 9.5px;
       font-weight: 700;
-      color: #111;
-      margin: 0 0 18px;
-      padding-bottom: 10px;
-      border-bottom: 2px solid #eee;
-      line-height: 1.5;
-    }
-    .col h2 {
-      font-size: 14px;
-      font-weight: 700;
-      color: #222;
-      margin: 22px 0 10px;
-      padding-left: 8px;
-      border-left: 3px solid #ccc;
-    }
-    .sonnet-col h2 { border-color: #2563eb; }
-    .fable-col  h2 { border-color: #7c3aed; }
-    .opus-col   h2 { border-color: #16a34a; }
-
-    .col h3 {
-      font-size: 13px;
-      font-weight: 700;
-      color: #333;
-      margin: 16px 0 7px;
-    }
-    .col p {
-      font-size: 13px;
-      line-height: 1.8;
-      color: #444;
-      margin-bottom: 10px;
-    }
-    .col ul, .col ol {
-      padding-left: 18px;
-      margin-bottom: 10px;
-    }
-    .col li {
-      font-size: 13px;
-      line-height: 1.8;
-      color: #444;
-      margin-bottom: 4px;
-    }
-    .col strong { color: #222; }
-    .col em     { color: #777; }
-    .col hr {
-      border: none;
-      border-top: 1px solid #eee;
-      margin: 18px 0;
-    }
-    .col blockquote {
-      border-left: 3px solid #ddd;
-      padding: 6px 14px;
-      margin: 10px 0;
-      color: #777;
-      font-size: 12.5px;
-    }
-    .col table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 12px;
-      margin: 12px 0;
-    }
-    .col th {
-      background: #f5f5f5;
-      padding: 7px 10px;
-      text-align: left;
-      border: 1px solid #ddd;
-      font-weight: 700;
-    }
-    .col td {
-      padding: 6px 10px;
-      border: 1px solid #ddd;
-      line-height: 1.6;
-    }
-    .col tr:nth-child(even) td { background: #fafafa; }
-
-    /* ── ローディング ── */
-    .loading {
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
       color: #bbb;
-      font-size: 13px;
-      margin-top: 40px;
-      text-align: center;
+      margin-bottom: 8px;
     }
+    .toc-chapter {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 5px 0 3px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .toc-chapter:hover { opacity: 0.7; }
+    .toc-sep { height: 1px; background: #eee; margin: 5px 0; }
+    .toc-h2 {
+      display: block;
+      font-size: 11px;
+      color: #666;
+      padding: 2px 0 2px 16px;
+      cursor: pointer;
+      line-height: 1.5;
+      user-select: none;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .toc-h2:hover { color: #222; }
+
+    /* ── コンテンツ領域 ── */
+    .col-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0 22px 56px;
+    }
+
+    /* ── セクションバナー ── */
+    .section-banner {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 28px 0 14px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 12.5px;
+      font-weight: 700;
+    }
+    .col-content > .section-banner:first-child { margin-top: 20px; }
+
+    /* ── Markdown スタイル ── */
+    .col-content h1 {
+      font-size: 15.5px; font-weight: 700; color: #111;
+      margin: 0 0 12px; line-height: 1.5;
+      padding-bottom: 8px; border-bottom: 1px solid #eee;
+      scroll-margin-top: 8px;
+    }
+    .col-content h2 {
+      font-size: 13px; font-weight: 700; color: #222;
+      margin: 18px 0 7px;
+      padding-left: 8px; border-left: 3px solid #ddd;
+      scroll-margin-top: 8px;
+    }
+    .sonnet-col .col-content h2 { border-color: #2563eb; }
+    .fable-col  .col-content h2 { border-color: #7c3aed; }
+    .opus-col   .col-content h2 { border-color: #16a34a; }
+    .col-content h3 {
+      font-size: 12px; font-weight: 700; color: #333;
+      margin: 13px 0 5px; scroll-margin-top: 8px;
+    }
+    .col-content p  { font-size: 12.5px; line-height: 1.85; color: #444; margin-bottom: 9px; }
+    .col-content ul, .col-content ol { padding-left: 18px; margin-bottom: 10px; }
+    .col-content li { font-size: 12.5px; line-height: 1.8; color: #444; margin-bottom: 3px; }
+    .col-content strong { color: #1a1a1a; }
+    .col-content em     { color: #888; }
+    .col-content hr     { border: none; border-top: 1px solid #eee; margin: 14px 0; }
+    .col-content blockquote {
+      border-left: 3px solid #ddd; padding: 6px 14px;
+      margin: 10px 0; color: #777; font-size: 12px;
+    }
+    .col-content table  { width: 100%; border-collapse: collapse; font-size: 11.5px; margin: 12px 0; }
+    .col-content th     { background: #f5f5f5; padding: 6px 10px; border: 1px solid #ddd; font-weight: 700; text-align: left; }
+    .col-content td     { padding: 5px 10px; border: 1px solid #ddd; line-height: 1.6; }
+    .col-content tr:nth-child(even) td { background: #fafafa; }
+    .col-content code   { font-family: 'Menlo','Courier New',monospace; font-size: 11px; background: #f5f5f5; padding: 1px 5px; border-radius: 3px; color: #c7254e; }
+    .col-content pre    { background: #f8f8f8; border: 1px solid #eee; border-radius: 6px; padding: 12px 14px; overflow-x: auto; margin: 10px 0; }
+    .col-content pre code { background: none; color: #333; padding: 0; }
+
+    .loading { color: #ccc; font-size: 12px; padding: 40px 0; text-align: center; }
   </style>
 </head>
 <body>
 
 <header>
-  <h1>Claude 3モデル比較 ── 猛暑の要因と対策</h1>
-  <p>同じ質問を Sonnet 5 / Fable 5 / Opus 5 に投げた結果を並べて表示しています</p>
+  <h1>Claude 3モデル比較 ── 2026-07-25</h1>
+  <p>同じ質問を Sonnet 5 / Fable 5 / Opus 5 に投げた全回答を並べています</p>
 </header>
 
 <div class="tab-bar">
-  <div class="tab sonnet">
-    <span class="dot"></span>
-    <span class="tab-model">Sonnet 5</span>
-    <span class="tab-desc">手際のいい助手</span>
-  </div>
-  <div class="tab fable">
-    <span class="dot"></span>
-    <span class="tab-model">Fable 5</span>
-    <span class="tab-desc">バランス型の編集者</span>
-  </div>
-  <div class="tab opus">
-    <span class="dot"></span>
-    <span class="tab-model">Opus 5</span>
-    <span class="tab-desc">独自調査をする研究者</span>
-  </div>
+  <div class="tab sonnet"><span class="dot"></span><span class="tab-model">Sonnet 5</span><span class="tab-desc">手際のいい助手</span></div>
+  <div class="tab fable" ><span class="dot"></span><span class="tab-model">Fable 5</span> <span class="tab-desc">バランス型の編集者</span></div>
+  <div class="tab opus"  ><span class="dot"></span><span class="tab-model">Opus 5</span>  <span class="tab-desc">独自調査をする研究者</span></div>
 </div>
 
 <div class="cols">
-  <div class="col sonnet-col" id="col-sonnet"><p class="loading">読み込み中…</p></div>
-  <div class="col fable-col"  id="col-fable" ><p class="loading">読み込み中…</p></div>
-  <div class="col opus-col"   id="col-opus"  ><p class="loading">読み込み中…</p></div>
+
+  <div class="col sonnet-col">
+    <div class="toc"><div class="toc-title">📋 目次</div><div id="toc-links-sonnet"></div></div>
+    <div class="col-content" id="content-sonnet"><p class="loading">読み込み中…</p></div>
+  </div>
+
+  <div class="col fable-col">
+    <div class="toc"><div class="toc-title">📋 目次</div><div id="toc-links-fable"></div></div>
+    <div class="col-content" id="content-fable"><p class="loading">読み込み中…</p></div>
+  </div>
+
+  <div class="col opus-col">
+    <div class="toc"><div class="toc-title">📋 目次</div><div id="toc-links-opus"></div></div>
+    <div class="col-content" id="content-opus"><p class="loading">読み込み中…</p></div>
+  </div>
+
 </div>
 
 <script>
   marked.setOptions({ breaks: true });
 
-  const files = [
-    { id: 'col-sonnet', src: 'sonnet5.md' },
-    { id: 'col-fable',  src: 'fable5.md'  },
-    { id: 'col-opus',   src: 'opus5.md'   },
+  const MODELS = [
+    {
+      id: 'sonnet', color: '#2563eb',
+      docs: [
+        { icon: '🌡️', label: 'Q1. 猛暑の要因と対策', src: 'sonnet5-weather.md' },
+        { icon: '📈', label: 'Q2. 株価指数分析',      src: 'sonnet5-stocks.md'  },
+        { icon: '🔍', label: '調査フロー解説',         src: 'sonnet5-flow.md'   },
+      ]
+    },
+    {
+      id: 'fable', color: '#7c3aed',
+      docs: [
+        { icon: '🌡️', label: 'Q1. 猛暑の要因と対策', src: 'fable5-weather.md' },
+        { icon: '📈', label: 'Q2. 株価指数分析',      src: 'fable5-stocks.md'  },
+        { icon: '🔍', label: '調査フロー解説',         src: 'fable5-flow.md'   },
+      ]
+    },
+    {
+      id: 'opus', color: '#16a34a',
+      docs: [
+        { icon: '🌡️', label: 'Q1. 猛暑の要因と対策', src: 'opus5-weather.md' },
+        { icon: '📈', label: 'Q2. 株価指数分析',      src: 'opus5-stocks.md'  },
+        { icon: '🔍', label: '調査フロー記録',         src: 'opus5-flow.md'   },
+      ]
+    },
   ];
 
-  files.forEach(({ id, src }) => {
-    fetch(src)
-      .then(r => {
-        if (!r.ok) throw new Error(r.status);
-        return r.text();
-      })
-      .then(md => {
-        document.getElementById(id).innerHTML = marked.parse(md);
-      })
-      .catch(err => {
-        document.getElementById(id).innerHTML =
-          `<p class="loading">読み込みエラー: ${err.message}</p>`;
-      });
-  });
-</script>
+  function scrollInCol(colId, el) {
+    const content = document.getElementById('content-' + colId);
+    const top = el.getBoundingClientRect().top
+              - content.getBoundingClientRect().top
+              + content.scrollTop - 8;
+    content.scrollTo({ top: top, behavior: 'smooth' });
+  }
 
+  async function loadModel(model) {
+    const content  = document.getElementById('content-'    + model.id);
+    const tocLinks = document.getElementById('toc-links-'  + model.id);
+    content.innerHTML = '';
+
+    for (let di = 0; di < model.docs.length; di++) {
+      const doc = model.docs[di];
+
+      // セクションバナー
+      const banner = document.createElement('div');
+      banner.className = 'section-banner';
+      banner.style.background = model.color + '18';
+      banner.style.color = model.color;
+      banner.innerHTML = '<span style="font-size:15px">' + doc.icon + '</span>'
+                       + '<span>' + doc.label + '</span>';
+      content.appendChild(banner);
+
+      // TOC 章見出し
+      if (di > 0) {
+        const sep = document.createElement('div');
+        sep.className = 'toc-sep';
+        tocLinks.appendChild(sep);
+      }
+      const chapLink = document.createElement('div');
+      chapLink.className = 'toc-chapter';
+      chapLink.style.color = model.color;
+      chapLink.innerHTML = '<span>' + doc.icon + '</span><span>' + doc.label + '</span>';
+      (function(b){ chapLink.onclick = function(){ scrollInCol(model.id, b); }; })(banner);
+      tocLinks.appendChild(chapLink);
+
+      // MD 取得 & レンダリング
+      try {
+        const res = await fetch(doc.src);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const md  = await res.text();
+
+        const wrap = document.createElement('div');
+        wrap.innerHTML = marked.parse(md);
+
+        let hIdx = 0;
+        wrap.querySelectorAll('h1, h2, h3').forEach(function(h) {
+          const hId = model.id + '-d' + di + '-h' + (hIdx++);
+          h.id = hId;
+
+          if (h.tagName === 'H2') {
+            const link = document.createElement('div');
+            link.className = 'toc-h2';
+            link.textContent = h.textContent;
+            link.title = h.textContent;
+            (function(target){ link.onclick = function(){ scrollInCol(model.id, target); }; })(h);
+            tocLinks.appendChild(link);
+          }
+        });
+
+        content.appendChild(wrap);
+
+      } catch(e) {
+        const err = document.createElement('p');
+        err.style.cssText = 'color:#e11d48;font-size:12px;padding:12px 0;';
+        err.textContent = '⚠️ 読み込みエラー: ' + doc.src + ' (' + e.message + ')';
+        content.appendChild(err);
+      }
+    }
+  }
+
+  MODELS.forEach(loadModel);
+</script>
 </body>
 </html>
