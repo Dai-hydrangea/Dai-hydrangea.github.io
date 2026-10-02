@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>合奏チューナー / Harmony Tuner - サポート / Support</title>
+    <style>
+        body { font-family: -apple-system, sans-serif; max-width: 760px; margin: 40px auto; padding: 0 20px; line-height: 1.8; color: #333; }
+        h1 { font-size: 28px; border-bottom: 2px solid #3a8c8e; padding-bottom: 8px; }
+        h2 { font-size: 20px; margin-top: 36px; color: #1e6668; }
+        h3 { font-size: 16px; margin-top: 20px; color: #555; }
+        p { margin: 10px 0; }
+        .date { color: #888; font-size: 14px; }
+        .feature-list { background: #eef7f7; padding: 14px 20px; border-radius: 8px; margin: 16px 0; }
+        .lang-switch { margin-bottom: 20px; font-size: 14px; }
+        .lang-switch a { margin-right: 10px; color: #3a8c8e; text-decoration: none; font-weight: 600; }
+        .lang-switch a:hover { text-decoration: underline; }
+        .note-box { background: #eef7f7; padding: 16px 20px; border-radius: 10px; margin: 20px 0; }
+        .link-list a { display: block; color: #3a8c8e; text-decoration: none; padding: 4px 0; }
+        .link-list a:hover { text-decoration: underline; }
+        hr { margin: 60px 0 30px; border: none; border-top: 1px solid #ddd; }
+        .app-icon { font-size: 48px; display: block; text-align: center; margin-bottom: 8px; }
+        .badge { display: inline-block; background: #3a8c8e; color: white; font-size: 11px; padding: 2px 8px; border-radius: 10px; margin-left: 6px; vertical-align: middle; }
+    </style>
+</head>
+<body>
+    <div class="lang-switch">
+        <a href="#ja">日本語</a> |
+        <a href="#en">English</a> |
+        <a href="#zh">中文</a>
+    </div>
+
+    <!-- ==================== 日本語 ==================== -->
+    <section id="ja">
+    <span class="app-icon">🎵</span>
+    <h1>合奏チューナー サポート</h1>
+    <p class="date">バージョン: 1.0</p>
+
+    <h2>合奏チューナーとは</h2>
+    <p>合奏チューナーは、複数の楽器が同時に鳴る環境でハーモニーを可視化するチューナーアプリです。マイクで拾った音を AI が解析し、和音名・各音の音名・純正律との偏差をリアルタイムで表示します。吹奏楽・弦楽・声楽の合奏練習に最適です。</p>
+
+    <div class="feature-list">
+    <h3>主な機能</h3>
+    <p>・ <strong>和音検出</strong>: Basic-Pitch (Spotify) CoreML モデルによるポリフォニック音高検出</p>
+    <p>・ <strong>純正律インジケーター</strong>: 各音が純正律の目標位置からどれだけズレているかをセント単位で表示</p>
+    <p>・ <strong>基準ピッチ設定</strong>: A4 = 430〜450 Hz を 1Hz 刻みで設定可能 (吹奏楽の標準 442Hz がデフォルト)</p>
+    <p>・ <strong>スペクトル 3D ウォーターフォール</strong>: 過去 10 秒間のスペクトル履歴を擬似 3D で表示 (折りたたみ可)</p>
+    <p>・ <strong>3 言語対応</strong>: 日本語・English・中文</p>
+    </div>
+
+    <h2>よくある質問</h2>
+
+    <h3>Q. 起動してもチューナーが動かない</h3>
+    <p>iPhone の「設定」アプリ → 合奏チューナー → <strong>マイク</strong> を ON にしてください。本アプリはマイクを使って音を解析するため、マイク権限が必要です。</p>
+
+    <h3>Q. 音がないのに音名が表示される</h3>
+    <p>換気扇・空調・ノイズなど環境音を誤検出している場合があります。静かな場所でお試しください。または基準ピッチ設定を実際の演奏ピッチに合わせると改善することがあります。</p>
+
+    <h3>Q. 和音名が表示されない</h3>
+    <p>和音名の表示には <strong>2 音以上</strong>の検出が必要です。単音演奏では音名のみが表示されます。また音量が小さすぎると検出が不安定になります。</p>
+
+    <h3>Q. 基準ピッチを変えたい</h3>
+    <p>画面左上の設定アイコン → <strong>基準ピッチ</strong> で ±1Hz 刻みのステッパーで設定できます。設定は自動保存されます。</p>
+
+    <h3>Q. スペクトルグラフが表示されない</h3>
+    <p>画面下部の「SPECTRUM」バーをタップすると折りたたみ/展開できます。デフォルトは折りたたみ状態です。</p>
+
+    <h3>Q. 言語を変えたい</h3>
+    <p>設定画面 → <strong>言語</strong> から日本語・English・中文を選べます。コード名・役割名もすべて切り替わります。</p>
+
+    <h3>Q. 純正律の青いマーカーとは？</h3>
+    <p>チューナーバーの青い縦線は「純正律の理想位置」を示しています。ドットをこの青線に近づけるように演奏すると、和音がより美しく響きます。根音はゼロ中央が目標、3度・5度は純正律の位置（長3度は −13.7¢ など）が目標です。</p>
+
+    <h2>関連ページ</h2>
+    <div class="link-list">
+        <a href="https://dai-hydrangea.github.io/privacy-policy-chordtuner.html">🔒 プライバシーポリシー</a>
+        <a href="https://dai-hydrangea.github.io/terms-chordtuner.html">📄 利用規約</a>
+        <a href="https://dai-hydrangea.github.io/">📱 開発者の他のアプリ</a>
+    </div>
+
+    <h2>お問い合わせ</h2>
+    <div class="note-box">
+    <p>バグ報告・機能要望は App Store の本アプリページの「開発者連絡先」からお気軽にどうぞ。</p>
+    </div>
+    </section>
+
+    <hr>
+
+    <!-- ==================== English ==================== -->
+    <section id="en">
+    <span class="app-icon">🎵</span>
+    <h1>Harmony Tuner Support</h1>
+    <p class="date">Version: 1.0</p>
+
+    <h2>About Harmony Tuner</h2>
+    <p>Harmony Tuner is a real-time ensemble tuner that visualizes harmony in environments where multiple instruments play simultaneously. The app uses AI to analyze microphone input and displays chord names, note names, and just-intonation deviations instantly. Perfect for wind band, string ensemble, and choral rehearsals.</p>
+
+    <div class="feature-list">
+    <h3>Key Features</h3>
+    <p>· <strong>Chord Detection</strong>: Polyphonic pitch detection using the Basic-Pitch (Spotify) CoreML model</p>
+    <p>· <strong>Just Intonation Indicator</strong>: Displays cent deviation from just-intonation targets for each note</p>
+    <p>· <strong>Reference Pitch</strong>: Set A4 from 430–450 Hz in 1 Hz steps (default: 442 Hz for wind instruments)</p>
+    <p>· <strong>3D Waterfall Spectrum</strong>: View up to 10 seconds of spectrum history in pseudo-3D (collapsible)</p>
+    <p>· <strong>3-Language Support</strong>: Japanese, English, Chinese</p>
+    </div>
+
+    <h2>FAQ</h2>
+
+    <h3>Q. The tuner does not respond after launch</h3>
+    <p>Go to iPhone Settings → Harmony Tuner → enable <strong>Microphone</strong>. The app requires microphone access to analyze sound.</p>
+
+    <h3>Q. Notes appear even when nothing is playing</h3>
+    <p>The app may be detecting environmental noise such as fans or HVAC. Try using the app in a quieter environment, or adjust the reference pitch to match your actual playing pitch.</p>
+
+    <h3>Q. Chord names are not displayed</h3>
+    <p>Chord names require <strong>2 or more detected notes</strong>. Only individual note names are shown for single pitches. Detection may also be unstable at very low volumes.</p>
+
+    <h3>Q. How do I change the reference pitch?</h3>
+    <p>Tap the settings icon (top-left) → <strong>Reference Pitch</strong> and use the stepper to adjust in 1 Hz increments. The setting is saved automatically.</p>
+
+    <h3>Q. The spectrum panel is not visible</h3>
+    <p>Tap the "SPECTRUM" bar at the bottom of the screen to expand it. It is collapsed by default.</p>
+
+    <h3>Q. How do I change the language?</h3>
+    <p>Settings → <strong>Language</strong> lets you switch between Japanese, English, and Chinese. All chord names and role labels update accordingly.</p>
+
+    <h3>Q. What is the blue marker on the tuner bar?</h3>
+    <p>The blue vertical line indicates the "just intonation target" for that note. Aim to place the dot near the blue line for a pure-sounding chord. For the root note, the center is the target; for the 3rd, the target is −13.7¢ below equal temperament; for the 5th, +2.0¢ above.</p>
+
+    <h2>Related Pages</h2>
+    <div class="link-list">
+        <a href="https://dai-hydrangea.github.io/privacy-policy-chordtuner.html">🔒 Privacy Policy</a>
+        <a href="https://dai-hydrangea.github.io/terms-chordtuner.html">📄 Terms of Use</a>
+        <a href="https://dai-hydrangea.github.io/">📱 More Apps by Developer</a>
+    </div>
+
+    <h2>Contact</h2>
+    <div class="note-box">
+    <p>For bug reports or feature requests, please use the developer contact link on the App Store page.</p>
+    </div>
+    </section>
+
+    <hr>
+
+    <!-- ==================== 中文 ==================== -->
+    <section id="zh">
+    <span class="app-icon">🎵</span>
+    <h1>和声调音器 支持</h1>
+    <p class="date">版本: 1.0</p>
+
+    <h2>关于和声调音器</h2>
+    <p>和声调音器是一款实时合奏调音器，可在多乐器同时演奏的环境中可视化和声。应用使用 AI 分析麦克风输入，实时显示和弦名称、音名及纯律偏差。非常适合管乐队、弦乐合奏和合唱排练。</p>
+
+    <div class="feature-list">
+    <h3>主要功能</h3>
+    <p>· <strong>和弦检测</strong>: 使用 Basic-Pitch（Spotify）CoreML 模型进行多音高检测</p>
+    <p>· <strong>纯律指示器</strong>: 以音分为单位显示每个音与纯律目标位置的偏差</p>
+    <p>· <strong>参考音高设置</strong>: A4 可在 430–450 Hz 范围内以 1Hz 步长设置（默认 442 Hz）</p>
+    <p>· <strong>3D 瀑布频谱</strong>: 以伪 3D 方式查看最近 10 秒的频谱历史（可折叠）</p>
+    <p>· <strong>三语支持</strong>: 日语、英语、中文</p>
+    </div>
+
+    <h2>常见问题</h2>
+
+    <h3>Q. 启动后调音器没有响应</h3>
+    <p>请打开 iPhone 设置 → 和声调音器 → 开启<strong>麦克风</strong>权限。本应用需要麦克风来分析声音。</p>
+
+    <h3>Q. 没有演奏时也显示音符</h3>
+    <p>应用可能检测到风扇或空调等环境噪音。请在较安静的环境中使用，或将参考音高调整为实际演奏音高。</p>
+
+    <h3>Q. 不显示和弦名称</h3>
+    <p>显示和弦名称需要检测到<strong>2个或以上音符</strong>。单音演奏时只显示音名。音量过低时检测也可能不稳定。</p>
+
+    <h3>Q. 如何更改参考音高？</h3>
+    <p>点击左上角的设置图标 → <strong>参考音高</strong>，使用步进器以 1Hz 为单位调整。设置自动保存。</p>
+
+    <h3>Q. 频谱面板不可见</h3>
+    <p>点击屏幕底部的"SPECTRUM"栏即可展开。默认为折叠状态。</p>
+
+    <h3>Q. 如何更改语言？</h3>
+    <p>设置 → <strong>语言</strong>可切换日语、英语和中文。所有和弦名称和音程角色标签均会相应更新。</p>
+
+    <h3>Q. 调音条上的蓝色标记是什么？</h3>
+    <p>蓝色竖线表示该音的"纯律目标位置"。将圆点靠近蓝线演奏，和声会更纯净。根音目标为中央零点；大三度目标为平均律下方 −13.7 音分；纯五度目标为平均律上方 +2.0 音分。</p>
+
+    <h2>相关页面</h2>
+    <div class="link-list">
+        <a href="https://dai-hydrangea.github.io/privacy-policy-chordtuner.html">🔒 隐私政策</a>
+        <a href="https://dai-hydrangea.github.io/terms-chordtuner.html">📄 使用条款</a>
+        <a href="https://dai-hydrangea.github.io/">📱 开发者的其他应用</a>
+    </div>
+
+    <h2>联系方式</h2>
+    <div class="note-box">
+    <p>如需报告 Bug 或提出功能建议，请通过 App Store 本应用页面的开发者联系方式与我们联系。</p>
+    </div>
+    </section>
+</body>
+</html>
