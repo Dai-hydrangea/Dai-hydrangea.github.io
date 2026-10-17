@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>裏紙メモ - サポート</title>
+<style>
+  body { font-family: -apple-system, "Hiragino Sans", "Yu Gothic", sans-serif; max-width: 720px; margin: 40px auto; padding: 0 24px; color: #2b2622; line-height: 1.7; background: #f4ecd8; }
+  .container { background: rgba(255,253,246,0.9); border-radius: 16px; padding: 40px 32px; margin: 20px 0; box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+  h1 { color: #274b73; border-bottom: 2px solid #b5342a; padding-bottom: 12px; text-align: center; letter-spacing: 2px; }
+  .tagline { text-align: center; color: #6b6258; font-style: italic; margin-bottom: 28px; font-size: 14px; }
+  h2 { color: #b5342a; margin-top: 32px; font-size: 18px; }
+  .qa { margin-bottom: 22px; }
+  .qa .q { font-weight: 600; color: #274b73; font-size: 14px; }
+  .qa .a { margin-top: 6px; padding-left: 16px; border-left: 3px solid #b5342a; font-size: 14px; }
+  .links { background: rgba(124,174,90,0.12); padding: 16px; border-radius: 12px; margin-top: 28px; }
+  .links a { display: block; margin: 6px 0; color: #b5342a; text-decoration: none; font-size: 13px; }
+  .footer { text-align: center; color: #6b6258; font-size: 11px; margin-top: 32px; }
+</style>
+</head>
+<body>
+<div style="max-width:720px;margin:20px auto 0;padding:0 24px;font-size:14px;">
+  <a href="#ja" style="color:#b5342a;margin-right:10px;text-decoration:none;">日本語</a> |
+  <a href="#en" style="color:#b5342a;margin-left:10px;text-decoration:none;">English</a>
+</div>
+
+<div class="container" id="ja">
+
+<h1>裏紙メモ サポート</h1>
+<p class="tagline">表はただの裏紙、裏は自律分散DB</p>
+
+<h2>よくある質問</h2>
+
+<div class="qa">
+  <div class="q">Q1. どんなアプリですか？</div>
+  <div class="a">殴り書きするだけのミニマルなメモ帳です。改行すると1行が1つのメモになり、裏側で勝手にデータとして整理されます。文中に日付を書くと予定表（ガント）に自動で並び、消したメモもアーカイブに残って掘り返せます。すべてあなたの端末の中と、あなた自身の iCloud の中だけで完結します。</div>
+</div>
+
+<div class="qa">
+  <div class="q">Q2. 書いたメモはどこに保存されますか？</div>
+  <div class="a">端末内に保存され、iCloud が有効な場合はあなたの非公開な iCloud（CloudKit）にも保存されて、同じ Apple ID の端末（iPhone / iPad / Mac）間で同期されます。開発者がメモを見ることはできません。</div>
+</div>
+
+<div class="qa">
+  <div class="q">Q3. メモを「アーカイブ」すると消えてしまいますか？</div>
+  <div class="a">消えません。メモをスワイプで片づけると「アーカイブ」に移るだけで、本文・日付・タグはそのまま残ります。アーカイブ画面の検索でいつでも掘り返せます。</div>
+</div>
+
+<div class="qa">
+  <div class="q">Q4. 上のバーに出るカレンダーのマークは？</div>
+  <div class="a">メモに「明日まで」「10/24 15時」のように日付を書くと、生きた予定があるときだけ上部にカレンダーのマークが出ます。タップすると、日付つきのメモが自動で並ぶ予定表（ガント）が開きます。</div>
+</div>
+
+<div class="qa">
+  <div class="q">Q5. ウィジェットやロック画面、Siri でも使えますか？</div>
+  <div class="a">はい。ホーム画面・ロック画面のウィジェットに最近のメモを表示できます（ウィジェットはアプリから自動では追加できないので、設定内の「ウィジェットの追加方法」をご覧ください）。ホーム画面のウィジェットでは各行の「✓」でアプリを開かずにアーカイブできます。Siri には「ヘイ Siri、うらがみメモにメモ」と、アプリ名から話しかけてください。</div>
+</div>
+
+<div class="qa">
+  <div class="q">Q6. 上部に出る本の紹介は何ですか？</div>
+  <div class="a">「書く・考える」ことに役立つ書籍の紹介（Amazon のアフィリエイトリンク）です。タップすると Safari で Amazon が開きます。アプリ内にトラッキングの仕組みはありません。Pro にすると非表示になります。</div>
+</div>
+
+<div class="qa">
+  <div class="q">Q7. 「Pro」では何ができますか？</div>
+  <div class="a">買い切り ¥300 で、①上部の本の紹介（広告）が消える ②白以外の紙（生成り・和紙テクスチャ）が全部使える ③メモを Markdown で書き出せる、の3つが解放されます。無料のままでも、書く・アーカイブ・予定表・検索などの基本機能はすべて使えます。</div>
+</div>
+
+<div class="qa">
+  <div class="q">Q8. Markdown 書き出しとは？</div>
+  <div class="a">選んだフォルダ（iCloud Drive や Obsidian の vault など）の中に「裏紙メモ」フォルダを作り、メモを Markdown ファイルとして書き出します。デイリーノート（1日1ファイル）と、1行1ファイルのノートの両方を作ります。Obsidian を使っていなくても、ただの Markdown なので何でも開けます。</div>
+</div>
+
+<div class="qa">
+  <div class="q">Q9. 機種変更しても Pro は引き継げますか？</div>
+  <div class="a">はい。同じ Apple ID であれば、設定の「Pro」→「購入を復元」から Pro を復元できます。メモも iCloud が有効なら端末間で同期されます。</div>
+</div>
+
+<div class="qa">
+  <div class="q">Q10. お問い合わせ・ご要望は？</div>
+  <div class="a">下記メール、または App Store の開発者ページからご連絡ください。<br>メール: daisaku.seto@gmail.com</div>
+</div>
+
+<div class="links">
+  <strong style="font-size: 13px; color: #274b73;">関連リンク</strong>
+  <a href="https://dai-hydrangea.github.io/privacy-policy-uragamimemo.html">プライバシーポリシー</a>
+  <a href="https://dai-hydrangea.github.io/terms-uragamimemo.html">利用規約</a>
+  <a href="https://apps.apple.com/jp/developer/daisaku-seto/id1889853807">制作者の他のアプリ</a>
+  <a href="https://note.com/dai_hydrangea">note (開発記録)</a>
+</div>
+
+<p class="footer">© 2026 裏紙メモ — 表はただの裏紙、裏は自律分散DB</p>
+
+</div>
+
+<div class="container" id="en">
+<h1>Uragami Memo Support</h1>
+<p class="tagline">The front is just scrap paper; the back is a quiet database</p>
+
+<h2>FAQ</h2>
+
+<div class="qa"><div class="q">Q1. What is this app?</div>
+<div class="a">A minimal scribble notepad. Each line becomes one note, and the app quietly organizes them in the background. Write a date in a line and it lines up on an auto schedule (Gantt); archived notes stay searchable forever. Everything stays on your device and in your own iCloud.</div></div>
+
+<div class="qa"><div class="q">Q2. Where are my notes stored?</div>
+<div class="a">On your device, and in your private iCloud (CloudKit) if enabled, synced across your iPhone / iPad / Mac on the same Apple ID. The developer cannot see your notes.</div></div>
+
+<div class="qa"><div class="q">Q3. Does "Archive" delete a note?</div>
+<div class="a">No. Swiping a note just moves it to the Archive — the text, date, and tags remain. You can dig it back up anytime via search in the Archive.</div></div>
+
+<div class="qa"><div class="q">Q4. What is the calendar mark in the top bar?</div>
+<div class="a">Write a date (e.g. "tomorrow", "10/24 3pm") in a note, and a calendar mark appears when you have live plans. Tap it to open the auto schedule (Gantt) of your dated notes.</div></div>
+
+<div class="qa"><div class="q">Q5. Widgets, Lock Screen, Siri?</div>
+<div class="a">Yes. Show recent notes in Home Screen and Lock Screen widgets (apps can't add widgets for you — see "How to add widgets" in Settings). On Home Screen widgets, the "✓" on each line archives it without opening the app. For Siri, start with the app name: "Hey Siri, add a note to Uragami Memo".</div></div>
+
+<div class="qa"><div class="q">Q6. What is the book suggestion at the top?</div>
+<div class="a">A suggestion of books about writing and thinking (an Amazon affiliate link). Tapping opens Amazon in Safari. There is no tracking inside the app. Pro removes it.</div></div>
+
+<div class="qa"><div class="q">Q7. What does "Pro" unlock?</div>
+<div class="a">A one-time ¥300 purchase unlocks: (1) removing the book suggestion (ad), (2) all papers beyond white (washi textures), and (3) Markdown export. Writing, archiving, the schedule, and search are all free.</div></div>
+
+<div class="qa"><div class="q">Q8. What is Markdown export?</div>
+<div class="a">It creates an "Uragami Memo" folder inside a folder you choose (iCloud Drive, an Obsidian vault, etc.) and writes your notes as Markdown — both daily notes (one file per day) and one-file-per-line notes. Plain Markdown, openable anywhere.</div></div>
+
+<div class="qa"><div class="q">Q9. Can I keep Pro on a new device?</div>
+<div class="a">Yes. With the same Apple ID, use Settings > Pro > "Restore Purchase". Notes also sync across devices when iCloud is enabled.</div></div>
+
+<div class="qa"><div class="q">Q10. Questions or feedback?</div>
+<div class="a">Email below, or via the developer page on the App Store.<br>Email: daisaku.seto@gmail.com</div></div>
+
+<div class="links">
+  <strong style="font-size: 13px; color: #274b73;">Links</strong>
+  <a href="https://dai-hydrangea.github.io/privacy-policy-uragamimemo.html">Privacy Policy</a>
+  <a href="https://dai-hydrangea.github.io/terms-uragamimemo.html">Terms of Use</a>
+  <a href="https://apps.apple.com/jp/developer/daisaku-seto/id1889853807">More apps by the developer</a>
+  <a href="https://note.com/dai_hydrangea">note (dev log)</a>
+</div>
+<p class="footer">© 2026 Uragami Memo</p>
+</div>
+
+</body>
+</html>
