@@ -1,9 +1,9 @@
 name: NetScope daily refresh
 
 on:
-  schedule:
-    # 22:00 UTC = 07:00 JST に毎日 1 回
-    - cron: "0 22 * * *"
+  # schedule:
+  #   # 22:00 UTC = 07:00 JST に毎日 1 回
+  #   - cron: "0 22 * * *"
   workflow_dispatch:        # 手動実行ボタンも有効化
 
 permissions:
